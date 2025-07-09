@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView, MotiText } from 'moti';
-import { BlurView } from '@react-native-community/blur';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
 import {
   Search,
   TrendingUp,
@@ -34,6 +34,7 @@ import { TouchableOpacity } from 'react-native';
 import { EnhancedStreamCard } from './EnhancedStreamCard';
 import { useTwitchStreams } from '@/hooks/useTwitchStreams';
 import { useStreamManager } from '@/hooks/useStreamManager';
+import { twitchApi } from '@/services/twitchApi';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -95,6 +96,7 @@ export const EnhancedDiscoverScreen: React.FC = () => {
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [totalStreamers, setTotalStreamers] = useState<number | null>(null);
   const flatListRef = useRef<FlatList>(null);
   
   // Animation values
@@ -102,8 +104,18 @@ export const EnhancedDiscoverScreen: React.FC = () => {
   const searchBarOpacity = useSharedValue(0);
   const scrollY = useSharedValue(0);
 
+  const loadTotalStreamers = async () => {
+    try {
+      const streamers = await twitchApi.getTotalLiveStreamers();
+      setTotalStreamers(streamers);
+    } catch (error) {
+      console.error('Failed to load total streamers:', error);
+    }
+  };
+
   useEffect(() => {
     refresh();
+    loadTotalStreamers();
   }, []);
 
   const handleCategoryPress = async (categoryId: string) => {
@@ -122,7 +134,7 @@ export const EnhancedDiscoverScreen: React.FC = () => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await refresh();
+    await Promise.all([refresh(), loadTotalStreamers()]);
     setIsRefreshing(false);
   };
 
@@ -195,7 +207,9 @@ export const EnhancedDiscoverScreen: React.FC = () => {
                 transition={{ delay: 400 }}
                 style={styles.subtitle}
               >
-                {streams.length} live streams
+                {totalStreamers 
+                  ? `${totalStreamers.toLocaleString()} people are streaming on Twitch right now` 
+                  : `${streams.length} live streams`}
               </MotiText>
             </View>
 

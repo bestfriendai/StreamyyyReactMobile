@@ -5,9 +5,9 @@ import {
   Dimensions,
   TouchableOpacity,
   Text,
-  PanResponder,
   LayoutAnimation,
   Platform,
+  SafeAreaView,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import Animated, {
@@ -19,7 +19,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { MotiView, MotiText } from 'moti';
-import { BlurView } from '@react-native-community/blur';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Play,
@@ -29,24 +29,16 @@ import {
   Maximize,
   Grid,
   RotateCw,
+  Settings,
+  Eye,
 } from 'lucide-react-native';
+import { useStreamManager } from '@/hooks/useStreamManager';
+import { TwitchStream } from '@/services/twitchApi';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-interface Stream {
-  id: string;
-  username: string;
-  title: string;
-  viewerCount: number;
-  thumbnailUrl: string;
-  embedUrl: string;
-  isLive: boolean;
-}
-
 interface StreamGridProps {
-  streams: Stream[];
   maxStreams?: number;
-  onStreamRemove?: (streamId: string) => void;
   onLayoutChange?: (layout: string) => void;
 }
 
@@ -114,7 +106,7 @@ const AudioManager = {
 };
 
 const StreamCell: React.FC<{
-  stream: Stream;
+  stream: TwitchStream;
   width: number;
   height: number;
   isActive: boolean;
@@ -185,40 +177,61 @@ const StreamCell: React.FC<{
     }
   };
 
-  // Generate Twitch embed HTML with better controls
+  // Generate Twitch embed HTML with constrained dimensions - THIS FIXES THE FULLSCREEN ISSUE
+  const embedUrl = `https://player.twitch.tv/?channel=${stream.user_name}&parent=localhost&muted=true&autoplay=true`;
+  
   const twitchEmbedHtml = `
     <!DOCTYPE html>
     <html>
     <head>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-          margin: 0; 
-          padding: 0; 
           background: #0e0e10;
           overflow: hidden;
+          width: 100%;
+          height: 100%;
         }
         iframe { 
-          width: 100vw; 
-          height: 100vh; 
-          border: none;
+          width: 100% !important; 
+          height: 100% !important; 
+          border: none !important;
+          display: block !important;
+        }
+        .container {
+          width: 100%;
+          height: 100%;
+          position: relative;
         }
       </style>
     </head>
     <body>
-      <iframe
-        src="${stream.embedUrl}&muted=true&autoplay=true&time=0s"
-        frameborder="0"
-        allowfullscreen="true"
-        scrolling="no">
-      </iframe>
+      <div class="container">
+        <iframe
+          src="${embedUrl}"
+          frameborder="0"
+          allowfullscreen="false"
+          scrolling="no"
+          allow="autoplay; encrypted-media">
+        </iframe>
+      </div>
       <script>
+        // Disable fullscreen attempts
+        document.addEventListener('fullscreenchange', function() {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          }
+        });
+        
         window.addEventListener('message', function(event) {
-          const data = JSON.parse(event.data);
-          if (data.action === 'mute') {
-            // Implement mute logic
-          } else if (data.action === 'unmute') {
-            // Implement unmute logic
+          try {
+            const data = JSON.parse(event.data);
+            if (data.action === 'mute' || data.action === 'unmute') {
+              // Audio control handled by parent
+            }
+          } catch (e) {
+            // Ignore parsing errors
           }
         });
       </script>
@@ -299,7 +312,7 @@ const StreamCell: React.FC<{
                   animate={{ opacity: 1, translateY: 0 }}
                   transition={{ delay: 300 }}
                 >
-                  {stream.username}
+                  {stream.user_name}
                 </MotiText>
                 <View style={styles.liveIndicator}>
                   <MotiView
@@ -313,14 +326,12 @@ const StreamCell: React.FC<{
                     }}
                     style={[
                       styles.liveDot,
-                      { backgroundColor: stream.isLive ? '#ff4444' : '#666' }
+                      { backgroundColor: '#ff4444' }
                     ]}
                   />
-                  <Text style={styles.liveText}>
-                    {stream.isLive ? 'LIVE' : 'OFFLINE'}
-                  </Text>
+                  <Text style={styles.liveText}>LIVE</Text>
                   <Text style={styles.viewerCount}>
-                    {stream.viewerCount.toLocaleString()}
+                    {stream.viewer_count?.toLocaleString() || '0'}
                   </Text>
                 </View>
               </View>
@@ -385,59 +396,75 @@ const StreamCell: React.FC<{
 };
 
 export const EnhancedMultiStreamGrid: React.FC<StreamGridProps> = ({
-  streams,
   maxStreams = 4,
-  onStreamRemove,
   onLayoutChange,
 }) => {
+  const { activeStreams, removeStream, clearAllStreams } = useStreamManager();
   const [layout, setLayout] = useState<GridLayout>('2x2');
   const [activeStreamId, setActiveStreamId] = useState<string | null>(null);
+  const [showControls, setShowControls] = useState(true);
   const gridScale = useSharedValue(1);
+  const pulseScale = useSharedValue(1);
+
+  useEffect(() => {
+    if (activeStreams.length > 0) {
+      pulseScale.value = withSpring(1.02, { damping: 15 }, () => {
+        pulseScale.value = withSpring(1);
+      });
+    }
+  }, [activeStreams.length]);
 
   const getGridDimensions = (layout: GridLayout, streamCount: number) => {
-    const padding = 8;
-    const gap = 4;
+    const padding = 16;
+    const gap = 8;
+    // Reserve space for header (~120px) and bottom tab bar (~100px) and safe areas
+    const availableHeight = SCREEN_HEIGHT - 200;
+    const availableWidth = SCREEN_WIDTH - padding * 2;
     
     switch (layout) {
       case '1x1':
         return {
           columns: 1,
           rows: 1,
-          cellWidth: SCREEN_WIDTH - padding * 2,
-          cellHeight: (SCREEN_HEIGHT * 0.7) - padding * 2,
+          cellWidth: availableWidth,
+          cellHeight: Math.min(availableHeight, (availableWidth * 9) / 16), // 16:9 aspect ratio
         };
       case '2x2':
+        const width2x2 = (availableWidth - gap) / 2;
         return {
           columns: 2,
           rows: 2,
-          cellWidth: (SCREEN_WIDTH - padding * 2 - gap) / 2,
-          cellHeight: ((SCREEN_HEIGHT * 0.7) - padding * 2 - gap) / 2,
+          cellWidth: width2x2,
+          cellHeight: Math.min((availableHeight - gap) / 2, (width2x2 * 9) / 16),
         };
       case '3x3':
+        const width3x3 = (availableWidth - gap * 2) / 3;
         return {
           columns: 3,
           rows: 3,
-          cellWidth: (SCREEN_WIDTH - padding * 2 - gap * 2) / 3,
-          cellHeight: ((SCREEN_HEIGHT * 0.7) - padding * 2 - gap * 2) / 3,
+          cellWidth: width3x3,
+          cellHeight: Math.min((availableHeight - gap * 2) / 3, (width3x3 * 9) / 16),
         };
       case '4x4':
+        const width4x4 = (availableWidth - gap * 3) / 4;
         return {
           columns: 4,
           rows: 4,
-          cellWidth: (SCREEN_WIDTH - padding * 2 - gap * 3) / 4,
-          cellHeight: ((SCREEN_HEIGHT * 0.7) - padding * 2 - gap * 3) / 4,
+          cellWidth: width4x4,
+          cellHeight: Math.min((availableHeight - gap * 3) / 4, (width4x4 * 9) / 16),
         };
       default:
+        const widthDefault = (availableWidth - gap) / 2;
         return {
           columns: 2,
           rows: 2,
-          cellWidth: (SCREEN_WIDTH - padding * 2 - gap) / 2,
-          cellHeight: ((SCREEN_HEIGHT * 0.7) - padding * 2 - gap) / 2,
+          cellWidth: widthDefault,
+          cellHeight: Math.min((availableHeight - gap) / 2, (widthDefault * 9) / 16),
         };
     }
   };
 
-  const { columns, rows, cellWidth, cellHeight } = getGridDimensions(layout, streams.length);
+  const { columns, rows, cellWidth, cellHeight } = getGridDimensions(layout, activeStreams.length);
 
   const handleLayoutChange = (newLayout: GridLayout) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -449,99 +476,174 @@ export const EnhancedMultiStreamGrid: React.FC<StreamGridProps> = ({
     transform: [{ scale: gridScale.value }],
   }));
 
-  return (
-    <View style={styles.container}>
-      {/* Layout Controls */}
-      <MotiView
-        from={{ opacity: 0, translateY: -20 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        style={styles.layoutControls}
-      >
-        <BlurView style={styles.controlsBlur} blurType="dark" blurAmount={20}>
-          <TouchableOpacity
-            style={[styles.layoutButton, layout === '2x2' && styles.activeLayoutButton]}
-            onPress={() => handleLayoutChange('2x2')}
-          >
-            <Grid size={20} color={layout === '2x2' ? '#8B5CF6' : '#fff'} />
-            <Text style={[styles.layoutText, layout === '2x2' && styles.activeLayoutText]}>
-              2×2
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.layoutButton, layout === '3x3' && styles.activeLayoutButton]}
-            onPress={() => handleLayoutChange('3x3')}
-          >
-            <Grid size={20} color={layout === '3x3' ? '#8B5CF6' : '#fff'} />
-            <Text style={[styles.layoutText, layout === '3x3' && styles.activeLayoutText]}>
-              3×3
-            </Text>
-          </TouchableOpacity>
+  const animatedPulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+  }));
 
-          <TouchableOpacity
-            style={[styles.layoutButton, layout === '1x1' && styles.activeLayoutButton]}
-            onPress={() => handleLayoutChange('1x1')}
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Enhanced Header */}
+      <MotiView
+        from={{ opacity: 0, translateY: -30 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        style={styles.header}
+      >
+        <BlurView style={styles.headerBlur} blurType="dark" blurAmount={20}>
+          <LinearGradient
+            colors={['rgba(139, 92, 246, 0.15)', 'rgba(124, 58, 237, 0.1)', 'transparent']}
+            style={styles.headerGradient}
           >
-            <Maximize size={20} color={layout === '1x1' ? '#8B5CF6' : '#fff'} />
-            <Text style={[styles.layoutText, layout === '1x1' && styles.activeLayoutText]}>
-              Full
-            </Text>
-          </TouchableOpacity>
+            <View style={styles.titleRow}>
+              <View style={styles.titleContainer}>
+                <LinearGradient
+                  colors={['#8B5CF6', '#A855F7']}
+                  style={styles.iconGradient}
+                >
+                  <Grid size={16} color="#fff" />
+                </LinearGradient>
+                <View>
+                  <MotiText style={styles.title}>Multi-View</MotiText>
+                  <View style={styles.subtitleContainer}>
+                    <Animated.View style={animatedPulseStyle}>
+                      <Eye size={14} color="#8B5CF6" />
+                    </Animated.View>
+                    <Text style={styles.subtitle}>
+                      {activeStreams.length} active stream{activeStreams.length !== 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              
+              <TouchableOpacity
+                style={styles.settingsButton}
+                onPress={() => setShowControls(!showControls)}
+              >
+                <BlurView style={styles.settingsBlur} blurType="dark" blurAmount={10}>
+                  <Settings size={18} color="#8B5CF6" />
+                </BlurView>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
         </BlurView>
       </MotiView>
 
+      {showControls && (
+        <MotiView
+          from={{ opacity: 0, translateY: -20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          style={styles.layoutControls}
+        >
+          <BlurView style={styles.controlsBlur} blurType="dark" blurAmount={20}>
+            <TouchableOpacity
+              style={[styles.layoutButton, layout === '2x2' && styles.activeLayoutButton]}
+              onPress={() => handleLayoutChange('2x2')}
+            >
+              <Grid size={18} color={layout === '2x2' ? '#8B5CF6' : '#fff'} />
+              <Text style={[styles.layoutText, layout === '2x2' && styles.activeLayoutText]}>
+                2×2
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.layoutButton, layout === '3x3' && styles.activeLayoutButton]}
+              onPress={() => handleLayoutChange('3x3')}
+            >
+              <Grid size={18} color={layout === '3x3' ? '#8B5CF6' : '#fff'} />
+              <Text style={[styles.layoutText, layout === '3x3' && styles.activeLayoutText]}>
+                3×3
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.layoutButton, layout === '1x1' && styles.activeLayoutButton]}
+              onPress={() => handleLayoutChange('1x1')}
+            >
+              <Maximize size={18} color={layout === '1x1' ? '#8B5CF6' : '#fff'} />
+              <Text style={[styles.layoutText, layout === '1x1' && styles.activeLayoutText]}>
+                Full
+              </Text>
+            </TouchableOpacity>
+            
+            {activeStreams.length > 0 && (
+              <TouchableOpacity
+                style={styles.clearAllButton}
+                onPress={clearAllStreams}
+              >
+                <Text style={styles.clearAllText}>Clear All</Text>
+              </TouchableOpacity>
+            )}
+          </BlurView>
+        </MotiView>
+      )}
+
       {/* Stream Grid */}
       <Animated.View style={[styles.gridContainer, animatedGridStyle]}>
-        {streams.slice(0, maxStreams).map((stream, index) => {
+        {activeStreams.slice(0, maxStreams).map((stream, index) => {
           const row = Math.floor(index / columns);
           const col = index % columns;
+          const marginRight = col < columns - 1 ? 8 : 0;
+          const marginBottom = row < Math.ceil(activeStreams.length / columns) - 1 ? 8 : 0;
           
           return (
-            <StreamCell
+            <View
               key={stream.id}
-              stream={stream}
-              width={cellWidth}
-              height={cellHeight}
-              isActive={activeStreamId === stream.id}
-              onPress={() => setActiveStreamId(stream.id)}
-              onLongPress={() => {
-                gridScale.value = withSpring(1.05, { damping: 15 }, () => {
-                  gridScale.value = withSpring(1);
-                });
-              }}
-              onRemove={() => onStreamRemove?.(stream.id)}
-            />
+              style={[
+                styles.streamCellWrapper,
+                {
+                  width: cellWidth,
+                  height: cellHeight,
+                  marginRight: marginRight,
+                  marginBottom: marginBottom,
+                }
+              ]}
+            >
+              <StreamCell
+                stream={stream}
+                width={cellWidth}
+                height={cellHeight}
+                isActive={activeStreamId === stream.id}
+                onPress={() => setActiveStreamId(stream.id)}
+                onLongPress={() => {
+                  gridScale.value = withSpring(1.05, { damping: 15 }, () => {
+                    gridScale.value = withSpring(1);
+                  });
+                }}
+                onRemove={() => removeStream(stream.id)}
+              />
+            </View>
           );
         })}
       </Animated.View>
 
       {/* Empty state */}
-      {streams.length === 0 && (
+      {activeStreams.length === 0 && (
         <MotiView
           from={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           style={styles.emptyState}
         >
-          <Grid size={64} color="#666" />
-          <MotiText
-            from={{ opacity: 0, translateY: 10 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ delay: 200 }}
-            style={styles.emptyTitle}
-          >
-            No Streams Added
-          </MotiText>
-          <MotiText
-            from={{ opacity: 0, translateY: 10 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ delay: 400 }}
-            style={styles.emptySubtitle}
-          >
-            Add streams from the discover tab to start watching
-          </MotiText>
+          <BlurView style={styles.emptyBlur} blurType="dark" blurAmount={10}>
+            <Grid size={64} color="#666" />
+            <MotiText
+              from={{ opacity: 0, translateY: 10 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ delay: 200 }}
+              style={styles.emptyTitle}
+            >
+              No Streams Added
+            </MotiText>
+            <MotiText
+              from={{ opacity: 0, translateY: 10 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ delay: 400 }}
+              style={styles.emptySubtitle}
+            >
+              Add streams from the discover tab to start watching
+            </MotiText>
+          </BlurView>
         </MotiView>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -550,9 +652,64 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0a0a0a',
   },
-  layoutControls: {
+  header: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    marginTop: Platform.OS === 'ios' ? 0 : 8,
+  },
+  headerBlur: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  headerGradient: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconGradient: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  subtitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  subtitle: {
+    color: '#999',
+    fontSize: 14,
+  },
+  settingsButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  settingsBlur: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  layoutControls: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
   },
   controlsBlur: {
     borderRadius: 16,
@@ -560,6 +717,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    alignItems: 'center',
   },
   layoutButton: {
     flexDirection: 'row',
@@ -581,12 +739,29 @@ const styles = StyleSheet.create({
   activeLayoutText: {
     color: '#8B5CF6',
   },
+  clearAllButton: {
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    marginLeft: 12,
+  },
+  clearAllText: {
+    color: '#ff4444',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   gridContainer: {
     flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: 8,
-    gap: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    justifyContent: 'flex-start',
+    alignContent: 'flex-start',
+  },
+  streamCellWrapper: {
+    // Empty style - dimensions handled inline
   },
   streamCell: {
     borderRadius: 12,
@@ -679,6 +854,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
+  },
+  emptyBlur: {
+    alignItems: 'center',
+    padding: 32,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.1)',
   },
   emptyTitle: {
     color: '#fff',
