@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
+import '../debug-env'; // Temporary debug import
 import {
   Inter_400Regular,
   Inter_500Medium,

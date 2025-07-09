@@ -50,6 +50,8 @@ class TwitchAPI {
   constructor() {
     if (!this.clientId || !this.clientSecret) {
       console.error('Twitch API credentials not found in environment variables');
+      console.error('Please ensure EXPO_PUBLIC_TWITCH_CLIENT_ID and EXPO_PUBLIC_TWITCH_CLIENT_SECRET are set in your .env file');
+      console.error('You can get these credentials from https://dev.twitch.tv/console/apps');
     }
   }
 
@@ -62,17 +64,16 @@ class TwitchAPI {
       throw new Error('Twitch API credentials not configured');
     }
 
+    // Create request body manually to ensure compatibility
+    const requestBody = `client_id=${encodeURIComponent(this.clientId)}&client_secret=${encodeURIComponent(this.clientSecret)}&grant_type=client_credentials`;
+
     try {
       const response = await fetch('https://id.twitch.tv/oauth2/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
-          client_id: this.clientId,
-          client_secret: this.clientSecret,
-          grant_type: 'client_credentials',
-        }),
+        body: requestBody,
       });
 
       if (!response.ok) {
