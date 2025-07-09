@@ -218,7 +218,7 @@ class TwitchAPI {
     // For web deployment, we need to handle multiple possible domains
     const possibleParents = ['streamyyy.com', 'localhost', 'bolt.new'];
     const parentParam = possibleParents.join('&parent=');
-    return `https://player.twitch.tv/?channel=${username}&parent=${parentParam}&muted=false&autoplay=true`;
+    return `https://player.twitch.tv/?channel=${username}&parent=${parentParam}&muted=false&autoplay=true&allowfullscreen=false&controls=false&time=0s`;
   }
 
   getThumbnailUrl(templateUrl: string, width: number = 320, height: number = 180): string {

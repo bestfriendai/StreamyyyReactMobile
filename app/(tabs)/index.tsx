@@ -1,13 +1,15 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { EnhancedDiscoverScreen } from '@/components/EnhancedDiscoverScreen';
+import { Theme } from '@/constants/Theme';
 
 export default function DiscoverScreen() {
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#000000" translucent />
       <LinearGradient
-        colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']}
+        colors={Theme.gradients.background}
         style={styles.background}
       />
       <EnhancedDiscoverScreen />
@@ -18,6 +20,7 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Theme.colors.background.primary,
   },
   background: {
     position: 'absolute',

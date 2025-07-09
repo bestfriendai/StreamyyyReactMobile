@@ -101,13 +101,13 @@ const StreamCell: React.FC<StreamCellProps> = ({
   };
 
   // Generate clean Twitch embed HTML that prevents fullscreen
-  const embedUrl = `https://player.twitch.tv/?channel=${stream.user_login}&parent=localhost&muted=${isMuted}&autoplay=true`;
+  const embedUrl = `https://player.twitch.tv/?channel=${stream.user_login}&parent=localhost&muted=${isMuted}&autoplay=true&allowfullscreen=false&controls=true&time=0s`;
   
   const twitchEmbedHtml = `
     <!DOCTYPE html>
     <html>
     <head>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
       <style>
         * { 
           margin: 0; 
@@ -119,17 +119,20 @@ const StreamCell: React.FC<StreamCellProps> = ({
           overflow: hidden;
           width: 100%;
           height: 100%;
+          position: fixed;
         }
         .container {
           width: 100%;
           height: 100%;
           position: relative;
+          overflow: hidden;
         }
         iframe { 
           width: 100% !important; 
           height: 100% !important; 
           border: none !important;
           display: block !important;
+          pointer-events: auto;
         }
       </style>
     </head>
@@ -144,10 +147,16 @@ const StreamCell: React.FC<StreamCellProps> = ({
         </iframe>
       </div>
       <script>
-        // Prevent fullscreen
+        // Prevent fullscreen completely
         document.addEventListener('fullscreenchange', function() {
           if (document.fullscreenElement) {
             document.exitFullscreen();
+          }
+        });
+        
+        document.addEventListener('webkitfullscreenchange', function() {
+          if (document.webkitFullscreenElement) {
+            document.webkitExitFullscreen();
           }
         });
         
@@ -155,8 +164,13 @@ const StreamCell: React.FC<StreamCellProps> = ({
         document.addEventListener('keydown', function(e) {
           if (e.key === 'F11' || (e.key === 'f' && e.target.tagName === 'IFRAME')) {
             e.preventDefault();
+            return false;
           }
         });
+        
+        // Override fullscreen API
+        Element.prototype.requestFullscreen = function() { return Promise.reject(); };
+        Element.prototype.webkitRequestFullscreen = function() { return Promise.reject(); };
       </script>
     </body>
     </html>
@@ -191,11 +205,14 @@ const StreamCell: React.FC<StreamCellProps> = ({
           onLoadStart={() => setIsLoading(true)}
           onLoadEnd={() => setIsLoading(false)}
           allowsInlineMediaPlayback={true}
+          allowsFullscreenVideo={false}
           mediaPlaybackRequiresUserAction={false}
           scrollEnabled={false}
           bounces={false}
           javaScriptEnabled={true}
           domStorageEnabled={true}
+          mixedContentMode="compatibility"
+          startInLoadingState={true}
         />
         
         {/* Loading overlay */}
@@ -383,7 +400,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0a',
   },
   gridContainer: {
-    padding: 16,
+    padding: 8,
     paddingBottom: 100,
   },
   grid: {
@@ -392,24 +409,27 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   cellWrapper: {
-    // Dimensions handled inline
+    marginBottom: 8,
+    marginHorizontal: 4,
   },
   streamCell: {
     backgroundColor: '#1a1a1a',
-    borderRadius: 12,
+    borderRadius: 8,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.2)',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
+        shadowColor: '#8B5CF6',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
       },
       android: {
-        elevation: 6,
+        elevation: 4,
       },
       web: {
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+        boxShadow: '0 2px 8px rgba(139, 92, 246, 0.2)',
       },
     }),
   },

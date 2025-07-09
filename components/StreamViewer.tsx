@@ -85,12 +85,15 @@ export function StreamViewer({ stream, onRemove, width, height }: StreamViewerPr
         <WebView
           source={{ uri: embedUrl }}
           style={styles.webview}
-          allowsFullscreenVideo={true}
+          allowsFullscreenVideo={false}
+          allowsInlineMediaPlayback={true}
           mediaPlaybackRequiresUserAction={false}
           javaScriptEnabled={true}
           domStorageEnabled={true}
           startInLoadingState={true}
           mixedContentMode="compatibility"
+          scrollEnabled={false}
+          bounces={false}
           onLoadStart={() => console.log(`Loading stream: ${stream.user_name}`)}
           onLoad={() => console.log(`Stream loaded: ${stream.user_name}`)}
           onError={(error) => console.error(`Stream error for ${stream.user_name}:`, error)}
