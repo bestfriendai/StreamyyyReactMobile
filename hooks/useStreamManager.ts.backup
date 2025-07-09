@@ -1,0 +1,129 @@
+import { useState, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TwitchStream } from '@/services/twitchApi';
+
+const STORAGE_KEYS = {
+  ACTIVE_STREAMS: 'streamyyy_active_streams',
+  FAVORITES: 'streamyyy_favorites',
+  SETTINGS: 'streamyyy_settings',
+};
+
+interface StreamSettings {
+  defaultVolume: number;
+  autoPlay: boolean;
+  chatEnabled: boolean;
+  qualityPreference: 'auto' | 'source' | '720p' | '480p';
+}
+
+const DEFAULT_SETTINGS: StreamSettings = {
+  defaultVolume: 0.7,
+  autoPlay: true,
+  chatEnabled: true,
+  qualityPreference: 'auto',
+};
+
+export function useStreamManager() {
+  const [activeStreams, setActiveStreams] = useState<TwitchStream[]>([]);
+  const [favorites, setFavorites] = useState<TwitchStream[]>([]);
+  const [settings, setSettings] = useState<StreamSettings>(DEFAULT_SETTINGS);
+  const [loading, setLoading] = useState(true);
+
+  // Load stored data on mount
+  useEffect(() => {
+    loadStoredData();
+  }, []);
+
+  const loadStoredData = async () => {
+    try {
+      const [storedStreams, storedFavorites, storedSettings] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_STREAMS),
+        AsyncStorage.getItem(STORAGE_KEYS.FAVORITES),
+        AsyncStorage.getItem(STORAGE_KEYS.SETTINGS),
+      ]);
+
+      if (storedStreams) {
+        setActiveStreams(JSON.parse(storedStreams));
+      }
+      if (storedFavorites) {
+        setFavorites(JSON.parse(storedFavorites));
+      }
+      if (storedSettings) {
+        setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(storedSettings) });
+      }
+    } catch (error) {
+      console.error('Error loading stored data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addStream = useCallback(async (stream: TwitchStream) => {
+    const isAlreadyActive = activeStreams.some(s => s.id === stream.id);
+    if (isAlreadyActive) {
+      console.log(`Stream ${stream.user_name} is already active`);
+      return;
+    }
+
+    console.log(`Adding stream: ${stream.user_name} (${stream.game_name})`);
+    const updatedStreams = [...activeStreams, stream];
+    setActiveStreams(updatedStreams);
+    await AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_STREAMS, JSON.stringify(updatedStreams));
+  }, [activeStreams]);
+
+  const removeStream = useCallback(async (streamId: string) => {
+    const streamToRemove = activeStreams.find(s => s.id === streamId);
+    if (streamToRemove) {
+      console.log(`Removing stream: ${streamToRemove.user_name}`);
+    }
+    
+    const updatedStreams = activeStreams.filter(stream => stream.id !== streamId);
+    setActiveStreams(updatedStreams);
+    await AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_STREAMS, JSON.stringify(updatedStreams));
+  }, [activeStreams]);
+
+  const toggleFavorite = useCallback(async (stream: TwitchStream) => {
+    const isFavorite = favorites.some(fav => fav.user_id === stream.user_id);
+    console.log(`${isFavorite ? 'Removing from' : 'Adding to'} favorites: ${stream.user_name}`);
+    
+    const updatedFavorites = isFavorite
+      ? favorites.filter(fav => fav.user_id !== stream.user_id)
+      : [...favorites, stream];
+    
+    setFavorites(updatedFavorites);
+    await AsyncStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(updatedFavorites));
+  }, [favorites]);
+
+  const isFavorite = useCallback((userId: string) => {
+    return favorites.some(fav => fav.user_id === userId);
+  }, [favorites]);
+
+  const isStreamActive = useCallback((streamId: string) => {
+    return activeStreams.some(stream => stream.id === streamId);
+  }, [activeStreams]);
+
+  const updateSettings = useCallback(async (newSettings: Partial<StreamSettings>) => {
+    const updatedSettings = { ...settings, ...newSettings };
+    setSettings(updatedSettings);
+    await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updatedSettings));
+  }, [settings]);
+
+  const clearAllStreams = useCallback(async () => {
+    console.log(`Clearing all ${activeStreams.length} active streams`);
+    setActiveStreams([]);
+    await AsyncStorage.removeItem(STORAGE_KEYS.ACTIVE_STREAMS);
+  }, []);
+
+  return {
+    activeStreams,
+    favorites,
+    settings,
+    loading,
+    addStream,
+    removeStream,
+    toggleFavorite,
+    isFavorite,
+    isStreamActive,
+    updateSettings,
+    clearAllStreams,
+  };
+}
