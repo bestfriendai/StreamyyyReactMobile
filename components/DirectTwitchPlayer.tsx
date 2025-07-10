@@ -51,7 +51,7 @@ export const DirectTwitchPlayer: React.FC<DirectTwitchPlayerProps> = ({
   const getDirectTwitchUrl = useCallback(() => {
     const params = new URLSearchParams({
       channel: stream.user_login,
-      muted: 'false', // Force unmuted to trigger autoplay
+      muted: String(isMuted),
       autoplay: 'true',
       controls: 'true',
       time: '0s',
@@ -61,7 +61,7 @@ export const DirectTwitchPlayer: React.FC<DirectTwitchPlayerProps> = ({
     const url = `https://player.twitch.tv/?${params.toString()}`;
     console.log('🎯 Direct Twitch URL:', url);
     return url;
-  }, [stream.user_login]);
+  }, [stream.user_login, isMuted]);
 
   // WebView event handlers - minimal and direct
   const handleWebViewLoad = useCallback(() => {
