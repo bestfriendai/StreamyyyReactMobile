@@ -10,6 +10,8 @@ import {
   StatusBar,
   Platform,
   Dimensions,
+  FlatList,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,10 +29,24 @@ import {
   Plus,
   SortAsc,
   SortDesc,
+  Sparkles,
+  Zap,
+  Clock,
+  TrendingUp,
+  Bookmark,
+  MoreVertical,
 } from 'lucide-react-native';
-import { MotiView, AnimatePresence } from 'moti';
+import { MotiView, AnimatePresence, MotiText } from 'moti';
 import { useStreamManager } from '@/hooks/useStreamManager';
 import { ModernTheme } from '@/theme/modernTheme';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  interpolate,
+  interpolateColor,
+} from 'react-native-reanimated';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -53,6 +69,13 @@ export function EnhancedFavoritesScreen() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [filterLive, setFilterLive] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedStreams, setSelectedStreams] = useState<string[]>([]);
+  const [showBulkActions, setShowBulkActions] = useState(false);
+  
+  // Animation values
+  const headerOpacity = useSharedValue(1);
+  const cardScale = useSharedValue(1);
 
   // Mock data for demonstration
   const [favoriteStreams, setFavoriteStreams] = useState<FavoriteStream[]>([
@@ -129,6 +152,14 @@ export function EnhancedFavoritesScreen() {
       ]
     );
   };
+  
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    // Simulate API call
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  };
 
   const handleAddToMultiView = (stream: FavoriteStream) => {
     addToMultiView({
@@ -154,42 +185,119 @@ export function EnhancedFavoritesScreen() {
   const renderStreamCard = (stream: FavoriteStream, index: number) => {
     const isGrid = viewMode === 'grid';
     const cardWidth = isGrid ? (screenWidth - 48) / 2 : screenWidth - 32;
+    const isSelected = selectedStreams.includes(stream.id);
+    
+    const cardAnimatedStyle = useAnimatedStyle(() => ({
+      transform: [{ scale: cardScale.value }],
+      borderColor: interpolateColor(
+        cardScale.value,
+        [1, 1.02],
+        ['rgba(255, 255, 255, 0.1)', 'rgba(139, 92, 246, 0.5)']
+      ),
+    }));
 
     return (
       <MotiView
         key={stream.id}
-        from={{ opacity: 0, translateY: 20 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ delay: index * 100 }}
+        from={{ opacity: 0, translateY: 30, scale: 0.9 }}
+        animate={{ opacity: 1, translateY: 0, scale: 1 }}
+        transition={{ 
+          delay: index * 80,
+          type: 'spring',
+          damping: 15,
+          stiffness: 200,
+        }}
         style={[
           styles.streamCard,
           { width: cardWidth },
           isGrid ? styles.gridCard : styles.listCard,
+          isSelected && styles.selectedCard,
         ]}
       >
-        <LinearGradient
-          colors={['rgba(42, 42, 42, 0.95)', 'rgba(28, 28, 28, 0.95)']}
-          style={styles.cardGradient}
-        >
-          {/* Live Indicator */}
+        <Animated.View style={[cardAnimatedStyle, styles.cardWrapper]}>
+          <LinearGradient
+            colors={isSelected 
+              ? ['rgba(139, 92, 246, 0.2)', 'rgba(124, 58, 237, 0.15)', 'rgba(42, 42, 42, 0.95)']
+              : ['rgba(42, 42, 42, 0.95)', 'rgba(28, 28, 28, 0.95)', 'rgba(15, 15, 15, 0.98)']
+            }
+            style={styles.cardGradient}
+          >
+          {/* Enhanced Live Indicator */}
           {stream.isLive && (
-            <View style={styles.liveIndicator}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>LIVE</Text>
-            </View>
+            <MotiView
+              from={{ scale: 0.8, opacity: 0.8 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{
+                type: 'spring',
+                damping: 12,
+                loop: true,
+                repeatReverse: true,
+              }}
+              style={styles.liveIndicator}
+            >
+              <LinearGradient
+                colors={['#ff4444', '#dc2626']}
+                style={styles.liveGradient}
+              >
+                <MotiView
+                  from={{ scale: 0.8 }}
+                  animate={{ scale: 1.2 }}
+                  transition={{
+                    type: 'timing',
+                    duration: 1000,
+                    loop: true,
+                    repeatReverse: true,
+                  }}
+                  style={styles.liveDot}
+                />
+                <Text style={styles.liveText}>LIVE</Text>
+              </LinearGradient>
+            </MotiView>
           )}
+          
+          {/* Quality Badge */}
+          <View style={styles.qualityBadge}>
+            <LinearGradient
+              colors={['rgba(16, 185, 129, 0.9)', 'rgba(5, 150, 105, 0.8)']}
+              style={styles.qualityGradient}
+            >
+              <Zap size={10} color="#fff" />
+              <Text style={styles.qualityText}>HD</Text>
+            </LinearGradient>
+          </View>
 
-          {/* Stream Info */}
+          {/* Enhanced Stream Info */}
           <View style={styles.streamInfo}>
-            <Text style={styles.streamUsername} numberOfLines={1}>
+            <MotiText
+              from={{ opacity: 0, translateX: -10 }}
+              animate={{ opacity: 1, translateX: 0 }}
+              transition={{ delay: 100 }}
+              style={styles.streamUsername}
+              numberOfLines={1}
+            >
               {stream.username}
-            </Text>
-            <Text style={styles.streamTitle} numberOfLines={isGrid ? 2 : 1}>
+            </MotiText>
+            
+            <MotiText
+              from={{ opacity: 0, translateX: -10 }}
+              animate={{ opacity: 1, translateX: 0 }}
+              transition={{ delay: 150 }}
+              style={styles.streamTitle}
+              numberOfLines={isGrid ? 2 : 1}
+            >
               {stream.title}
-            </Text>
-            <Text style={styles.streamGame} numberOfLines={1}>
-              {stream.game}
-            </Text>
+            </MotiText>
+            
+            <View style={styles.gameContainer}>
+              <LinearGradient
+                colors={['rgba(139, 92, 246, 0.3)', 'rgba(124, 58, 237, 0.2)']}
+                style={styles.gameGradient}
+              >
+                <Text style={styles.streamGame} numberOfLines={1}>
+                  {stream.game}
+                </Text>
+              </LinearGradient>
+            </View>
             
             <View style={styles.streamStats}>
               <View style={styles.statItem}>
@@ -199,70 +307,151 @@ export function EnhancedFavoritesScreen() {
                 </Text>
               </View>
               <View style={styles.statItem}>
-                <Star size={14} color={ModernTheme.colors.accent} />
+                <Clock size={14} color={ModernTheme.colors.accent} />
                 <Text style={styles.statText}>
                   {stream.addedAt.toLocaleDateString()}
                 </Text>
               </View>
+              <View style={styles.statItem}>
+                <TrendingUp size={14} color="#10B981" />
+                <Text style={[styles.statText, { color: '#10B981' }]}>+{Math.floor(Math.random() * 50)}%</Text>
+              </View>
             </View>
           </View>
 
-          {/* Action Buttons */}
+          {/* Enhanced Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity
               style={[styles.actionButton, styles.playButton]}
-              onPress={() => handleAddToMultiView(stream)}
+              onPress={() => {
+                cardScale.value = withSpring(1.05, { damping: 15 }, () => {
+                  cardScale.value = withSpring(1);
+                });
+                handleAddToMultiView(stream);
+              }}
               activeOpacity={0.7}
             >
               <LinearGradient
-                colors={[ModernTheme.colors.primary[500], ModernTheme.colors.background.secondary]}
+                colors={['#8B5CF6', '#7C3AED', '#6366F1']}
                 style={styles.actionGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
               >
                 <Plus size={16} color="#fff" />
+                <Text style={styles.actionText}>Add</Text>
               </LinearGradient>
             </TouchableOpacity>
             
             <TouchableOpacity
-              style={[styles.actionButton, styles.removeButton]}
-              onPress={() => handleRemoveFavorite(stream.id, stream.username)}
+              style={[styles.actionButton, styles.bookmarkButton]}
+              onPress={() => {
+                // Toggle bookmark/priority
+                Alert.alert('Bookmark', 'Stream bookmarked!');
+              }}
               activeOpacity={0.7}
             >
               <LinearGradient
-                colors={['#dc2626', '#b91c1c']}
+                colors={['#F59E0B', '#D97706']}
+                style={styles.actionGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Bookmark size={16} color="#fff" />
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.actionButton, styles.moreButton]}
+              onPress={() => {
+                // Show more options
+                Alert.alert('More Options', 'Share, Remove, Settings...');
+              }}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={['rgba(55, 65, 81, 0.8)', 'rgba(31, 41, 55, 0.8)']}
                 style={styles.actionGradient}
               >
-                <Trash2 size={16} color="#fff" />
+                <MoreVertical size={16} color="#fff" />
               </LinearGradient>
             </TouchableOpacity>
           </View>
         </LinearGradient>
+        </Animated.View>
       </MotiView>
     );
   };
 
   const renderEmptyState = () => (
     <MotiView
-      from={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
+      from={{ opacity: 0, scale: 0.8, rotate: '-5deg' }}
+      animate={{ opacity: 1, scale: 1, rotate: '0deg' }}
+      transition={{
+        type: 'spring',
+        damping: 20,
+        stiffness: 300,
+      }}
       style={styles.emptyState}
     >
       <LinearGradient
-        colors={['rgba(139, 92, 246, 0.1)', 'rgba(168, 85, 247, 0.05)']}
+        colors={['rgba(139, 92, 246, 0.15)', 'rgba(168, 85, 247, 0.1)', 'rgba(99, 102, 241, 0.05)']}
         style={styles.emptyGradient}
       >
-        <Heart size={64} color={ModernTheme.colors.primary[500]} />
-        <Text style={styles.emptyTitle}>No Favorites Yet</Text>
-        <Text style={styles.emptySubtitle}>
-          Add streamers to your favorites to see them here
-        </Text>
-        <TouchableOpacity style={styles.emptyButton}>
-          <LinearGradient
-            colors={[ModernTheme.colors.primary[500], ModernTheme.colors.background.secondary]}
-            style={styles.emptyButtonGradient}
+        <MotiView
+          from={{ scale: 0.5, rotate: '-180deg' }}
+          animate={{ scale: 1, rotate: '0deg' }}
+          transition={{
+            type: 'spring',
+            damping: 15,
+            stiffness: 200,
+            delay: 200,
+          }}
+        >
+          <Heart size={80} color={ModernTheme.colors.primary[500]} />
+        </MotiView>
+        
+        <MotiView
+          from={{ opacity: 0, translateY: 20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ delay: 400 }}
+          style={styles.emptyTextContainer}
+        >
+          <Text style={styles.emptyTitle}>No Favorites Yet</Text>
+          <Text style={styles.emptySubtitle}>
+            Add streamers to your favorites to see them here
+          </Text>
+          <View style={styles.emptyFeatures}>
+            <View style={styles.emptyFeature}>
+              <Sparkles size={16} color={ModernTheme.colors.primary[500]} />
+              <Text style={styles.emptyFeatureText}>Get notified when they go live</Text>
+            </View>
+            <View style={styles.emptyFeature}>
+              <Zap size={16} color={ModernTheme.colors.primary[500]} />
+              <Text style={styles.emptyFeatureText}>Quick access to your favorites</Text>
+            </View>
+          </View>
+        </MotiView>
+        
+        <MotiView
+          from={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 600 }}
+        >
+          <TouchableOpacity 
+            style={styles.emptyButton}
+            onPress={() => Alert.alert('Navigate', 'Navigate to discover screen')}
           >
-            <Text style={styles.emptyButtonText}>Discover Streams</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+            <LinearGradient
+              colors={['#8B5CF6', '#7C3AED', '#6366F1']}
+              style={styles.emptyButtonGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Search size={18} color="#fff" />
+              <Text style={styles.emptyButtonText}>Discover Streams</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </MotiView>
       </LinearGradient>
     </MotiView>
   );
@@ -404,19 +593,26 @@ export function EnhancedFavoritesScreen() {
         </View>
 
         {/* Content */}
-        <ScrollView
-          style={styles.scrollView}
+        <FlatList
+          data={filteredAndSortedStreams}
+          renderItem={({ item, index }) => renderStreamCard(item, index)}
+          keyExtractor={(item) => item.id}
+          numColumns={viewMode === 'grid' ? 2 : 1}
+          key={viewMode} // Force re-render when view mode changes
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-        >
-          {filteredAndSortedStreams.length === 0 ? (
-            renderEmptyState()
-          ) : (
-            <View style={[styles.streamsContainer, viewMode === 'grid' && styles.gridContainer]}>
-              {filteredAndSortedStreams.map((stream, index) => renderStreamCard(stream, index))}
-            </View>
-          )}
-        </ScrollView>
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={ModernTheme.colors.primary[500]}
+              colors={[ModernTheme.colors.primary[500]]}
+            />
+          }
+          ListEmptyComponent={renderEmptyState}
+          ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+          columnWrapperStyle={viewMode === 'grid' ? styles.gridRow : undefined}
+        />
       </SafeAreaView>
     </View>
   );
@@ -606,10 +802,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   streamCard: {
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  cardWrapper: {
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  selectedCard: {
+    borderColor: 'rgba(139, 92, 246, 0.6)',
+    borderWidth: 2,
+  },
+  gridRow: {
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
   },
   gridCard: {
     marginBottom: 16,
@@ -625,14 +833,41 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#ff4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 4,
+    zIndex: 1,
+  },
+  liveGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#dc2626',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    gap: 5,
+  },
+  qualityBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    borderRadius: 8,
+    overflow: 'hidden',
     zIndex: 1,
+  },
+  qualityGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    gap: 3,
+  },
+  qualityText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '700',
   },
   liveDot: {
     width: 6,
@@ -661,11 +896,20 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: 8,
   },
-  streamGame: {
-    color: ModernTheme.colors.primary[500],
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
+  gameContainer: {
+    alignSelf: 'flex-start',
+    borderRadius: 8,
+    overflow: 'hidden',
     marginBottom: 12,
+  },
+  gameGradient: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  streamGame: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
   },
   streamStats: {
     flexDirection: 'row',
@@ -683,20 +927,34 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   actionButton: {
     flex: 1,
-    borderRadius: 8,
+    borderRadius: 10,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
   actionGradient: {
-    paddingVertical: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  actionText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   playButton: {},
-  removeButton: {},
+  bookmarkButton: {},
+  moreButton: {},
   emptyState: {
     flex: 1,
     justifyContent: 'center',
@@ -706,8 +964,28 @@ const styles = StyleSheet.create({
   emptyGradient: {
     alignItems: 'center',
     padding: 40,
-    borderRadius: 20,
+    borderRadius: 24,
     width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.2)',
+  },
+  emptyTextContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  emptyFeatures: {
+    marginTop: 16,
+    gap: 12,
+  },
+  emptyFeature: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  emptyFeatureText: {
+    color: '#999',
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
   },
   emptyTitle: {
     color: '#fff',
@@ -725,16 +1003,24 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   emptyButton: {
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   emptyButtonGradient: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    gap: 10,
   },
   emptyButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
+    fontWeight: '700',
   },
 });

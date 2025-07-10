@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, memo } from 'react';
 import {
   View,
   StyleSheet,
@@ -70,7 +70,7 @@ interface StreamSearchResult {
   error: string | null;
 }
 
-export const EnhancedMultiStreamViewer: React.FC<EnhancedMultiStreamViewerProps> = ({
+const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProps> = ({
   streams,
   onAddStream,
   onRemoveStream,
@@ -104,8 +104,8 @@ export const EnhancedMultiStreamViewer: React.FC<EnhancedMultiStreamViewerProps>
   const headerOpacity = useSharedValue(1);
   const controlsScale = useSharedValue(1);
   
-  // Calculate grid dimensions
-  const getGridDimensions = useCallback(() => {
+  // Calculate grid dimensions with memoization
+  const gridDimensions = useMemo(() => {
     const padding = ModernTheme.spacing.md;
     const headerHeight = viewMode === 'focus' ? 80 : 120;
     const controlsHeight = viewMode === 'focus' ? 60 : 80;
@@ -162,8 +162,6 @@ export const EnhancedMultiStreamViewer: React.FC<EnhancedMultiStreamViewerProps>
       maxItems: columns * rows,
     };
   }, [gridLayout, viewMode, focusedStreamId, screenWidth, screenHeight]);
-  
-  const gridDimensions = useMemo(() => getGridDimensions(), [getGridDimensions]);
   
   // Handle stream audio toggle
   const handleStreamAudioToggle = useCallback((streamId: string) => {
@@ -320,7 +318,7 @@ export const EnhancedMultiStreamViewer: React.FC<EnhancedMultiStreamViewerProps>
     setIsPlaying(!isPlaying);
   }, [isPlaying]);
   
-  // Get streams to display based on view mode
+  // Get streams to display based on view mode with memoization
   const displayStreams = useMemo(() => {
     if (viewMode === 'focus' && focusedStreamId) {
       const focusedStream = streams.find(s => s.id === focusedStreamId);
@@ -329,9 +327,12 @@ export const EnhancedMultiStreamViewer: React.FC<EnhancedMultiStreamViewerProps>
     return streams;
   }, [streams, viewMode, focusedStreamId]);
 
-  const totalViewers = streams.reduce((sum, stream) => sum + (stream.viewer_count || 0), 0);
+  // Memoize total viewers calculation
+  const totalViewers = useMemo(() => {
+    return streams.reduce((sum, stream) => sum + (stream.viewer_count || 0), 0);
+  }, [streams]);
 
-  // Prepare grid data
+  // Prepare grid data with memoization
   const gridData = useMemo(() => {
     const maxItems = gridDimensions.maxItems;
     const data = [...displayStreams.slice(0, maxItems)];
@@ -361,28 +362,15 @@ export const EnhancedMultiStreamViewer: React.FC<EnhancedMultiStreamViewerProps>
     transform: [{ scale: controlsScale.value }],
   }));
   
-  // Render grid item
+  // Render grid item with memoization
   const renderGridItem = useCallback(({ item, index }: { item: any; index: number }) => {
     if (item.type === 'add') {
       return (
-        <TouchableOpacity
-          style={[
-            styles.addStreamContainer,
-            {
-              width: gridDimensions.itemWidth,
-              height: gridDimensions.itemHeight,
-            },
-          ]}
+        <AddStreamButton
+          width={gridDimensions.itemWidth}
+          height={gridDimensions.itemHeight}
           onPress={() => setShowSearchModal(true)}
-        >
-          <LinearGradient
-            colors={ModernTheme.colors.gradients.primary}
-            style={styles.addStreamGradient}
-          >
-            <Plus size={32} color={ModernTheme.colors.text.primary} />
-            <Text style={styles.addStreamText}>Add Stream</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+        />
       );
     }
     
@@ -390,7 +378,7 @@ export const EnhancedMultiStreamViewer: React.FC<EnhancedMultiStreamViewerProps>
     const isMuted = audioState.globalMute || audioState.activeStreamId !== item.id;
     
     return (
-      <WorkingTwitchPlayer
+      <MemoizedWorkingTwitchPlayer
         key={item.id}
         stream={item}
         width={gridDimensions.itemWidth}
@@ -404,11 +392,12 @@ export const EnhancedMultiStreamViewer: React.FC<EnhancedMultiStreamViewerProps>
       />
     );
   }, [
-    gridDimensions,
+    gridDimensions.itemWidth,
+    gridDimensions.itemHeight,
     selectedStreamId,
-    audioState,
+    audioState.globalMute,
+    audioState.activeStreamId,
     showControls,
-    onAddStream,
     handleStreamPress,
     handleStreamAudioToggle,
     handleStreamRemove,
@@ -1159,5 +1148,29 @@ const styles = StyleSheet.create({
     color: ModernTheme.colors.text.secondary,
   },
 });
+
+// Memoized components for performance
+const MemoizedWorkingTwitchPlayer = memo(WorkingTwitchPlayer);
+
+const AddStreamButton = memo(({ width, height, onPress }: { width: number; height: number; onPress: () => void }) => (
+  <TouchableOpacity
+    style={[
+      styles.addStreamContainer,
+      { width, height },
+    ]}
+    onPress={onPress}
+  >
+    <LinearGradient
+      colors={ModernTheme.colors.gradients.primary}
+      style={styles.addStreamGradient}
+    >
+      <Plus size={32} color={ModernTheme.colors.text.primary} />
+      <Text style={styles.addStreamText}>Add Stream</Text>
+    </LinearGradient>
+  </TouchableOpacity>
+));
+
+// Memoize the main component
+export const EnhancedMultiStreamViewer = memo(EnhancedMultiStreamViewerComponent);
 
 export default EnhancedMultiStreamViewer;

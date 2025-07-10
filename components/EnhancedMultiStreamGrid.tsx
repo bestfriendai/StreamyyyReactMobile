@@ -8,6 +8,8 @@ import {
   LayoutAnimation,
   Platform,
   SafeAreaView,
+  PanResponder,
+  Animated as RNAnimated,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import Animated, {
@@ -17,6 +19,10 @@ import Animated, {
   withTiming,
   interpolate,
   runOnJS,
+  withSequence,
+  withDelay,
+  useAnimatedGestureHandler,
+  interpolateColor,
 } from 'react-native-reanimated';
 import { MotiView, MotiText } from 'moti';
 import { BlurViewFallback as BlurView } from './BlurViewFallback';
@@ -31,9 +37,16 @@ import {
   RotateCw,
   Settings,
   Eye,
+  Maximize2,
+  Minimize2,
+  Move,
+  Zap,
+  Target,
+  Sparkles,
 } from 'lucide-react-native';
 import { useStreamManager } from '@/hooks/useStreamManager';
 import { TwitchStream } from '@/services/twitchApi';
+import { PanGestureHandler, PinchGestureHandler } from 'react-native-gesture-handler';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -42,7 +55,15 @@ interface StreamGridProps {
   onLayoutChange?: (layout: string) => void;
 }
 
-type GridLayout = '1x1' | '2x2' | '3x3' | '4x4' | 'pip' | 'mosaic';
+type GridLayout = '1x1' | '2x2' | '3x3' | '4x4' | 'pip' | 'mosaic' | 'focus';
+
+interface StreamCellAnimation {
+  scale: Animated.SharedValue<number>;
+  opacity: Animated.SharedValue<number>;
+  translateX: Animated.SharedValue<number>;
+  translateY: Animated.SharedValue<number>;
+  rotation: Animated.SharedValue<number>;
+}
 
 interface StreamPlayer {
   id: string;
@@ -113,13 +134,26 @@ const StreamCell: React.FC<{
   onPress: () => void;
   onLongPress: () => void;
   onRemove: () => void;
-}> = ({ stream, width, height, isActive, onPress, onLongPress, onRemove }) => {
+  index: number;
+  totalStreams: number;
+}> = ({ stream, width, height, isActive, onPress, onLongPress, onRemove, index, totalStreams }) => {
   const webViewRef = useRef<WebView>(null);
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const rotation = useSharedValue(0);
+  const borderGlow = useSharedValue(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [showControls, setShowControls] = useState(false);
+  
+  // Enhanced animation entrance
+  const entranceDelay = index * 150;
+  const entranceScale = useSharedValue(0.3);
+  const entranceOpacity = useSharedValue(0);
+  const entranceRotation = useSharedValue(-180);
 
   useEffect(() => {
     const player: StreamPlayer = {
@@ -132,29 +166,81 @@ const StreamCell: React.FC<{
     
     AudioManager.registerPlayer(stream.id, player);
     
+    // Enhanced entrance animation
+    entranceScale.value = withDelay(
+      entranceDelay,
+      withSpring(1, { damping: 20, stiffness: 300 })
+    );
+    entranceOpacity.value = withDelay(
+      entranceDelay,
+      withTiming(1, { duration: 800 })
+    );
+    entranceRotation.value = withDelay(
+      entranceDelay,
+      withSpring(0, { damping: 15, stiffness: 200 })
+    );
+    
     return () => {
       AudioManager.unregisterPlayer(stream.id);
     };
-  }, [stream.id, isPlaying, isMuted]);
+  }, [stream.id, isPlaying, isMuted, entranceDelay]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
+    transform: [
+      { scale: scale.value * entranceScale.value },
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { rotate: `${rotation.value + entranceRotation.value}deg` },
+    ],
+    opacity: opacity.value * entranceOpacity.value,
+  }));
+
+  const animatedBorderStyle = useAnimatedStyle(() => ({
+    borderWidth: interpolate(borderGlow.value, [0, 1], [1, 3]),
+    borderColor: interpolateColor(
+      borderGlow.value,
+      [0, 1],
+      ['rgba(255, 255, 255, 0.1)', 'rgba(139, 92, 246, 0.8)']
+    ),
+    shadowOpacity: interpolate(borderGlow.value, [0, 1], [0.2, 0.8]),
+    shadowRadius: interpolate(borderGlow.value, [0, 1], [4, 20]),
   }));
 
   const handlePress = () => {
-    scale.value = withSpring(0.95, { damping: 15 }, () => {
-      scale.value = withSpring(1);
-    });
+    scale.value = withSequence(
+      withSpring(0.92, { damping: 20 }),
+      withSpring(1.02, { damping: 15 }),
+      withSpring(1, { damping: 20 })
+    );
+    
+    // Enhanced visual feedback
+    borderGlow.value = withSequence(
+      withTiming(1, { duration: 200 }),
+      withTiming(0, { duration: 800 })
+    );
+    
     AudioManager.setActiveStream(stream.id);
     onPress();
   };
 
   const handleLongPress = () => {
-    scale.value = withSpring(1.05, { damping: 12 }, () => {
-      scale.value = withSpring(1);
-    });
+    scale.value = withSpring(1.08, { damping: 12 });
+    rotation.value = withSequence(
+      withSpring(-2, { damping: 20 }),
+      withSpring(2, { damping: 20 }),
+      withSpring(0, { damping: 20 })
+    );
+    
+    // Show controls on long press
+    setShowControls(true);
+    setTimeout(() => setShowControls(false), 3000);
+    
     onLongPress();
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 20 });
+    rotation.value = withSpring(0, { damping: 20 });
   };
 
   const toggleMute = () => {
@@ -250,11 +336,12 @@ const StreamCell: React.FC<{
       }}
       style={[styles.streamCell, { width, height }]}
     >
-      <Animated.View style={[StyleSheet.absoluteFill, animatedStyle]}>
+      <Animated.View style={[StyleSheet.absoluteFill, animatedStyle, animatedBorderStyle]}>
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={handlePress}
           onLongPress={handleLongPress}
+          onPressOut={handlePressOut}
           style={StyleSheet.absoluteFill}
         >
           <View style={styles.streamContainer}>
@@ -375,19 +462,45 @@ const StreamCell: React.FC<{
               </BlurView>
             </View>
 
-            {/* Active stream indicator */}
+            {/* Enhanced active stream indicator */}
             {isActive && (
               <MotiView
-                from={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+                from={{ opacity: 0, scale: 0.5, rotate: '-180deg' }}
+                animate={{ opacity: 1, scale: 1, rotate: '0deg' }}
+                transition={{
+                  type: 'spring',
+                  damping: 15,
+                  stiffness: 200,
+                }}
                 style={styles.activeIndicator}
               >
                 <LinearGradient
-                  colors={['#8B5CF6', '#7C3AED']}
+                  colors={['#8B5CF6', '#7C3AED', '#A855F7']}
                   style={styles.activeGradient}
-                />
+                >
+                  <MotiView
+                    from={{ scale: 0.8 }}
+                    animate={{ scale: 1.2 }}
+                    transition={{
+                      type: 'timing',
+                      duration: 1000,
+                      loop: true,
+                      repeatReverse: true,
+                    }}
+                  >
+                    <Zap size={16} color="#fff" fill="#fff" />
+                  </MotiView>
+                </LinearGradient>
               </MotiView>
             )}
+            
+            {/* Stream quality indicator */}
+            <View style={styles.qualityIndicator}>
+              <BlurView blurType="dark" blurAmount={10} style={styles.qualityBlur}>
+                <Target size={10} color="#10B981" />
+                <Text style={styles.qualityText}>HD</Text>
+              </BlurView>
+            </View>
           </View>
         </TouchableOpacity>
       </Animated.View>
@@ -490,16 +603,28 @@ export const EnhancedMultiStreamGrid: React.FC<StreamGridProps> = ({
       >
         <BlurView style={styles.headerBlur} blurType="dark" blurAmount={20}>
           <LinearGradient
-            colors={['rgba(139, 92, 246, 0.15)', 'rgba(124, 58, 237, 0.1)', 'transparent']}
+            colors={['rgba(139, 92, 246, 0.2)', 'rgba(124, 58, 237, 0.15)', 'rgba(99, 102, 241, 0.1)', 'transparent']}
             style={styles.headerGradient}
           >
             <View style={styles.titleRow}>
               <View style={styles.titleContainer}>
                 <LinearGradient
-                  colors={['#8B5CF6', '#A855F7']}
+                  colors={['#8B5CF6', '#A855F7', '#7C3AED']}
                   style={styles.iconGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
                 >
-                  <Grid size={16} color="#fff" />
+                  <MotiView
+                    from={{ scale: 0.8, rotate: '-45deg' }}
+                    animate={{ scale: 1, rotate: '0deg' }}
+                    transition={{
+                      type: 'spring',
+                      damping: 15,
+                      delay: 200,
+                    }}
+                  >
+                    <Sparkles size={16} color="#fff" />
+                  </MotiView>
                 </LinearGradient>
                 <View>
                   <MotiText style={styles.title}>Multi-View</MotiText>
@@ -602,6 +727,8 @@ export const EnhancedMultiStreamGrid: React.FC<StreamGridProps> = ({
                 width={cellWidth}
                 height={cellHeight}
                 isActive={activeStreamId === stream.id}
+                index={index}
+                totalStreams={activeStreams.length}
                 onPress={() => setActiveStreamId(stream.id)}
                 onLongPress={() => {
                   gridScale.value = withSpring(1.05, { damping: 15 }, () => {
@@ -764,9 +891,14 @@ const styles = StyleSheet.create({
     // Empty style - dimensions handled inline
   },
   streamCell: {
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(26, 26, 26, 0.95)',
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   streamContainer: {
     flex: 1,
@@ -874,5 +1006,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  qualityIndicator: {
+    position: 'absolute',
+    top: 12,
+    right: 60,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  qualityBlur: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    gap: 3,
+  },
+  qualityText: {
+    color: '#10B981',
+    fontSize: 9,
+    fontWeight: '700',
   },
 });

@@ -51,11 +51,20 @@ const qualityOptions: QualityOption[] = [
     color: '#10B981',
   },
   {
+    id: '1080p',
+    name: 'Ultra',
+    resolution: '1080p30',
+    bitrate: '4500 kbps',
+    description: 'Ultra high quality, high bandwidth',
+    icon: <Gauge size={20} color="#8B5CF6" />,
+    color: '#8B5CF6',
+  },
+  {
     id: '720p60',
     name: 'High',
     resolution: '720p60',
     bitrate: '3000 kbps',
-    description: 'High quality, balanced',
+    description: 'High quality, smooth motion',
     icon: <Monitor size={20} color="#8B5CF6" />,
     color: '#8B5CF6',
   },
@@ -74,6 +83,15 @@ const qualityOptions: QualityOption[] = [
     resolution: '480p30',
     bitrate: '800 kbps',
     description: 'Lower quality, minimal bandwidth',
+    icon: <Zap size={20} color="#EF4444" />,
+    color: '#EF4444',
+  },
+  {
+    id: '360p',
+    name: 'Mobile',
+    resolution: '360p30',
+    bitrate: '400 kbps',
+    description: 'Mobile-friendly, very low bandwidth',
     icon: <Zap size={20} color="#EF4444" />,
     color: '#EF4444',
   },
@@ -107,6 +125,10 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
 }) => {
   const [selectedQuality, setSelectedQuality] = useState(currentQuality);
   const [networkSpeed, setNetworkSpeed] = useState<'fast' | 'medium' | 'slow'>('medium');
+  const [connectionType, setConnectionType] = useState<'wifi' | 'cellular' | 'ethernet'>('wifi');
+  const [bandwidth, setBandwidth] = useState<number>(0);
+  const [latency, setLatency] = useState<number>(0);
+  const [adaptiveEnabled, setAdaptiveEnabled] = useState(false);
   
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
@@ -121,16 +143,56 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
     }
   }, [isVisible]);
 
-  // Simulate network speed detection
+  // Enhanced network speed detection with actual measurement
   useEffect(() => {
-    const detectNetworkSpeed = () => {
-      // In a real app, you'd measure actual network speed
-      const speeds = ['fast', 'medium', 'slow'] as const;
-      setNetworkSpeed(speeds[Math.floor(Math.random() * speeds.length)]);
+    const detectNetworkSpeed = async () => {
+      try {
+        const startTime = Date.now();
+        
+        // Use a small test image to measure download speed
+        const testImage = new Image();
+        testImage.crossOrigin = 'anonymous';
+        
+        const testPromise = new Promise((resolve, reject) => {
+          testImage.onload = () => resolve(Date.now() - startTime);
+          testImage.onerror = () => reject(new Error('Network test failed'));
+          testImage.src = 'https://via.placeholder.com/100x100.jpg?t=' + Date.now();
+        });
+
+        const downloadTime = await testPromise as number;
+        
+        // Calculate approximate bandwidth (very rough estimate)
+        const imageSize = 1024; // approximately 1KB
+        const speedKbps = (imageSize * 8) / (downloadTime / 1000);
+        
+        setBandwidth(Math.round(speedKbps));
+        setLatency(downloadTime);
+        
+        // Categorize network speed
+        if (speedKbps > 2000) {
+          setNetworkSpeed('fast');
+          setConnectionType('wifi');
+        } else if (speedKbps > 500) {
+          setNetworkSpeed('medium');
+          setConnectionType('wifi');
+        } else {
+          setNetworkSpeed('slow');
+          setConnectionType('cellular');
+        }
+        
+        console.log(`Network speed: ${speedKbps.toFixed(0)} kbps, Latency: ${downloadTime}ms`);
+      } catch (error) {
+        console.warn('Network speed detection failed:', error);
+        // Fallback to default values
+        setNetworkSpeed('medium');
+        setConnectionType('wifi');
+        setBandwidth(1000);
+        setLatency(100);
+      }
     };
 
     detectNetworkSpeed();
-    const interval = setInterval(detectNetworkSpeed, 10000);
+    const interval = setInterval(detectNetworkSpeed, 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -143,11 +205,33 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
   };
 
   const getRecommendedQuality = () => {
-    switch (networkSpeed) {
-      case 'fast': return 'source';
-      case 'medium': return '720p';
-      case 'slow': return '480p';
-      default: return 'auto';
+    // Consider both bandwidth and connection type for recommendations
+    if (bandwidth > 4000 && connectionType === 'wifi') {
+      return 'source';
+    } else if (bandwidth > 2500 && connectionType === 'wifi') {
+      return '720p60';
+    } else if (bandwidth > 1200) {
+      return '720p';
+    } else if (bandwidth > 600) {
+      return '480p';
+    } else if (bandwidth > 300) {
+      return '360p';
+    } else {
+      return 'auto';
+    }
+  };
+
+  const getAdaptiveQuality = () => {
+    // More sophisticated adaptive logic
+    if (latency > 200 || connectionType === 'cellular') {
+      // High latency or cellular - prefer lower quality
+      return bandwidth > 800 ? '480p' : '360p';
+    } else if (networkSpeed === 'fast' && bandwidth > 3000) {
+      return 'source';
+    } else if (networkSpeed === 'medium' && bandwidth > 1500) {
+      return '720p';
+    } else {
+      return '480p';
     }
   };
 
@@ -226,12 +310,19 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
                           { backgroundColor: getNetworkSpeedColor() }
                         ]}
                       />
-                      <Text style={styles.networkText}>
-                        Network: {networkSpeed.toUpperCase()}
-                      </Text>
-                      <Text style={styles.recommendedText}>
-                        Recommended: {qualityOptions.find(q => q.id === getRecommendedQuality())?.name}
-                      </Text>
+                      <View style={styles.networkDetails}>
+                        <View style={styles.networkRow}>
+                          <Text style={styles.networkText}>
+                            {connectionType.toUpperCase()} • {networkSpeed.toUpperCase()}
+                          </Text>
+                          <Text style={styles.networkMetrics}>
+                            {bandwidth}kbps • {latency}ms
+                          </Text>
+                        </View>
+                        <Text style={styles.recommendedText}>
+                          Recommended: {qualityOptions.find(q => q.id === getRecommendedQuality())?.name}
+                        </Text>
+                      </View>
                     </View>
                   </BlurView>
                 </MotiView>
@@ -404,15 +495,28 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
+  networkDetails: {
+    flex: 1,
+  },
+  networkRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   networkText: {
     color: '#fff',
     fontSize: 12,
     fontWeight: '600',
-    flex: 1,
+  },
+  networkMetrics: {
+    color: '#ccc',
+    fontSize: 10,
+    fontWeight: '500',
   },
   recommendedText: {
     color: '#999',
     fontSize: 10,
+    marginTop: 2,
   },
   optionsContainer: {
     gap: 8,

@@ -683,6 +683,33 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   } as ViewStyle,
+  placeholderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: ModernTheme.colors.background.secondary,
+    padding: ModernTheme.spacing.md,
+  } as ViewStyle,
+  placeholderText: {
+    color: ModernTheme.colors.text.secondary,
+    fontSize: ModernTheme.typography.sizes.sm,
+    textAlign: 'center',
+    marginBottom: ModernTheme.spacing.md,
+  } as TextStyle,
+  loadButton: {
+    backgroundColor: ModernTheme.colors.primary[500],
+    paddingHorizontal: ModernTheme.spacing.md,
+    paddingVertical: ModernTheme.spacing.sm,
+    borderRadius: ModernTheme.borderRadius.md,
+  } as ViewStyle,
+  loadButtonText: {
+    color: ModernTheme.colors.text.primary,
+    fontSize: ModernTheme.typography.sizes.sm,
+    fontWeight: ModernTheme.typography.weights.semibold,
+  } as TextStyle,
 });
+
+// Memoize the component for performance
+export const WorkingTwitchPlayer = memo(WorkingTwitchPlayerComponent);
 
 export default WorkingTwitchPlayer;

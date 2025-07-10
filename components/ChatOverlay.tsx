@@ -9,6 +9,7 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { MotiView, MotiText } from 'moti';
 import { BlurView } from '@react-native-community/blur';
@@ -53,6 +54,8 @@ interface ChatOverlayProps {
   onToggleVisibility: () => void;
   onToggleMinimize: () => void;
   position: { x: number; y: number };
+  enableRealTimeChat?: boolean;
+  onChatMessage?: (message: ChatMessage) => void;
 }
 
 const mockMessages: ChatMessage[] = [
@@ -92,11 +95,21 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
   onToggleVisibility,
   onToggleMinimize,
   position,
+  enableRealTimeChat = false,
+  onChatMessage,
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>(mockMessages);
   const [newMessage, setNewMessage] = useState('');
   const [viewerCount, setViewerCount] = useState(1247);
   const [isTyping, setIsTyping] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [chatModerators, setChatModerators] = useState<string[]>(['ChatMod']);
+  const [bannedWords, setBannedWords] = useState<string[]>(['spam', 'hate']);
+  const [slowMode, setSlowMode] = useState(false);
+  const [slowModeDelay, setSlowModeDelay] = useState(0);
+  const [lastMessageTime, setLastMessageTime] = useState(0);
   
   const chatListRef = useRef<FlatList>(null);
   const scale = useSharedValue(isVisible ? 1 : 0);
@@ -117,46 +130,127 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
     chatHeight.value = withSpring(isMinimized ? 60 : 400, { damping: 15 });
   }, [isMinimized]);
 
-  // Simulate new messages
+  // Real-time chat connection simulation
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible || !enableRealTimeChat) return;
     
-    const interval = setInterval(() => {
+    // Simulate connection
+    setConnectionStatus('connecting');
+    const connectTimeout = setTimeout(() => {
+      setConnectionStatus('connected');
+      setIsConnected(true);
+    }, 1000);
+    
+    // Simulate new messages with more realistic patterns
+    const messageInterval = setInterval(() => {
+      const messageTemplates = [
+        'Nice stream!',
+        'PogChamp',
+        'Amazing play!',
+        'KEKW',
+        '5Head move',
+        'EZ Clap',
+        'LUL',
+        'Kreygasm',
+        'MonkaS',
+        'That was insane!',
+        'GG',
+        'What game is this?',
+        'First time here!',
+        'Followed!',
+        'Sub hype!',
+      ];
+      
+      const randomTemplate = messageTemplates[Math.floor(Math.random() * messageTemplates.length)];
+      const username = `User${Math.floor(Math.random() * 1000)}`;
+      
       const newMsg: ChatMessage = {
         id: Date.now().toString(),
-        username: `User${Math.floor(Math.random() * 1000)}`,
-        message: [
-          'Nice stream!',
-          'PogChamp',
-          'Amazing play!',
-          'KEKW',
-          '5Head move',
-          'EZ Clap',
-          'Heart eyes emoji',
-        ][Math.floor(Math.random() * 7)],
+        username,
+        message: randomTemplate,
         timestamp: new Date(),
-        type: 'normal',
+        type: Math.random() < 0.05 ? 'subscription' : 'normal',
         color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`,
+        badges: Math.random() < 0.1 ? ['subscriber'] : undefined,
       };
       
       setMessages(prev => [...prev.slice(-49), newMsg]);
+      
+      // Simulate typing indicator
+      if (Math.random() < 0.3) {
+        const typingUser = `User${Math.floor(Math.random() * 100)}`;
+        setTypingUsers(prev => [...prev, typingUser]);
+        setTimeout(() => {
+          setTypingUsers(prev => prev.filter(u => u !== typingUser));
+        }, 2000);
+      }
       
       // Auto-scroll to bottom
       setTimeout(() => {
         chatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
-    }, 3000 + Math.random() * 4000);
+    }, 2000 + Math.random() * 4000);
 
-    return () => clearInterval(interval);
-  }, [isVisible]);
+    // Simulate viewer count changes
+    const viewerInterval = setInterval(() => {
+      setViewerCount(prev => {
+        const change = Math.floor(Math.random() * 20) - 10; // ±10
+        return Math.max(1000, prev + change);
+      });
+    }, 10000);
+
+    return () => {
+      clearTimeout(connectTimeout);
+      clearInterval(messageInterval);
+      clearInterval(viewerInterval);
+      setConnectionStatus('disconnected');
+      setIsConnected(false);
+    };
+  }, [isVisible, enableRealTimeChat]);
+
+  // Enhanced message validation and moderation
+  const validateMessage = (messageText: string): { isValid: boolean; reason?: string } => {
+    const trimmedMessage = messageText.trim();
+    
+    if (!trimmedMessage) {
+      return { isValid: false, reason: 'Message cannot be empty' };
+    }
+    
+    if (trimmedMessage.length > 500) {
+      return { isValid: false, reason: 'Message too long (max 500 characters)' };
+    }
+    
+    // Check for banned words
+    const lowerMessage = trimmedMessage.toLowerCase();
+    const containsBannedWord = bannedWords.some(word => lowerMessage.includes(word.toLowerCase()));
+    if (containsBannedWord) {
+      return { isValid: false, reason: 'Message contains inappropriate content' };
+    }
+    
+    // Check slow mode
+    if (slowMode) {
+      const now = Date.now();
+      if (now - lastMessageTime < slowModeDelay * 1000) {
+        const remaining = Math.ceil((slowModeDelay * 1000 - (now - lastMessageTime)) / 1000);
+        return { isValid: false, reason: `Slow mode: wait ${remaining}s` };
+      }
+    }
+    
+    return { isValid: true };
+  };
 
   const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+    const validation = validateMessage(newMessage);
+    
+    if (!validation.isValid) {
+      Alert.alert('Cannot Send Message', validation.reason);
+      return;
+    }
     
     const message: ChatMessage = {
       id: Date.now().toString(),
       username: 'You',
-      message: newMessage,
+      message: newMessage.trim(),
       timestamp: new Date(),
       type: 'normal',
       color: '#8B5CF6',
@@ -165,6 +259,10 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
     setMessages(prev => [...prev.slice(-49), message]);
     setNewMessage('');
     setIsTyping(false);
+    setLastMessageTime(Date.now());
+    
+    // Notify parent component
+    onChatMessage?.(message);
     
     setTimeout(() => {
       chatListRef.current?.scrollToEnd({ animated: true });
@@ -257,6 +355,14 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
             <View style={styles.headerLeft}>
               <MessageCircle size={18} color="#8B5CF6" />
               <Text style={styles.chatTitle}>Chat</Text>
+              
+              {/* Connection Status */}
+              <View style={[
+                styles.connectionStatus,
+                { backgroundColor: connectionStatus === 'connected' ? '#10B981' : 
+                  connectionStatus === 'connecting' ? '#F59E0B' : '#EF4444' }
+              ]} />
+              
               <View style={styles.viewerBadge}>
                 <Users size={12} color="#10B981" />
                 <Text style={styles.viewerCount}>
@@ -302,6 +408,39 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
                     chatListRef.current?.scrollToEnd({ animated: true });
                   }}
                 />
+                
+                {/* Typing Indicators */}
+                {typingUsers.length > 0 && (
+                  <MotiView
+                    from={{ opacity: 0, translateY: 10 }}
+                    animate={{ opacity: 1, translateY: 0 }}
+                    exit={{ opacity: 0, translateY: 10 }}
+                    style={styles.typingIndicators}
+                  >
+                    <View style={styles.typingDots}>
+                      <MotiView
+                        animate={{ opacity: [0.3, 1, 0.3] }}
+                        transition={{ repeat: Infinity, duration: 1000 }}
+                        style={styles.typingDot}
+                      />
+                      <MotiView
+                        animate={{ opacity: [0.3, 1, 0.3] }}
+                        transition={{ repeat: Infinity, duration: 1000, delay: 200 }}
+                        style={styles.typingDot}
+                      />
+                      <MotiView
+                        animate={{ opacity: [0.3, 1, 0.3] }}
+                        transition={{ repeat: Infinity, duration: 1000, delay: 400 }}
+                        style={styles.typingDot}
+                      />
+                    </View>
+                    <Text style={styles.typingText}>
+                      {typingUsers.slice(0, 3).join(', ')} 
+                      {typingUsers.length > 3 && ` +${typingUsers.length - 3} more`} 
+                      {typingUsers.length === 1 ? ' is' : ' are'} typing...
+                    </Text>
+                  </MotiView>
+                )}
               </View>
 
               {/* Input */}
@@ -398,6 +537,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  connectionStatus: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginLeft: 4,
   },
   viewerBadge: {
     flexDirection: 'row',
@@ -522,5 +667,25 @@ const styles = StyleSheet.create({
   typingText: {
     color: '#666',
     fontSize: 10,
+  },
+  typingIndicators: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 12,
+    margin: 8,
+    gap: 8,
+  },
+  typingDots: {
+    flexDirection: 'row',
+    gap: 3,
+  },
+  typingDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#8B5CF6',
   },
 });

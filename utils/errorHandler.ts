@@ -1,7 +1,9 @@
 /**
  * Global Error Handler Utility
  * Provides consistent error logging and debugging throughout the app
+ * Now integrated with the enhanced error reporting system
  */
+import { errorReporter, ErrorSeverity, ErrorCategory } from './errorReporting';
 
 export interface ErrorContext {
   component?: string;
@@ -37,6 +39,13 @@ export class ErrorHandler {
     });
     
     console.groupEnd();
+
+    // Report to enhanced error reporting system
+    errorReporter.reportError(errorObj, {
+      severity: ErrorSeverity.HIGH,
+      category: ErrorCategory.UNKNOWN,
+      context: context || {}
+    });
   }
   
   /**
@@ -52,6 +61,13 @@ export class ErrorHandler {
     
     console.log('⏰ Timestamp:', new Date().toISOString());
     console.groupEnd();
+
+    // Report as low severity error
+    errorReporter.reportError(new Error(message), {
+      severity: ErrorSeverity.LOW,
+      category: ErrorCategory.UNKNOWN,
+      context: context || {}
+    });
   }
   
   /**
@@ -99,6 +115,92 @@ export class ErrorHandler {
       this.logError(error as Error, context);
       return null;
     }
+  }
+
+  /**
+   * Enhanced error handling with retry logic
+   */
+  static async withRetryableErrorHandling<T>(
+    fn: () => Promise<T>,
+    context?: ErrorContext,
+    maxRetries: number = 3,
+    retryDelay: number = 1000
+  ): Promise<T | null> {
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error as Error;
+        
+        if (attempt === maxRetries) {
+          // Final attempt failed
+          this.logError(lastError, {
+            ...context,
+            additionalData: {
+              ...context?.additionalData,
+              totalAttempts: attempt + 1,
+              finalAttempt: true
+            }
+          });
+          return null;
+        }
+        
+        // Log retry attempt
+        this.logWarning(`Retry attempt ${attempt + 1} failed: ${lastError.message}`, {
+          ...context,
+          additionalData: {
+            ...context?.additionalData,
+            attempt: attempt + 1,
+            maxRetries,
+            retryDelay
+          }
+        });
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Handle specific error types with appropriate severity
+   */
+  static handleNetworkError(error: Error, context?: ErrorContext): void {
+    errorReporter.reportNetworkError(error, context);
+  }
+
+  static handleStreamError(error: Error, streamId: string, context?: ErrorContext): void {
+    errorReporter.reportStreamError(error, streamId, context);
+  }
+
+  static handleApiError(error: any, context?: ErrorContext): void {
+    if (error.response) {
+      // API error with response
+      errorReporter.reportApiError({
+        code: `API_ERROR_${error.response.status}`,
+        message: error.message || 'API request failed',
+        statusCode: error.response.status,
+        details: error.response.data,
+        timestamp: new Date().toISOString()
+      }, context);
+    } else if (error.request) {
+      // Network error
+      this.handleNetworkError(error, context);
+    } else {
+      // Other error
+      this.logError(error, context);
+    }
+  }
+
+  /**
+   * Performance monitoring helper
+   */
+  static reportPerformanceIssue(metric: string, value: number, threshold: number, context?: ErrorContext): void {
+    errorReporter.reportPerformanceIssue(metric, value, threshold, context);
   }
 }
 

@@ -79,36 +79,43 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
   const successOpacity = useSharedValue(0);
 
   const handlePress = () => {
-    scale.value = withSpring(0.95, { damping: 15 }, () => {
-      scale.value = withSpring(1);
-    });
+    scale.value = withSequence(
+      withSpring(0.92, { damping: 20 }),
+      withSpring(1.02, { damping: 15 }),
+      withSpring(1, { damping: 20 })
+    );
   };
 
   const handleLongPress = () => {
-    scale.value = withSpring(1.05, { damping: 12 });
-    elevation.value = withTiming(8, { duration: 200 });
+    scale.value = withSpring(1.08, { damping: 12 });
+    elevation.value = withTiming(12, { duration: 200 });
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1);
-    elevation.value = withTiming(0, { duration: 200 });
+    scale.value = withSpring(1, { damping: 20 });
+    elevation.value = withTiming(0, { duration: 300 });
   };
 
   const handleAddPress = async () => {
     if (isLoading) return;
     
     setIsLoading(true);
-    addButtonRotation.value = withTiming(360, { duration: 500 });
+    addButtonRotation.value = withSequence(
+      withTiming(180, { duration: 250 }),
+      withTiming(360, { duration: 250 })
+    );
     
     try {
       const result = await onAdd(stream);
       if (result.success) {
         runOnJS(setShowSuccess)(true);
-        successOpacity.value = withTiming(1, { duration: 300 }, () => {
-          successOpacity.value = withTiming(0, { duration: 300, delay: 1500 }, () => {
+        successOpacity.value = withSequence(
+          withTiming(1, { duration: 400 }),
+          withTiming(1, { duration: 1200 }),
+          withTiming(0, { duration: 400 }, () => {
             runOnJS(setShowSuccess)(false);
-          });
-        });
+          })
+        );
       }
     } catch (error) {
       console.error('Error adding stream:', error);
@@ -119,9 +126,12 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
   };
 
   const handleFavoritePress = () => {
-    heartScale.value = withSpring(1.3, { damping: 10 }, () => {
-      heartScale.value = withSpring(1);
-    });
+    heartScale.value = withSequence(
+      withSpring(1.4, { damping: 12 }),
+      withSpring(0.9, { damping: 15 }),
+      withSpring(1.1, { damping: 20 }),
+      withSpring(1, { damping: 25 })
+    );
     onToggleFavorite(stream.user_id);
   };
 
@@ -226,25 +236,35 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
                 />
               </MotiView>
 
-              {/* Loading skeleton */}
+              {/* Enhanced loading skeleton */}
               {!isImageLoaded && (
                 <MotiView
-                  from={{ opacity: 0.5 }}
-                  animate={{ opacity: 1 }}
+                  from={{ opacity: 0.3, scale: 0.95 }}
+                  animate={{ opacity: 0.7, scale: 1 }}
                   transition={{
                     type: 'timing',
-                    duration: 1000,
+                    duration: 1200,
                     loop: true,
                     repeatReverse: true,
                   }}
                   style={styles.thumbnailSkeleton}
-                />
+                >
+                  <LinearGradient
+                    colors={['rgba(51, 51, 51, 0.8)', 'rgba(68, 68, 68, 0.9)', 'rgba(51, 51, 51, 0.8)']}
+                    style={StyleSheet.absoluteFill}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  />
+                  <View style={styles.skeletonIcon}>
+                    <Play size={32} color="rgba(255, 255, 255, 0.3)" />
+                  </View>
+                </MotiView>
               )}
 
-              {/* Live indicator */}
+              {/* Enhanced live indicator */}
               <MotiView
-                from={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
+                from={{ scale: 0.8, opacity: 0.8 }}
+                animate={{ scale: 1, opacity: 1 }}
                 transition={{
                   type: 'spring',
                   damping: 12,
@@ -253,31 +273,60 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
                 }}
                 style={styles.liveIndicator}
               >
-                <BlurView blurType="dark" blurAmount={10} style={styles.liveBlur}>
-                  <View style={styles.liveDot} />
+                <LinearGradient
+                  colors={['rgba(255, 68, 68, 0.95)', 'rgba(220, 38, 38, 0.9)']}
+                  style={styles.liveGradient}
+                >
+                  <MotiView
+                    from={{ scale: 0.8 }}
+                    animate={{ scale: 1.2 }}
+                    transition={{
+                      type: 'timing',
+                      duration: 1000,
+                      loop: true,
+                      repeatReverse: true,
+                    }}
+                    style={styles.liveDot}
+                  />
                   <Text style={styles.liveText}>LIVE</Text>
-                </BlurView>
+                </LinearGradient>
               </MotiView>
 
-              {/* Viewer count */}
-              <View style={styles.viewerCountContainer}>
-                <BlurView blurType="dark" blurAmount={10} style={styles.viewerBlur}>
+              {/* Enhanced viewer count */}
+              <MotiView
+                from={{ opacity: 0, translateY: -10 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ delay: 300 }}
+                style={styles.viewerCountContainer}
+              >
+                <LinearGradient
+                  colors={['rgba(0, 0, 0, 0.8)', 'rgba(0, 0, 0, 0.6)']}
+                  style={styles.viewerGradient}
+                >
                   <Eye size={12} color="#fff" />
                   <Text style={styles.viewerCount}>
                     {formatViewerCount(stream.viewer_count)}
                   </Text>
-                </BlurView>
-              </View>
+                </LinearGradient>
+              </MotiView>
 
-              {/* Stream duration */}
-              <View style={styles.durationContainer}>
-                <BlurView blurType="dark" blurAmount={10} style={styles.durationBlur}>
-                  <Clock size={12} color="#8B5CF6" />
+              {/* Enhanced stream duration */}
+              <MotiView
+                from={{ opacity: 0, translateY: 10 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ delay: 400 }}
+                style={styles.durationContainer}
+              >
+                <LinearGradient
+                  colors={['rgba(139, 92, 246, 0.9)', 'rgba(124, 58, 237, 0.8)']}
+                  style={styles.durationGradient}
+                >
+                  <Clock size={12} color="#fff" />
                   <Text style={styles.durationText}>
                     {getTimeSinceStart(stream.started_at)}
                   </Text>
-                </BlurView>
-              </View>
+                </LinearGradient>
+              </MotiView>
 
               {/* Active indicator */}
               {isActive && (
@@ -418,20 +467,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   card: {
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: 'rgba(26, 26, 26, 0.95)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(139, 92, 246, 0.2)',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
+        shadowColor: '#8B5CF6',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2,
+        shadowRadius: 16,
       },
       android: {
-        elevation: 4,
+        elevation: 8,
       },
     }),
   },
@@ -440,6 +489,7 @@ const styles = StyleSheet.create({
   },
   cardBackground: {
     flex: 1,
+    borderRadius: 20,
   },
   thumbnailContainer: {
     height: 180,
@@ -452,21 +502,32 @@ const styles = StyleSheet.create({
   },
   thumbnailSkeleton: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#333',
+    backgroundColor: 'rgba(51, 51, 51, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  skeletonIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   liveIndicator: {
     position: 'absolute',
     top: 12,
     left: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: 'hidden',
+    shadowColor: '#ff4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  liveBlur: {
+  liveGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    gap: 6,
   },
   liveDot: {
     width: 6,
@@ -483,15 +544,20 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    borderRadius: 8,
+    borderRadius: 10,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  viewerBlur: {
+  viewerGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    gap: 5,
   },
   viewerCount: {
     color: '#fff',
@@ -502,20 +568,25 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 12,
     left: 12,
-    borderRadius: 8,
+    borderRadius: 10,
     overflow: 'hidden',
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  durationBlur: {
+  durationGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    gap: 5,
   },
   durationText: {
-    color: '#8B5CF6',
+    color: '#fff',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   activeIndicator: {
     position: 'absolute',
@@ -580,8 +651,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   addButton: {
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   addButtonActive: {
     opacity: 0.8,
@@ -592,14 +668,15 @@ const styles = StyleSheet.create({
   addButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    gap: 8,
   },
   addButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   successOverlay: {
     ...StyleSheet.absoluteFillObject,

@@ -244,11 +244,37 @@ export const useAppStore = create<AppState>()(
   )
 );
 
-// Selectors for better performance
-export const useActiveStreams = () => useAppStore(state => state.activeStreams);
-export const useSavedLayouts = () => useAppStore(state => state.savedLayouts);
+// Performance monitoring subscription
+useAppStore.subscribe(
+  (state) => state.activeStreams.length,
+  (streamCount) => {
+    if (streamCount > 0) {
+      useAppStore.getState().updatePerformanceMetrics({
+        renderCount: useAppStore.getState().performanceMetrics.renderCount + 1,
+      });
+    }
+  }
+);
+
+// Optimized selectors with shallow equality for better performance
+import { shallow } from 'zustand/shallow';
+
+export const useActiveStreams = () => useAppStore(state => state.activeStreams, shallow);
+export const useSavedLayouts = () => useAppStore(state => state.savedLayouts, shallow);
 export const useCurrentLayout = () => useAppStore(state => state.currentLayout);
 export const useSubscriptionTier = () => useAppStore(state => state.tier);
+export const useLoadingState = () => useAppStore(state => ({ isLoading: state.isLoading, error: state.error }));
+export const useMaxStreams = () => useAppStore(state => state.maxStreams);
+
+// Granular settings selectors to prevent unnecessary re-renders
+export const useTheme = () => useAppStore(state => state.theme);
+export const useStreamQuality = () => useAppStore(state => state.streamQuality);
+export const useAutoPlay = () => useAppStore(state => state.autoPlay);
+export const useChatEnabled = () => useAppStore(state => state.chatEnabled);
+export const useNotificationsEnabled = () => useAppStore(state => state.notificationsEnabled);
+export const useHapticsEnabled = () => useAppStore(state => state.hapticsEnabled);
+
+// Combined settings selector with shallow comparison
 export const useSettings = () => useAppStore(state => ({
   theme: state.theme,
   streamQuality: state.streamQuality,
@@ -256,30 +282,38 @@ export const useSettings = () => useAppStore(state => ({
   chatEnabled: state.chatEnabled,
   notificationsEnabled: state.notificationsEnabled,
   hapticsEnabled: state.hapticsEnabled,
-}));
+}), shallow);
 
-// Actions selectors
+// Optimized actions selectors with shallow comparison
 export const useStreamActions = () => useAppStore(state => ({
   addStream: state.addStream,
   removeStream: state.removeStream,
   updateStream: state.updateStream,
   clearStreams: state.clearStreams,
-}));
+}), shallow);
 
 export const useLayoutActions = () => useAppStore(state => ({
   saveLayout: state.saveLayout,
   loadLayout: state.loadLayout,
   deleteLayout: state.deleteLayout,
   setCurrentLayout: state.setCurrentLayout,
-}));
+}), shallow);
 
 export const useSubscriptionActions = () => useAppStore(state => ({
   updateSubscription: state.updateSubscription,
   getMaxStreams: state.getMaxStreams,
   canAddMoreStreams: state.canAddMoreStreams,
-}));
+}), shallow);
 
 export const useSettingsActions = () => useAppStore(state => ({
   updateSettings: state.updateSettings,
   resetSettings: state.resetSettings,
-}));
+}), shallow);
+
+// Performance-focused selectors
+export const useActiveStreamIds = () => useAppStore(state => state.activeStreams.map(s => s.id), shallow);
+export const useActiveStreamCount = () => useAppStore(state => state.activeStreams.length);
+export const useCanAddMoreStreams = () => useAppStore(state => state.canAddMoreStreams(state.activeStreams.length));
+export const useStreamById = (id: string) => useAppStore(state => state.activeStreams.find(s => s.id === id));
+export const useLayoutById = (id: string) => useAppStore(state => state.savedLayouts.find(l => l.id === id));
+export const usePerformanceMetrics = () => useAppStore(state => state.performanceMetrics, shallow);

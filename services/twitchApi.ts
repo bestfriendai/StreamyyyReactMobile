@@ -46,6 +46,18 @@ class TwitchAPI {
   private readonly clientId = process.env.EXPO_PUBLIC_TWITCH_CLIENT_ID;
   private readonly clientSecret = process.env.EXPO_PUBLIC_TWITCH_CLIENT_SECRET;
   private readonly baseUrl = 'https://api.twitch.tv/helix';
+  
+  // Cache for improved performance
+  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+  private readonly defaultCacheTTL = 5 * 60 * 1000; // 5 minutes
+  
+  // Stream health monitoring
+  private streamHealthMap = new Map<string, { 
+    lastChecked: number; 
+    consecutiveErrors: number; 
+    isHealthy: boolean; 
+    lastError?: string;
+  }>();
 
   constructor() {
     if (!this.clientId || !this.clientSecret) {
@@ -53,6 +65,77 @@ class TwitchAPI {
       console.error('Please ensure EXPO_PUBLIC_TWITCH_CLIENT_ID and EXPO_PUBLIC_TWITCH_CLIENT_SECRET are set in your .env file');
       console.error('You can get these credentials from https://dev.twitch.tv/console/apps');
     }
+  }
+
+  private getCacheKey(endpoint: string, params?: Record<string, string>): string {
+    const paramString = params ? JSON.stringify(params) : '';
+    return `${endpoint}:${paramString}`;
+  }
+
+  private setCache(key: string, data: any, ttl: number = this.defaultCacheTTL): void {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl
+    });
+  }
+
+  private getCache(key: string): any | null {
+    const cached = this.cache.get(key);
+    if (!cached) return null;
+    
+    const isExpired = Date.now() - cached.timestamp > cached.ttl;
+    if (isExpired) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return cached.data;
+  }
+
+  private clearCache(): void {
+    this.cache.clear();
+  }
+
+  private updateStreamHealth(streamId: string, success: boolean, error?: string): void {
+    const current = this.streamHealthMap.get(streamId) || {
+      lastChecked: 0,
+      consecutiveErrors: 0,
+      isHealthy: true
+    };
+
+    const now = Date.now();
+    
+    if (success) {
+      current.consecutiveErrors = 0;
+      current.isHealthy = true;
+      current.lastError = undefined;
+    } else {
+      current.consecutiveErrors += 1;
+      current.isHealthy = current.consecutiveErrors < 3; // Unhealthy after 3 consecutive errors
+      current.lastError = error;
+    }
+    
+    current.lastChecked = now;
+    this.streamHealthMap.set(streamId, current);
+  }
+
+  public getStreamHealth(streamId: string): { 
+    isHealthy: boolean; 
+    consecutiveErrors: number; 
+    lastError?: string; 
+    lastChecked: number; 
+  } | null {
+    return this.streamHealthMap.get(streamId) || null;
+  }
+
+  public getAllStreamHealths(): Map<string, { 
+    lastChecked: number; 
+    consecutiveErrors: number; 
+    isHealthy: boolean; 
+    lastError?: string; 
+  }> {
+    return new Map(this.streamHealthMap);
   }
 
   private async getAccessToken(): Promise<string> {
@@ -93,7 +176,18 @@ class TwitchAPI {
     }
   }
 
-  private async makeRequest<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
+  private async makeRequest<T>(endpoint: string, params?: Record<string, string>, retries: number = 3, useCache: boolean = true): Promise<T> {
+    const cacheKey = this.getCacheKey(endpoint, params);
+    
+    // Check cache first
+    if (useCache) {
+      const cached = this.getCache(cacheKey);
+      if (cached) {
+        console.log(`📋 Cache hit for ${endpoint}`);
+        return cached;
+      }
+    }
+
     const token = await this.getAccessToken();
     const url = new URL(`${this.baseUrl}${endpoint}`);
     
@@ -105,22 +199,87 @@ class TwitchAPI {
       });
     }
 
-    const response = await fetch(url.toString(), {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Client-Id': this.clientId!,
-        'Content-Type': 'application/json',
-      },
-    });
+    let lastError: Error | null = null;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`API request failed: ${response.status} ${response.statusText}`, errorText);
-      throw new Error(`Twitch API request failed: ${response.status} ${response.statusText}`);
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const response = await fetch(url.toString(), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Client-Id': this.clientId!,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000, // 10 second timeout
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          
+          // Handle rate limiting
+          if (response.status === 429) {
+            const retryAfter = response.headers.get('Retry-After');
+            const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : (attempt + 1) * 2000;
+            console.warn(`Rate limited, waiting ${waitTime}ms before retry ${attempt + 1}/${retries}`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            continue;
+          }
+
+          // Handle token expiration
+          if (response.status === 401) {
+            console.warn('Token expired, refreshing and retrying...');
+            this.accessToken = null;
+            this.tokenExpiry = 0;
+            if (attempt < retries) {
+              continue;
+            }
+          }
+
+          // Handle server errors with backoff
+          if (response.status >= 500 && attempt < retries) {
+            const backoffTime = Math.min(1000 * Math.pow(2, attempt), 10000);
+            console.warn(`Server error ${response.status}, retrying in ${backoffTime}ms (attempt ${attempt + 1}/${retries})`);
+            await new Promise(resolve => setTimeout(resolve, backoffTime));
+            continue;
+          }
+
+          console.error(`API request failed: ${response.status} ${response.statusText}`, errorText);
+          throw new Error(`Twitch API request failed: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        // Cache successful response
+        if (useCache) {
+          this.setCache(cacheKey, data);
+        }
+        
+        // Log successful request after retries
+        if (attempt > 0) {
+          console.log(`✅ Request succeeded after ${attempt} retries`);
+        }
+        
+        return data;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error('Unknown error');
+        
+        // Network errors or timeouts
+        if (error instanceof TypeError || error.message.includes('timeout')) {
+          if (attempt < retries) {
+            const backoffTime = Math.min(1000 * Math.pow(2, attempt), 10000);
+            console.warn(`Network error, retrying in ${backoffTime}ms (attempt ${attempt + 1}/${retries}):`, error.message);
+            await new Promise(resolve => setTimeout(resolve, backoffTime));
+            continue;
+          }
+        }
+        
+        // If it's not a retryable error, throw immediately
+        throw error;
+      }
     }
 
-    const data = await response.json();
-    return data;
+    // If we've exhausted all retries
+    console.error(`❌ Request failed after ${retries} retries`);
+    throw lastError || new Error('Request failed after retries');
   }
 
   async getTopStreams(first: number = 20, after?: string): Promise<{ data: TwitchStream[]; pagination: { cursor?: string } }> {
