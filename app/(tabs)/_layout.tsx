@@ -1,9 +1,19 @@
 import { Tabs } from 'expo-router';
-import { Search, Grid2x2 as Grid, Heart, Settings } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { View } from 'react-native';
+import { 
+  Compass, 
+  Grid3X3, 
+  Heart, 
+  Settings, 
+  Crown,
+  User
+} from 'lucide-react-native';
+import { View, Platform } from 'react-native';
+import { useTheme } from '@/contexts/ThemeContext';
+import { HapticFeedback } from '@/utils/haptics';
 
 export default function TabLayout() {
+  const { theme, isDark } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
@@ -14,77 +24,118 @@ export default function TabLayout() {
             bottom: 0,
             left: 0,
             right: 0,
-            height: 85,
-            backgroundColor: 'transparent',
-            borderTopWidth: 0,
+            height: Platform.OS === 'ios' ? 90 : 85,
+            backgroundColor: '#000000',
+            borderTopWidth: 1,
+            borderTopColor: 'rgba(255, 255, 255, 0.1)',
             elevation: 0,
             shadowOpacity: 0,
+            paddingBottom: Platform.OS === 'ios' ? 5 : 0,
           },
         ],
         tabBarBackground: () => (
-          <LinearGradient
-            colors={['rgba(26, 26, 26, 0.95)', 'rgba(0, 0, 0, 0.98)']}
+          <View
             style={{
               position: 'absolute',
               left: 0,
               right: 0,
               top: 0,
-              height: 85,
+              height: Platform.OS === 'ios' ? 90 : 85,
+              backgroundColor: '#000000',
+              borderTopWidth: 1,
+              borderTopColor: 'rgba(255, 255, 255, 0.1)',
             }}
           />
         ),
-        tabBarActiveTintColor: '#8B5CF6',
-        tabBarInactiveTintColor: '#6B7280',
+        tabBarActiveTintColor: '#ffffff',
+        tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.6)',
         tabBarLabelStyle: {
-          fontFamily: 'Inter-Medium',
-          fontSize: 12,
-          marginBottom: 8,
+          fontFamily: theme.tokens.typography.fonts.primary,
+          fontSize: theme.tokens.typography.sizes.xs,
+          fontWeight: theme.tokens.typography.weights.semibold,
+          marginBottom: Platform.OS === 'ios' ? 12 : 8,
+          letterSpacing: 0.5,
         },
         tabBarIconStyle: {
-          marginTop: 8,
+          marginTop: Platform.OS === 'ios' ? 8 : 6,
         },
+        tabBarHideOnKeyboard: true,
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Discover',
-          tabBarIcon: ({ size, color }) => (
-            <Search size={size} color={color} />
+          tabBarIcon: ({ size, color, focused }) => (
+            <Compass 
+              size={focused ? size + 2 : size} 
+              color={color} 
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
+          tabBarAccessibilityLabel: 'Discover streams and games',
+          tabBarTestID: 'discover-tab',
         }}
       />
       <Tabs.Screen
         name="grid"
         options={{
           title: 'Multi-View',
-          tabBarIcon: ({ size, color }) => (
-            <Grid size={size} color={color} />
+          tabBarIcon: ({ size, color, focused }) => (
+            <Grid3X3 
+              size={focused ? size + 2 : size} 
+              color={color} 
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
+          tabBarAccessibilityLabel: 'Multi-view streaming grid',
+          tabBarTestID: 'multiview-tab',
         }}
       />
       <Tabs.Screen
         name="favorites"
         options={{
           title: 'Favorites',
-          tabBarIcon: ({ size, color }) => (
-            <Heart size={size} color={color} />
+          tabBarIcon: ({ size, color, focused }) => (
+            <Heart 
+              size={focused ? size + 2 : size} 
+              color={color} 
+              strokeWidth={focused ? 2.5 : 2}
+              fill={focused ? color : 'transparent'}
+            />
           ),
+          tabBarAccessibilityLabel: 'Your favorite streamers',
+          tabBarTestID: 'favorites-tab',
+        }}
+      />
+      <Tabs.Screen
+        name="subscription"
+        options={{
+          title: 'Premium',
+          tabBarIcon: ({ size, color, focused }) => (
+            <Crown 
+              size={focused ? size + 2 : size} 
+              color={color} 
+              strokeWidth={focused ? 2.5 : 2}
+              fill={focused ? color : 'transparent'}
+            />
+          ),
+          tabBarAccessibilityLabel: 'Subscription and premium features',
+          tabBarTestID: 'premium-tab',
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ size, color }) => (
-            <Settings size={size} color={color} />
+          tabBarIcon: ({ size, color, focused }) => (
+            <Settings 
+              size={focused ? size + 2 : size} 
+              color={color} 
+              strokeWidth={focused ? 2.5 : 2}
+            />
           ),
-        }}
-      />
-      {/* Hide subscription tab to reduce clutter */}
-      <Tabs.Screen
-        name="subscription"
-        options={{
-          href: null, // This hides the tab from navigation
+          tabBarAccessibilityLabel: 'App settings and preferences',
+          tabBarTestID: 'settings-tab',
         }}
       />
     </Tabs>
