@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TwitchStream } from '@/services/twitchApi';
 import { useAuth } from '@/contexts/AuthContext';
 import { databaseService } from '@/services/databaseService';
+import { logError, logDebug, withErrorHandling } from '@/utils/errorHandler';
 
 const STORAGE_KEYS = {
   ACTIVE_STREAMS: 'streamyyy_active_streams',
@@ -37,37 +38,40 @@ export function useStreamManager() {
   }, [user]);
 
   const loadData = async () => {
-    try {
+    await withErrorHandling(async () => {
       setLoading(true);
+      logDebug('Loading stream manager data', { userId: user?.id });
       
       // Load active streams from local storage (these are temporary)
       const activeStreamsData = await AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_STREAMS);
       if (activeStreamsData) {
         setActiveStreams(JSON.parse(activeStreamsData));
+        logDebug('Loaded active streams', { count: JSON.parse(activeStreamsData).length });
       }
       
       // Load settings from local storage
       const settingsData = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS);
       if (settingsData) {
         setSettings(JSON.parse(settingsData));
+        logDebug('Loaded settings from storage');
       }
       
       // Load favorites from database if user is authenticated
       if (user) {
         const userFavorites = await databaseService.getFavoriteStreams(user.id);
         setFavorites(userFavorites);
+        logDebug('Loaded favorites from database', { count: userFavorites.length });
       } else {
         // Load favorites from local storage if not authenticated
         const favoritesData = await AsyncStorage.getItem(STORAGE_KEYS.FAVORITES);
         if (favoritesData) {
           setFavorites(JSON.parse(favoritesData));
+          logDebug('Loaded favorites from storage', { count: JSON.parse(favoritesData).length });
         }
       }
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
-    }
+    }, { component: 'useStreamManager', action: 'loadData' });
+    
+    setLoading(false);
   };
 
   // Save active streams to local storage
@@ -105,14 +109,18 @@ export function useStreamManager() {
 
   // Add stream to active streams
   const addStream = useCallback(async (stream: TwitchStream) => {
-    try {
+    const result = await withErrorHandling(async () => {
+      logDebug('Adding stream to active streams', { streamId: stream.id, streamName: stream.user_name });
+      
       // Check if stream is already active
       if (activeStreams.some(s => s.id === stream.id)) {
+        logDebug('Stream already active', { streamId: stream.id });
         return { success: false, message: 'Stream is already in multi-view' };
       }
       
       // Check stream limit (max 4 streams for performance)
       if (activeStreams.length >= 4) {
+        logDebug('Stream limit reached', { currentCount: activeStreams.length });
         return { success: false, message: 'Maximum 4 streams allowed in multi-view' };
       }
       
@@ -120,11 +128,11 @@ export function useStreamManager() {
       setActiveStreams(newActiveStreams);
       await saveActiveStreams(newActiveStreams);
       
+      logDebug('Stream added successfully', { streamId: stream.id, totalStreams: newActiveStreams.length });
       return { success: true, message: 'Stream added successfully' };
-    } catch (error) {
-      console.error('Error adding stream:', error);
-      return { success: false, message: 'Failed to add stream' };
-    }
+    }, { component: 'useStreamManager', action: 'addStream', additionalData: { streamId: stream.id } });
+    
+    return result || { success: false, message: 'Failed to add stream' };
   }, [activeStreams, saveActiveStreams]);
 
   // Remove stream from active streams

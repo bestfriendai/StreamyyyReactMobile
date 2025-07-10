@@ -352,6 +352,18 @@ export const MultiViewGrid: React.FC<MultiViewGridProps> = ({
     );
   }
 
+  // Create proper grid rows
+  const createGridRows = () => {
+    const rows = [];
+    for (let i = 0; i < displayStreams.length; i += columns) {
+      const rowStreams = displayStreams.slice(i, i + columns);
+      rows.push(rowStreams);
+    }
+    return rows;
+  };
+
+  const gridRows = createGridRows();
+
   return (
     <ScrollView 
       style={styles.container}
@@ -359,29 +371,32 @@ export const MultiViewGrid: React.FC<MultiViewGridProps> = ({
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.grid}>
-        {displayStreams.map((stream, index) => {
-          return (
-            <View
-              key={stream.id}
-              style={[
-                styles.cellWrapper,
-                {
-                  width: cellWidth,
-                  height: cellHeight,
-                }
-              ]}
-            >
-              <StreamCell
-                stream={stream}
-                width={cellWidth}
-                height={cellHeight}
-                onRemove={() => removeStream(stream.id)}
-                isActive={activeStreamId === stream.id}
-                onPress={() => setActiveStreamId(stream.id)}
-              />
-            </View>
-          );
-        })}
+        {gridRows.map((rowStreams, rowIndex) => (
+          <View key={rowIndex} style={styles.gridRow}>
+            {rowStreams.map((stream, columnIndex) => (
+              <View
+                key={stream.id}
+                style={[
+                  styles.cellWrapper,
+                  {
+                    width: cellWidth,
+                    height: cellHeight,
+                    marginRight: columnIndex < rowStreams.length - 1 ? gap : 0,
+                  }
+                ]}
+              >
+                <StreamCell
+                  stream={stream}
+                  width={cellWidth}
+                  height={cellHeight}
+                  onRemove={() => removeStream(stream.id)}
+                  isActive={activeStreamId === stream.id}
+                  onPress={() => setActiveStreamId(stream.id)}
+                />
+              </View>
+            ))}
+          </View>
+        ))}
       </View>
     </ScrollView>
   );
@@ -397,13 +412,16 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   grid: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  gridRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    justifyContent: 'center',
+    marginBottom: 6,
   },
   cellWrapper: {
-    marginBottom: 6,
+    // marginRight is handled dynamically in the component
   },
   streamCell: {
     backgroundColor: '#1a1a1a',

@@ -267,4 +267,26 @@ class TwitchAPI {
 }
 
 export const twitchApi = new TwitchAPI();
+
+// Wrapper functions for easier importing
+export const fetchTopStreams = async (first: number = 20, after?: string) => {
+  const result = await twitchApi.getTopStreams(first, after);
+  return result.data;
+};
+
+export const fetchTopGames = async (first: number = 20) => {
+  const result = await twitchApi.getTopGames(first);
+  return result.data;
+};
+
+export const searchStreams = async (query: string, first: number = 20) => {
+  const result = await twitchApi.searchStreams(query, first);
+  return result.data;
+};
+
+export const searchChannels = async (query: string, first: number = 20) => {
+  const result = await twitchApi.searchChannels(query, first);
+  return result.data;
+};
+
 export type { TwitchStream, TwitchUser, TwitchGame };

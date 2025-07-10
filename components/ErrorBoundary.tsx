@@ -23,7 +23,21 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: any) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // Enhanced error logging for debugging
+    console.group('🚨 ErrorBoundary caught an error');
+    console.error('Error:', error);
+    console.error('Error Message:', error.message);
+    console.error('Error Stack:', error.stack);
+    console.error('Component Stack:', errorInfo.componentStack);
+    console.error('Error Info:', errorInfo);
+    console.groupEnd();
+    
+    // Log additional debugging information
+    console.log('📱 Device Info:', {
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A',
+      platform: typeof navigator !== 'undefined' ? navigator.platform : 'N/A',
+      timestamp: new Date().toISOString()
+    });
   }
 
   handleRetry = () => {

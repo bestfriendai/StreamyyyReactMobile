@@ -14,6 +14,7 @@ import { ClerkProvider } from '@clerk/clerk-expo';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { setupGlobalErrorHandlers } from '@/utils/errorHandler';
 
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -30,6 +31,9 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    // Setup global error handlers for better debugging
+    setupGlobalErrorHandlers();
+    
     if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
     }
