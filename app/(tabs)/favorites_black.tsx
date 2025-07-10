@@ -14,7 +14,7 @@ export default function FavoritesScreen() {
   const renderHeader = () => (
     <View style={styles.headerContent}>
       <LinearGradient
-        colors={Theme.gradients.header}
+        colors={Theme.gradients.card}
         style={styles.headerGradient}
       >
         <View style={styles.titleContainer}>
@@ -41,7 +41,7 @@ export default function FavoritesScreen() {
         </Text>
         <TouchableOpacity style={styles.discoverButton} onPress={() => router.push('/')}>
           <LinearGradient
-            colors={Theme.gradients.primary}
+            colors={Theme.gradients.button}
             style={styles.discoverGradient}
           >
             <Star size={16} color={Theme.colors.text.primary} />
@@ -107,14 +107,13 @@ const styles = StyleSheet.create({
   },
   title: {
     color: Theme.colors.text.primary,
-    fontSize: Theme.typography.title.fontSize,
-    fontFamily: Theme.typography.title.fontFamily,
-    letterSpacing: Theme.typography.title.letterSpacing,
+    fontSize: Theme.typography.sizes.title,
+    fontWeight: Theme.typography.weights.bold,
   },
   subtitle: {
     color: Theme.colors.text.tertiary,
-    fontSize: Theme.typography.body.fontSize,
-    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: Theme.typography.sizes.md,
+    fontWeight: Theme.typography.weights.regular,
     marginLeft: 40,
   },
   emptyContainer: {
@@ -128,29 +127,29 @@ const styles = StyleSheet.create({
   emptyGradient: {
     alignItems: 'center',
     padding: Theme.spacing.xxl,
-    borderRadius: Theme.borderRadius.lg,
+    borderRadius: Theme.radius.lg,
     marginHorizontal: Theme.spacing.lg,
     borderWidth: 1,
     borderColor: Theme.colors.background.tertiary,
   },
   emptyTitle: {
     color: Theme.colors.text.primary,
-    fontSize: Theme.typography.subtitle.fontSize,
-    fontFamily: Theme.typography.subtitle.fontFamily,
+    fontSize: Theme.typography.sizes.xl,
+    fontWeight: Theme.typography.weights.semibold,
     marginTop: Theme.spacing.lg,
     marginBottom: Theme.spacing.xs,
     textAlign: 'center',
   },
   emptySubtitle: {
     color: Theme.colors.text.tertiary,
-    fontSize: Theme.typography.caption.fontSize,
-    fontFamily: Theme.typography.caption.fontFamily,
+    fontSize: Theme.typography.sizes.sm,
+    fontWeight: Theme.typography.weights.regular,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: Theme.spacing.xl,
   },
   discoverButton: {
-    borderRadius: Theme.borderRadius.md,
+    borderRadius: Theme.radius.md,
     overflow: 'hidden',
   },
   discoverGradient: {
@@ -162,7 +161,7 @@ const styles = StyleSheet.create({
   },
   discoverText: {
     color: Theme.colors.text.primary,
-    fontSize: Theme.typography.body.fontSize,
-    fontFamily: Theme.typography.subtitle.fontFamily,
+    fontSize: Theme.typography.sizes.md,
+    fontWeight: Theme.typography.weights.medium,
   },
 });

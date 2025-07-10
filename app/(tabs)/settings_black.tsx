@@ -37,7 +37,7 @@ export default function SettingsScreen() {
   const renderHeader = () => (
     <View style={styles.headerContent}>
       <LinearGradient
-        colors={Theme.gradients.header}
+        colors={Theme.gradients.card}
         style={styles.headerGradient}
       >
         <View style={styles.titleContainer}>
@@ -178,8 +178,8 @@ export default function SettingsScreen() {
               <LinearGradient
                 colors={
                   activeStreams.length === 0 
-                    ? Theme.gradients.disabled
-                    : Theme.gradients.danger
+                    ? Theme.gradients.card
+                    : [Theme.colors.accent.red, Theme.colors.functional.error]
                 }
                 style={styles.dangerGradient}
               >
@@ -232,21 +232,20 @@ const styles = StyleSheet.create({
   },
   title: {
     color: Theme.colors.text.primary,
-    fontSize: Theme.typography.title.fontSize,
-    fontFamily: Theme.typography.title.fontFamily,
-    letterSpacing: Theme.typography.title.letterSpacing,
+    fontSize: Theme.typography.sizes.title,
+    fontWeight: Theme.typography.weights.bold,
   },
   subtitle: {
     color: Theme.colors.text.tertiary,
-    fontSize: Theme.typography.body.fontSize,
-    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: Theme.typography.sizes.md,
+    fontWeight: Theme.typography.weights.regular,
     marginLeft: 40,
   },
   section: {
     marginHorizontal: Theme.spacing.lg,
     marginBottom: Theme.spacing.xl,
     backgroundColor: Theme.colors.background.card,
-    borderRadius: Theme.borderRadius.lg,
+    borderRadius: Theme.radius.lg,
     padding: Theme.spacing.lg,
     borderWidth: 1,
     borderColor: Theme.colors.background.tertiary,
@@ -259,8 +258,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: Theme.colors.text.primary,
-    fontSize: Theme.typography.subtitle.fontSize,
-    fontFamily: Theme.typography.subtitle.fontFamily,
+    fontSize: Theme.typography.sizes.lg,
+    fontWeight: Theme.typography.weights.semibold,
   },
   settingRow: {
     flexDirection: 'row',
@@ -275,22 +274,22 @@ const styles = StyleSheet.create({
   },
   settingTitle: {
     color: Theme.colors.text.primary,
-    fontSize: Theme.typography.body.fontSize,
-    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: Theme.typography.sizes.md,
+    fontWeight: Theme.typography.weights.regular,
     marginBottom: 2,
   },
   settingSubtitle: {
     color: Theme.colors.text.tertiary,
-    fontSize: Theme.typography.caption.fontSize,
-    fontFamily: Theme.typography.caption.fontFamily,
+    fontSize: Theme.typography.sizes.sm,
+    fontWeight: Theme.typography.weights.regular,
   },
   qualityContainer: {
     marginTop: Theme.spacing.lg,
   },
   qualityLabel: {
     color: Theme.colors.text.primary,
-    fontSize: Theme.typography.body.fontSize,
-    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: Theme.typography.sizes.md,
+    fontWeight: Theme.typography.weights.regular,
     marginBottom: Theme.spacing.sm,
   },
   qualityButtons: {
@@ -301,7 +300,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: Theme.spacing.xs,
     paddingHorizontal: Theme.spacing.sm,
-    borderRadius: Theme.borderRadius.sm,
+    borderRadius: Theme.radius.sm,
     backgroundColor: Theme.colors.background.secondary,
     borderWidth: 1,
     borderColor: Theme.colors.background.tertiary,
@@ -313,8 +312,8 @@ const styles = StyleSheet.create({
   },
   qualityText: {
     color: Theme.colors.text.tertiary,
-    fontSize: Theme.typography.caption.fontSize,
-    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: Theme.typography.sizes.sm,
+    fontWeight: Theme.typography.weights.regular,
   },
   activeQualityText: {
     color: Theme.colors.background.primary,
@@ -330,17 +329,17 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     color: Theme.colors.accent.primary,
-    fontSize: 24,
-    fontFamily: Theme.typography.title.fontFamily,
+    fontSize: Theme.typography.sizes.title,
+    fontWeight: Theme.typography.weights.bold,
     marginBottom: 4,
   },
   statLabel: {
     color: Theme.colors.text.tertiary,
-    fontSize: Theme.typography.caption.fontSize,
-    fontFamily: Theme.typography.caption.fontFamily,
+    fontSize: Theme.typography.sizes.sm,
+    fontWeight: Theme.typography.weights.regular,
   },
   dangerButton: {
-    borderRadius: Theme.borderRadius.md,
+    borderRadius: Theme.radius.md,
     overflow: 'hidden',
     marginTop: Theme.spacing.xs,
   },
@@ -353,8 +352,8 @@ const styles = StyleSheet.create({
   },
   dangerText: {
     color: Theme.colors.text.primary,
-    fontSize: Theme.typography.body.fontSize,
-    fontFamily: Theme.typography.subtitle.fontFamily,
+    fontSize: Theme.typography.sizes.md,
+    fontWeight: Theme.typography.weights.medium,
   },
   footer: {
     alignItems: 'center',
@@ -363,14 +362,14 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: Theme.colors.accent.primary,
-    fontSize: Theme.typography.body.fontSize,
-    fontFamily: Theme.typography.subtitle.fontFamily,
+    fontSize: Theme.typography.sizes.md,
+    fontWeight: Theme.typography.weights.medium,
     marginBottom: 4,
   },
   footerSubtext: {
     color: Theme.colors.text.tertiary,
-    fontSize: Theme.typography.caption.fontSize,
-    fontFamily: Theme.typography.caption.fontFamily,
+    fontSize: Theme.typography.sizes.sm,
+    fontWeight: Theme.typography.weights.regular,
     textAlign: 'center',
   },
 });

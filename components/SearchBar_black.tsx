@@ -100,7 +100,7 @@ export function SearchBar({
           {query.length > 0 && (
             <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
               <LinearGradient
-                colors={Theme.gradients.accent}
+                colors={Theme.gradients.buttonActive}
                 style={styles.clearGradient}
               >
                 <X size={16} color={Theme.colors.background.primary} />
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: Theme.borderRadius.lg,
+    borderRadius: Theme.radius.lg,
     paddingHorizontal: Theme.spacing.lg,
     paddingVertical: Theme.spacing.lg,
     borderWidth: 1,
@@ -181,12 +181,12 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: Theme.colors.text.primary,
-    fontSize: 15,
-    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: Theme.typography.sizes.md,
+    fontWeight: Theme.typography.weights.regular,
   },
   clearButton: {
     marginLeft: Theme.spacing.sm,
-    borderRadius: Theme.borderRadius.sm,
+    borderRadius: Theme.radius.sm,
     overflow: 'hidden',
   },
   clearGradient: {

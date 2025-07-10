@@ -111,14 +111,14 @@ export default function MultiViewScreen() {
       {showControls && (
         <Animated.View style={[styles.header, animatedHeaderStyle]}>
           <LinearGradient
-            colors={Theme.gradients.header}
+            colors={Theme.gradients.card}
             style={styles.headerGradient}
           >
             <View style={styles.titleRow}>
               <View style={styles.titleContainer}>
                 <View style={styles.titleIconContainer}>
                   <LinearGradient
-                    colors={Theme.gradients.primary}
+                    colors={Theme.gradients.buttonActive}
                     style={styles.titleIcon}
                   >
                     <Grid size={20} color={Theme.colors.background.primary} />
@@ -142,7 +142,7 @@ export default function MultiViewScreen() {
                 onPress={() => setShowControls(!showControls)}
               >
                 <LinearGradient
-                  colors={Theme.gradients.accent}
+                  colors={Theme.gradients.buttonActive}
                   style={styles.settingsGradient}
                 >
                   <Settings size={18} color={Theme.colors.background.primary} />
@@ -161,7 +161,7 @@ export default function MultiViewScreen() {
                 >
                   <LinearGradient
                     colors={layoutType === 'grid' 
-                      ? Theme.gradients.primary 
+                      ? Theme.gradients.buttonActive 
                       : Theme.gradients.card
                     }
                     style={styles.controlGradient}
@@ -185,7 +185,7 @@ export default function MultiViewScreen() {
                 >
                   <LinearGradient
                     colors={layoutType === 'stacked' 
-                      ? Theme.gradients.primary 
+                      ? Theme.gradients.buttonActive 
                       : Theme.gradients.card
                     }
                     style={styles.controlGradient}
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     gap: Theme.spacing.sm,
   },
   titleIconContainer: {
-    borderRadius: Theme.borderRadius.sm,
+    borderRadius: Theme.radius.sm,
     overflow: 'hidden',
   },
   titleIcon: {
@@ -345,10 +345,9 @@ const styles = StyleSheet.create({
   },
   title: {
     color: Theme.colors.text.primary,
-    fontSize: 26,
-    fontFamily: Theme.typography.title.fontFamily,
+    fontSize: Theme.typography.sizes.heading,
+    fontWeight: Theme.typography.weights.bold,
     marginBottom: 6,
-    letterSpacing: Theme.typography.title.letterSpacing,
   },
   subtitleContainer: {
     flexDirection: 'row',
@@ -357,11 +356,11 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: Theme.colors.text.tertiary,
-    fontSize: 15,
-    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: Theme.typography.sizes.md,
+    fontWeight: Theme.typography.weights.regular,
   },
   settingsButton: {
-    borderRadius: Theme.borderRadius.sm,
+    borderRadius: Theme.radius.sm,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: Theme.colors.background.tertiary,
@@ -387,7 +386,7 @@ const styles = StyleSheet.create({
     gap: Theme.spacing.sm,
   },
   controlButton: {
-    borderRadius: Theme.borderRadius.md,
+    borderRadius: Theme.radius.md,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: Theme.colors.background.tertiary,
@@ -404,8 +403,8 @@ const styles = StyleSheet.create({
   },
   controlButtonText: {
     color: Theme.colors.text.tertiary,
-    fontSize: 13,
-    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: Theme.typography.sizes.sm,
+    fontWeight: Theme.typography.weights.regular,
   },
   activeControlButtonText: {
     color: Theme.colors.background.primary,
@@ -415,7 +414,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Theme.spacing.xs,
     backgroundColor: Theme.colors.background.card,
-    borderRadius: Theme.borderRadius.md,
+    borderRadius: Theme.radius.md,
     paddingHorizontal: Theme.spacing.sm,
     paddingVertical: Theme.spacing.xs,
     borderWidth: 1,
@@ -434,17 +433,17 @@ const styles = StyleSheet.create({
   columnButtonText: {
     color: Theme.colors.accent.primary,
     fontSize: 16,
-    fontFamily: Theme.typography.subtitle.fontFamily,
+    fontWeight: Theme.typography.weights.medium,
   },
   columnText: {
     color: Theme.colors.text.primary,
-    fontSize: 15,
-    fontFamily: Theme.typography.body.fontFamily,
+    fontSize: Theme.typography.sizes.md,
+    fontWeight: Theme.typography.weights.regular,
     minWidth: 24,
     textAlign: 'center',
   },
   clearButton: {
-    borderRadius: Theme.borderRadius.sm,
+    borderRadius: Theme.radius.sm,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: Theme.colors.accent.red + '30',
@@ -503,22 +502,22 @@ const styles = StyleSheet.create({
   emptyGradient: {
     alignItems: 'center',
     padding: Theme.spacing.xxl,
-    borderRadius: Theme.borderRadius.lg,
+    borderRadius: Theme.radius.lg,
     borderWidth: 1,
     borderColor: Theme.colors.background.tertiary,
   },
   emptyTitle: {
     color: Theme.colors.text.primary,
-    fontSize: Theme.typography.subtitle.fontSize,
-    fontFamily: Theme.typography.subtitle.fontFamily,
+    fontSize: Theme.typography.sizes.xl,
+    fontWeight: Theme.typography.weights.semibold,
     marginTop: Theme.spacing.lg,
     marginBottom: Theme.spacing.xs,
     textAlign: 'center',
   },
   emptySubtitle: {
     color: Theme.colors.text.tertiary,
-    fontSize: Theme.typography.caption.fontSize,
-    fontFamily: Theme.typography.caption.fontFamily,
+    fontSize: Theme.typography.sizes.sm,
+    fontWeight: Theme.typography.weights.regular,
     textAlign: 'center',
     lineHeight: 20,
   },
