@@ -326,11 +326,11 @@ export const MultiViewGrid: React.FC<MultiViewGridProps> = ({
   const maxStreams = columns * rows;
   const displayStreams = activeStreams.slice(0, maxStreams);
 
-  // Calculate cell dimensions
-  const padding = 16;
-  const gap = 8;
+  // Calculate cell dimensions with improved sizing
+  const padding = 12;
+  const gap = 6;
   const availableWidth = SCREEN_WIDTH - padding * 2;
-  const availableHeight = SCREEN_HEIGHT - 250; // Reserve space for header and tab bar
+  const availableHeight = SCREEN_HEIGHT - 180; // Reduced reserved space for better stream visibility
   
   const cellWidth = (availableWidth - gap * (columns - 1)) / columns;
   const cellHeight = Math.min(
@@ -360,11 +360,6 @@ export const MultiViewGrid: React.FC<MultiViewGridProps> = ({
     >
       <View style={styles.grid}>
         {displayStreams.map((stream, index) => {
-          const row = Math.floor(index / columns);
-          const col = index % columns;
-          const marginRight = col < columns - 1 ? gap : 0;
-          const marginBottom = row < Math.ceil(displayStreams.length / columns) - 1 ? gap : 0;
-          
           return (
             <View
               key={stream.id}
@@ -373,8 +368,6 @@ export const MultiViewGrid: React.FC<MultiViewGridProps> = ({
                 {
                   width: cellWidth,
                   height: cellHeight,
-                  marginRight,
-                  marginBottom,
                 }
               ]}
             >
@@ -400,17 +393,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0a',
   },
   gridContainer: {
-    padding: 8,
+    padding: 12,
     paddingBottom: 100,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   cellWrapper: {
-    marginBottom: 8,
-    marginHorizontal: 4,
+    marginBottom: 6,
   },
   streamCell: {
     backgroundColor: '#1a1a1a',

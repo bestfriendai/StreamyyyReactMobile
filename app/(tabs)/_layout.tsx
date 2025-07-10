@@ -80,6 +80,13 @@ export default function TabLayout() {
           ),
         }}
       />
+      {/* Hide subscription tab to reduce clutter */}
+      <Tabs.Screen
+        name="subscription"
+        options={{
+          href: null, // This hides the tab from navigation
+        }}
+      />
     </Tabs>
   );
 }

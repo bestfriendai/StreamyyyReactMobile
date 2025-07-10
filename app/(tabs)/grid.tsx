@@ -51,12 +51,15 @@ export default function MultiViewScreen() {
   }, [showControls]);
 
   const screenWidth = Dimensions.get('window').width;
+  const screenHeight = Dimensions.get('window').height;
+  
+  // Improved sizing calculations for better stream visibility
   const streamWidth = layoutType === 'grid' 
-    ? (screenWidth - 24 - (gridColumns - 1) * 8) / gridColumns 
-    : screenWidth - 32;
+    ? (screenWidth - 20 - (gridColumns - 1) * 6) / gridColumns 
+    : screenWidth - 24;
 
   const streamHeight = layoutType === 'grid' 
-    ? (streamWidth * 9) / 16
+    ? Math.min((streamWidth * 9) / 16, (screenHeight - 200) / Math.ceil(activeStreams.length / gridColumns))
     : (streamWidth * 9) / 16;
 
   const renderGridView = () => {
@@ -490,13 +493,14 @@ const styles = StyleSheet.create({
     paddingTop: 160,
   },
   scrollContent: {
-    padding: 12,
+    padding: 10,
     paddingBottom: 100,
   },
   gridRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 6,
+    gap: 6,
   },
   emptyState: {
     flex: 1,
