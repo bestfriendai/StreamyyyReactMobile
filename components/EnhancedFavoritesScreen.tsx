@@ -215,7 +215,7 @@ export function EnhancedFavoritesScreen() {
               activeOpacity={0.7}
             >
               <LinearGradient
-                colors={[ModernTheme.colors.primary, ModernTheme.colors.secondary]}
+                colors={[ModernTheme.colors.primary[500], ModernTheme.colors.background.secondary]}
                 style={styles.actionGradient}
               >
                 <Plus size={16} color="#fff" />
@@ -250,14 +250,14 @@ export function EnhancedFavoritesScreen() {
         colors={['rgba(139, 92, 246, 0.1)', 'rgba(168, 85, 247, 0.05)']}
         style={styles.emptyGradient}
       >
-        <Heart size={64} color={ModernTheme.colors.primary} />
+        <Heart size={64} color={ModernTheme.colors.primary[500]} />
         <Text style={styles.emptyTitle}>No Favorites Yet</Text>
         <Text style={styles.emptySubtitle}>
           Add streamers to your favorites to see them here
         </Text>
         <TouchableOpacity style={styles.emptyButton}>
           <LinearGradient
-            colors={[ModernTheme.colors.primary, ModernTheme.colors.secondary]}
+            colors={[ModernTheme.colors.primary[500], ModernTheme.colors.background.secondary]}
             style={styles.emptyButtonGradient}
           >
             <Text style={styles.emptyButtonText}>Discover Streams</Text>
@@ -289,7 +289,7 @@ export function EnhancedFavoritesScreen() {
             <View style={styles.titleContainer}>
               <View style={styles.titleIconContainer}>
                 <LinearGradient
-                  colors={[ModernTheme.colors.primary, ModernTheme.colors.secondary]}
+                  colors={[ModernTheme.colors.primary[500], ModernTheme.colors.background.secondary]}
                   style={styles.titleIcon}
                 >
                   <Heart size={24} color="#fff" />
@@ -377,9 +377,9 @@ export function EnhancedFavoritesScreen() {
                           onPress={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                         >
                           {sortOrder === 'asc' ? (
-                            <SortAsc size={16} color={ModernTheme.colors.primary} />
+                            <SortAsc size={16} color={ModernTheme.colors.primary[500]} />
                           ) : (
-                            <SortDesc size={16} color={ModernTheme.colors.primary} />
+                            <SortDesc size={16} color={ModernTheme.colors.primary[500]} />
                           )}
                         </TouchableOpacity>
                       </View>
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   activeViewMode: {
-    backgroundColor: ModernTheme.colors.primary,
+    backgroundColor: ModernTheme.colors.primary[500],
   },
   filterButton: {
     padding: 10,
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(42, 42, 42, 0.6)',
   },
   activeFilter: {
-    backgroundColor: ModernTheme.colors.primary,
+    backgroundColor: ModernTheme.colors.primary[500],
   },
   filterPanel: {
     marginTop: 16,
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(58, 58, 58, 0.8)',
   },
   activeSortButton: {
-    backgroundColor: ModernTheme.colors.primary,
+    backgroundColor: ModernTheme.colors.primary[500],
   },
   sortText: {
     color: '#999',
@@ -662,7 +662,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   streamGame: {
-    color: ModernTheme.colors.primary,
+    color: ModernTheme.colors.primary[500],
     fontSize: 12,
     fontFamily: 'Inter-Medium',
     marginBottom: 12,

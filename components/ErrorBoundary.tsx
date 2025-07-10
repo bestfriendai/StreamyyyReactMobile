@@ -1,6 +1,5 @@
 import React, { Component, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { TriangleAlert as AlertTriangle, RefreshCw } from 'lucide-react-native';
 
 interface Props {
   children: ReactNode;
@@ -53,13 +52,13 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <View style={styles.container}>
           <View style={styles.content}>
-            <AlertTriangle size={48} color="#FF6B6B" />
+            <Text style={styles.icon}>⚠️</Text>
             <Text style={styles.title}>Something went wrong</Text>
             <Text style={styles.message}>
               {this.state.error?.message || 'An unexpected error occurred'}
             </Text>
             <TouchableOpacity style={styles.retryButton} onPress={this.handleRetry}>
-              <RefreshCw size={20} color="#fff" />
+              <Text style={styles.retryIcon}>🔄</Text>
               <Text style={styles.retryText}>Try Again</Text>
             </TouchableOpacity>
           </View>
@@ -83,6 +82,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     maxWidth: 300,
   },
+  icon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
   title: {
     color: '#fff',
     fontSize: 20,
@@ -105,7 +108,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
-    gap: 8,
+  },
+  retryIcon: {
+    fontSize: 16,
+    marginRight: 8,
   },
   retryText: {
     color: '#fff',

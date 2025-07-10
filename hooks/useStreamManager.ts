@@ -107,10 +107,16 @@ export function useStreamManager() {
     }
   }, []);
 
-  // Add stream to active streams
+  // Add stream to active streams with validation
   const addStream = useCallback(async (stream: TwitchStream) => {
     const result = await withErrorHandling(async () => {
       logDebug('Adding stream to active streams', { streamId: stream.id, streamName: stream.user_name });
+      
+      // Validate stream object
+      if (!stream.user_login || !stream.user_name) {
+        logDebug('Invalid stream object', { stream });
+        return { success: false, message: 'Invalid stream data' };
+      }
       
       // Check if stream is already active
       if (activeStreams.some(s => s.id === stream.id)) {
@@ -124,7 +130,15 @@ export function useStreamManager() {
         return { success: false, message: 'Maximum 4 streams allowed in multi-view' };
       }
       
-      const newActiveStreams = [...activeStreams, stream];
+      // Add stream health check metadata
+      const enhancedStream = {
+        ...stream,
+        addedAt: new Date().toISOString(),
+        loadAttempts: 0,
+        lastError: null
+      };
+      
+      const newActiveStreams = [...activeStreams, enhancedStream];
       setActiveStreams(newActiveStreams);
       await saveActiveStreams(newActiveStreams);
       
@@ -192,6 +206,36 @@ export function useStreamManager() {
     await saveSettings(updatedSettings);
   }, [settings, saveSettings]);
 
+  // Stream health monitoring
+  const updateStreamHealth = useCallback(async (streamId: string, error: string | null) => {
+    const updatedStreams = activeStreams.map(stream => {
+      if (stream.id === streamId) {
+        return {
+          ...stream,
+          loadAttempts: (stream.loadAttempts || 0) + 1,
+          lastError: error,
+          lastUpdated: new Date().toISOString()
+        };
+      }
+      return stream;
+    });
+    
+    setActiveStreams(updatedStreams);
+    await saveActiveStreams(updatedStreams);
+  }, [activeStreams, saveActiveStreams]);
+  
+  // Get stream health status
+  const getStreamHealth = useCallback((streamId: string) => {
+    const stream = activeStreams.find(s => s.id === streamId);
+    if (!stream) return null;
+    
+    return {
+      loadAttempts: stream.loadAttempts || 0,
+      lastError: stream.lastError || null,
+      isHealthy: (stream.loadAttempts || 0) < 3 && !stream.lastError
+    };
+  }, [activeStreams]);
+
   return {
     activeStreams,
     favorites,
@@ -204,6 +248,7 @@ export function useStreamManager() {
     isFavorite,
     isStreamActive,
     updateSettings,
-    loadData,
-  };
+     updateStreamHealth,
+     getStreamHealth,
+   };
 }

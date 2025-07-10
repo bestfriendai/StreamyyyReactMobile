@@ -1,38 +1,23 @@
-import React from 'react';
-import { View, StyleSheet, Alert, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { EnhancedMultiStreamViewer } from '@/components/EnhancedMultiStreamViewer';
-import { useStreamManager } from '@/hooks/useStreamManager';
-import { StatusBar } from 'expo-status-bar';
+import { ModernMultiStreamGrid } from '@/components/ModernMultiStreamGrid';
 
 export default function GridScreen() {
-  const { activeStreams, removeStream } = useStreamManager();
+  const [layout, setLayout] = useState<'1x1' | '2x2' | '3x3' | '4x4'>('2x2');
 
-  const handleAddStream = () => {
-    // TODO: Implement stream search and selection
-    Alert.alert('Add Stream', 'Stream search functionality coming soon!');
-  };
-
-  const handleRemoveStream = (streamId: string) => {
-    removeStream(streamId);
+  const handleLayoutChange = (newLayout: '1x1' | '2x2' | '3x3' | '4x4') => {
+    setLayout(newLayout);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
-      <EnhancedMultiStreamViewer
-        streams={activeStreams}
-        onAddStream={handleAddStream}
-        onRemoveStream={handleRemoveStream}
-        maxStreams={9}
-      />
-    </SafeAreaView>
+    <View style={{ flex: 1, backgroundColor: '#000' }}>
+      <SafeAreaView style={{ flex: 1 }}>
+        <ModernMultiStreamGrid
+          maxStreams={16}
+          onLayoutChange={handleLayoutChange}
+        />
+      </SafeAreaView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-});

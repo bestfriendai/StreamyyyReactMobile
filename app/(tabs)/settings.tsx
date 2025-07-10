@@ -1,20 +1,15 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Switch, Platform, View, Text, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { EnhancedSettingsScreen } from '@/components/EnhancedSettingsScreen';
 
 export default function Settings() {
 
   return (
-    <SafeAreaView style={styles.container}>
-      <EnhancedSettingsScreen />
-    </SafeAreaView>
+    <View style={{ flex: 1, backgroundColor: '#000' }}>
+      <SafeAreaView style={{ flex: 1 }}>
+        <EnhancedSettingsScreen />
+      </SafeAreaView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-});

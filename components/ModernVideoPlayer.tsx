@@ -4,19 +4,17 @@ import {
   StyleSheet,
   TouchableOpacity,
   Text,
-  Dimensions,
-  Platform,
   ActivityIndicator,
+  ViewStyle,
+  TextStyle,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { MotiView } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Play,
   Pause,
   Volume2,
   VolumeX,
-  Maximize,
   X,
   Eye,
   Settings,
@@ -28,10 +26,9 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
-  interpolate,
 } from 'react-native-reanimated';
 
-interface EnhancedVideoPlayerProps {
+interface ModernVideoPlayerProps {
   stream: TwitchStream;
   width: number;
   height: number;
@@ -46,7 +43,7 @@ interface EnhancedVideoPlayerProps {
   quality?: 'auto' | 'source' | 'high' | 'medium' | 'low';
 }
 
-export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
+export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
   stream,
   width,
   height,
@@ -67,35 +64,21 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
   const [controlsVisible, setControlsVisible] = useState(false);
   const webViewRef = useRef<WebView>(null);
   
-  // Generate Twitch embed URL with comprehensive parent domains
+  // Generate Twitch embed URL
   const getTwitchEmbedUrl = useCallback(() => {
     const params = new URLSearchParams({
       channel: stream.user_login,
       muted: isMuted.toString(),
       autoplay: 'true',
-      controls: 'false',
-      quality: quality === 'auto' ? 'auto' : quality
+      controls: 'true'
     });
     
-    // Add comprehensive list of parent domains for better compatibility
-    const parentDomains = [
-      'localhost',
-      '127.0.0.1',
-      'expo.dev',
-      'exp.host',
-      'expo.io',
-      'snack.expo.dev',
-      'reactnative.dev',
-      'github.dev',
-      'codesandbox.io'
-    ];
-    
-    parentDomains.forEach(domain => {
-      params.append('parent', domain);
-    });
+    params.append('parent', 'localhost');
+    params.append('parent', '127.0.0.1');
+    params.append('parent', 'expo.dev');
     
     return `https://player.twitch.tv/?${params.toString()}`;
-  }, [stream.user_login, isMuted, quality]);
+  }, [stream.user_login, isMuted]);
   
   const embedUrl = getTwitchEmbedUrl();
   
@@ -158,95 +141,34 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
     onMuteToggle?.();
   }, [onMuteToggle]);
   
-  // Retry mechanism
-  const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 3;
-  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // WebView event handlers with improved error handling
+  // WebView event handlers
   const handleWebViewLoad = useCallback(() => {
-    console.log('✅ WebView loaded successfully for:', stream.user_login);
+    console.log('WebView loaded successfully for:', stream.user_login);
     setIsLoading(false);
     setError(null);
-    setRetryCount(0);
   }, [stream.user_login]);
 
   const handleWebViewError = useCallback((syntheticEvent: any) => {
     const { nativeEvent } = syntheticEvent;
-    console.error('❌ WebView error for', stream.user_login, ':', nativeEvent);
-    
-    const errorMessage = nativeEvent.description || 'Stream failed to load';
-    setError(errorMessage);
+    console.log('WebView error for', stream.user_login, ':', nativeEvent);
+    setError(`Failed to load stream: ${nativeEvent.description || 'Unknown error'}`);
     setIsLoading(false);
-    
-    // Auto-retry logic
-    if (retryCount < maxRetries) {
-      console.log(`🔄 Auto-retrying stream load (${retryCount + 1}/${maxRetries})`);
-      retryTimeoutRef.current = setTimeout(() => {
-        setRetryCount(prev => prev + 1);
-        setError(null);
-        setIsLoading(true);
-        webViewRef.current?.reload();
-      }, 2000 * (retryCount + 1)); // Exponential backoff
-    }
-  }, [stream.user_login, retryCount, maxRetries]);
+  }, [stream.user_login]);
 
   const handleWebViewLoadStart = useCallback(() => {
-    console.log('🔄 WebView load started for:', stream.user_login);
+    console.log('WebView load started for:', stream.user_login);
     setIsLoading(true);
     setError(null);
   }, [stream.user_login]);
-
-  const handleWebViewMessage = useCallback((event: any) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      console.log('📨 WebView message:', data);
-      
-      // Handle specific message types if needed
-      if (data.type === 'player_ready') {
-        setIsLoading(false);
-        setError(null);
-      } else if (data.type === 'player_error') {
-        setError(data.message || 'Player error occurred');
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.log('WebView message (non-JSON):', event.nativeEvent.data);
-    }
-  }, []);
   
-  // Manual retry function
-  const handleRetry = useCallback(() => {
-    setError(null);
-    setIsLoading(true);
-    setRetryCount(0);
-    webViewRef.current?.reload();
-  }, []);
-  
-  // Cleanup timers on unmount
+  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
       if (controlsTimer.current) {
         clearTimeout(controlsTimer.current);
       }
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
-      }
     };
   }, []);
-  
-  // Loading timeout to prevent infinite loading
-  useEffect(() => {
-    const loadingTimeout = setTimeout(() => {
-      if (isLoading && !error) {
-        console.log('⏰ Loading timeout for stream:', stream.user_login);
-        setError('Stream is taking too long to load');
-        setIsLoading(false);
-      }
-    }, 15000); // 15 second timeout
-    
-    return () => clearTimeout(loadingTimeout);
-  }, [isLoading, error, stream.user_login]);
   
   return (
     <Animated.View style={[styles.container, { width, height }, containerStyle]}>
@@ -264,22 +186,8 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
           onLoad={handleWebViewLoad}
           onError={handleWebViewError}
           onLoadStart={handleWebViewLoadStart}
-          onMessage={handleWebViewMessage}
           allowsInlineMediaPlayback={true}
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          startInLoadingState={false}
-          scalesPageToFit={true}
-          bounces={false}
-          scrollEnabled={false}
-          showsHorizontalScrollIndicator={false}
-          showsVerticalScrollIndicator={false}
-          originWhitelist={['*']}
-          mixedContentMode="compatibility"
-          thirdPartyCookiesEnabled={true}
-          sharedCookiesEnabled={true}
-          userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
           javaScriptEnabled={true}
           domStorageEnabled={true}
           startInLoadingState={false}
@@ -307,24 +215,15 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
         {error && (
           <View style={styles.errorOverlay}>
             <Text style={styles.errorText}>{error}</Text>
-            <View style={styles.errorActions}>
-              <TouchableOpacity
-                style={styles.retryButton}
-                onPress={handleRetry}
-              >
-                <Text style={styles.retryText}>Retry ({retryCount}/{maxRetries})</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.openExternalButton}
-                onPress={() => {
-                  const twitchUrl = `https://twitch.tv/${stream.user_login}`;
-                  // Open in external browser as fallback
-                  console.log('Opening Twitch in external browser:', twitchUrl);
-                }}
-              >
-                <Text style={styles.openExternalText}>Open in Twitch</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={() => {
+                setError(null);
+                setIsLoading(true);
+              }}
+            >
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
           </View>
         )}
         
@@ -454,15 +353,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     margin: ModernTheme.spacing.xs,
     ...ModernTheme.shadows.md,
-  },
+  } as ViewStyle,
   touchArea: {
     flex: 1,
     position: 'relative',
-  },
+  } as ViewStyle,
   video: {
     flex: 1,
     backgroundColor: '#000',
-  },
+  } as ViewStyle,
   loadingOverlay: {
     position: 'absolute',
     top: 0,
@@ -472,12 +371,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.8)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
+  } as ViewStyle,
   loadingText: {
     color: ModernTheme.colors.text.secondary,
     fontSize: ModernTheme.typography.sizes.sm,
     marginTop: ModernTheme.spacing.sm,
-  },
+  } as TextStyle,
   errorOverlay: {
     position: 'absolute',
     top: 0,
@@ -488,66 +387,51 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: ModernTheme.spacing.md,
-  },
+  } as ViewStyle,
   errorText: {
     color: ModernTheme.colors.text.error,
     fontSize: ModernTheme.typography.sizes.sm,
     textAlign: 'center',
     marginBottom: ModernTheme.spacing.md,
-  },
-  errorActions: {
-    flexDirection: 'row',
-    gap: ModernTheme.spacing.sm,
-  },
+  } as TextStyle,
   retryButton: {
     backgroundColor: ModernTheme.colors.primary[500],
     paddingHorizontal: ModernTheme.spacing.md,
     paddingVertical: ModernTheme.spacing.sm,
     borderRadius: ModernTheme.borderRadius.md,
-  },
+  } as ViewStyle,
   retryText: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
-  },
-  openExternalButton: {
-    backgroundColor: ModernTheme.colors.twitch,
-    paddingHorizontal: ModernTheme.spacing.md,
-    paddingVertical: ModernTheme.spacing.sm,
-    borderRadius: ModernTheme.borderRadius.md,
-  },
-  openExternalText: {
-    color: ModernTheme.colors.text.primary,
-    fontSize: ModernTheme.typography.sizes.sm,
-    fontWeight: ModernTheme.typography.weights.semibold,
-  },
+  } as TextStyle,
   infoOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-  },
+  } as ViewStyle,
   infoGradient: {
     padding: ModernTheme.spacing.sm,
-  },
+  } as ViewStyle,
   streamInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: ModernTheme.spacing.sm,
     marginBottom: ModernTheme.spacing.xs,
-  },
+  } as ViewStyle,
   platformBadge: {
     backgroundColor: ModernTheme.colors.twitch,
     paddingHorizontal: ModernTheme.spacing.sm,
     paddingVertical: ModernTheme.spacing.xs,
     borderRadius: ModernTheme.borderRadius.sm,
-  },
+  } as ViewStyle,
   platformText: {
     color: ModernTheme.colors.text.primary,
     fontSize: 10,
     fontWeight: ModernTheme.typography.weights.bold,
     letterSpacing: 0.5,
-  },
+  } as TextStyle,
   liveIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -556,65 +440,65 @@ const styles = StyleSheet.create({
     paddingVertical: ModernTheme.spacing.xs,
     borderRadius: ModernTheme.borderRadius.sm,
     gap: ModernTheme.spacing.xs,
-  },
+  } as ViewStyle,
   liveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-  },
+  } as ViewStyle,
   liveText: {
     color: ModernTheme.colors.text.primary,
     fontSize: 10,
     fontWeight: ModernTheme.typography.weights.semibold,
     letterSpacing: 0.5,
-  },
+  } as TextStyle,
   streamTitle: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
     marginBottom: 2,
-  },
+  } as TextStyle,
   streamGame: {
     color: ModernTheme.colors.text.accent,
     fontSize: ModernTheme.typography.sizes.xs,
     fontWeight: ModernTheme.typography.weights.medium,
-  },
+  } as TextStyle,
   viewerInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: ModernTheme.spacing.xs,
     marginTop: ModernTheme.spacing.xs,
-  },
+  } as ViewStyle,
   viewerCount: {
     color: ModernTheme.colors.text.secondary,
     fontSize: ModernTheme.typography.sizes.xs,
-  },
+  } as TextStyle,
   controlsOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-  },
+  } as ViewStyle,
   controlsGradient: {
     padding: ModernTheme.spacing.sm,
-  },
+  } as ViewStyle,
   controlsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
+  } as ViewStyle,
   leftControls: {
     flexDirection: 'row',
     gap: ModernTheme.spacing.sm,
-  },
+  } as ViewStyle,
   rightControls: {
     flexDirection: 'row',
     gap: ModernTheme.spacing.sm,
-  },
+  } as ViewStyle,
   controlButton: {
     borderRadius: ModernTheme.borderRadius.md,
     overflow: 'hidden',
-  },
+  } as ViewStyle,
   controlButtonGradient: {
     width: 32,
     height: 32,
@@ -622,7 +506,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
+  } as ViewStyle,
   activeIndicator: {
     position: 'absolute',
     top: 0,
@@ -630,13 +514,13 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: ModernTheme.borderRadius.lg,
-  },
+  } as ViewStyle,
   activeGradient: {
     flex: 1,
     borderRadius: ModernTheme.borderRadius.lg,
     borderWidth: 2,
     borderColor: 'transparent',
-  },
+  } as ViewStyle,
 });
 
-export default EnhancedVideoPlayer;
+export default ModernVideoPlayer;

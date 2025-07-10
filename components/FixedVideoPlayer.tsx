@@ -4,22 +4,21 @@ import {
   StyleSheet,
   TouchableOpacity,
   Text,
-  Dimensions,
-  Platform,
   ActivityIndicator,
+  ViewStyle,
+  TextStyle,
+  Alert,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { MotiView } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Play,
   Pause,
   Volume2,
   VolumeX,
-  Maximize,
   X,
   Eye,
-  Settings,
+  ExternalLink,
 } from 'lucide-react-native';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
@@ -28,10 +27,9 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
-  interpolate,
 } from 'react-native-reanimated';
 
-interface EnhancedVideoPlayerProps {
+interface FixedVideoPlayerProps {
   stream: TwitchStream;
   width: number;
   height: number;
@@ -41,12 +39,10 @@ interface EnhancedVideoPlayerProps {
   onLongPress?: () => void;
   onRemove?: () => void;
   onMuteToggle?: () => void;
-  onPlayPause?: () => void;
   showControls?: boolean;
-  quality?: 'auto' | 'source' | 'high' | 'medium' | 'low';
 }
 
-export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
+export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
   stream,
   width,
   height,
@@ -56,61 +52,104 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
   onLongPress,
   onRemove,
   onMuteToggle,
-  onPlayPause,
   showControls = true,
-  quality = 'auto',
 }) => {
   // State management
-  const [isPlaying, setIsPlaying] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [controlsVisible, setControlsVisible] = useState(false);
   const webViewRef = useRef<WebView>(null);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Generate Twitch embed URL with comprehensive parent domains
+  // Generate proper Twitch embed URL with comprehensive mobile support
   const getTwitchEmbedUrl = useCallback(() => {
-    const params = new URLSearchParams({
-      channel: stream.user_login,
-      muted: isMuted.toString(),
-      autoplay: 'true',
-      controls: 'false',
-      quality: quality === 'auto' ? 'auto' : quality
-    });
-    
-    // Add comprehensive list of parent domains for better compatibility
-    const parentDomains = [
-      'localhost',
-      '127.0.0.1',
-      'expo.dev',
-      'exp.host',
-      'expo.io',
-      'snack.expo.dev',
-      'reactnative.dev',
-      'github.dev',
-      'codesandbox.io'
-    ];
-    
-    parentDomains.forEach(domain => {
-      params.append('parent', domain);
-    });
-    
-    return `https://player.twitch.tv/?${params.toString()}`;
-  }, [stream.user_login, isMuted, quality]);
-  
-  const embedUrl = getTwitchEmbedUrl();
+    // For mobile apps, we need to use a different approach
+    // Create an HTML page that embeds the Twitch player
+    const embedHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            overflow: hidden;
+        }
+        #twitch-embed {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">Loading ${stream.user_name}...</div>
+    <iframe
+        id="twitch-embed"
+        src="https://player.twitch.tv/?channel=${stream.user_login}&parent=localhost&parent=127.0.0.1&parent=expo.dev&parent=exp.host&parent=expo.io&parent=snack.expo.dev&parent=reactnative.dev&parent=facebook.github.io&muted=${isMuted}&autoplay=true&controls=false"
+        allowfullscreen
+        style="display: none;">
+    </iframe>
+
+    <script>
+        const iframe = document.getElementById('twitch-embed');
+        const loading = document.getElementById('loading');
+
+        // Show iframe after a short delay
+        setTimeout(() => {
+            iframe.style.display = 'block';
+            loading.style.display = 'none';
+        }, 1000);
+
+        // Handle iframe load
+        iframe.onload = () => {
+            loading.style.display = 'none';
+            iframe.style.display = 'block';
+        };
+
+        // Handle errors
+        iframe.onerror = () => {
+            loading.innerHTML = 'Failed to load stream';
+            loading.style.color = '#ff6b6b';
+        };
+
+        // Prevent context menu and selection
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('selectstart', e => e.preventDefault());
+
+        // Handle touch events for mobile
+        document.addEventListener('touchstart', e => e.preventDefault());
+    </script>
+</body>
+</html>`;
+
+    // Convert HTML to data URL
+    return `data:text/html;charset=utf-8,${encodeURIComponent(embedHtml)}`;
+  }, [stream.user_login, stream.user_name, isMuted]);
   
   // Animation values
   const scale = useSharedValue(1);
-  const opacity = useSharedValue(1);
   const controlsOpacity = useSharedValue(0);
-  
-  // Auto-hide controls timer
-  const controlsTimer = useRef<NodeJS.Timeout | null>(null);
   
   // Animated styles
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    opacity: opacity.value,
   }));
   
   const controlsStyle = useAnimatedStyle(() => ({
@@ -119,7 +158,7 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
   
   // Handle press with animation
   const handlePress = useCallback(() => {
-    scale.value = withSpring(0.95, { damping: 15 }, () => {
+    scale.value = withSpring(0.98, { damping: 15 }, () => {
       scale.value = withSpring(1);
     });
     
@@ -127,127 +166,105 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
     setControlsVisible(!controlsVisible);
     controlsOpacity.value = withTiming(controlsVisible ? 0 : 1, { duration: 200 });
     
-    // Auto-hide controls after 3 seconds
-    if (!controlsVisible) {
-      if (controlsTimer.current) clearTimeout(controlsTimer.current);
-      controlsTimer.current = setTimeout(() => {
-        setControlsVisible(false);
-        controlsOpacity.value = withTiming(0, { duration: 200 });
-      }, 3000);
-    }
-    
     onPress?.();
   }, [controlsVisible, onPress]);
   
-  // Handle long press with animation
+  // Handle long press
   const handleLongPress = useCallback(() => {
-    scale.value = withSpring(1.05, { damping: 12 }, () => {
-      scale.value = withSpring(1);
-    });
+    Alert.alert(
+      'Stream Options',
+      `${stream.user_name} - ${stream.game_name}`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Open in Twitch', 
+          onPress: () => {
+            // TODO: Open in Twitch app or browser
+            console.log('Open in Twitch:', stream.user_login);
+          }
+        },
+        onRemove && { 
+          text: 'Remove', 
+          style: 'destructive',
+          onPress: onRemove
+        }
+      ].filter(Boolean)
+    );
     onLongPress?.();
-  }, [onLongPress]);
+  }, [stream, onRemove, onLongPress]);
   
-  // Handle play/pause
-  const handlePlayPause = useCallback(() => {
-    setIsPlaying(!isPlaying);
-    onPlayPause?.();
-  }, [isPlaying, onPlayPause]);
+  // WebView event handlers
+  const handleWebViewLoad = useCallback(() => {
+    console.log('✅ Stream loaded successfully:', stream.user_login);
+    setIsLoading(false);
+    setError(null);
 
+    // Clear loading timeout
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
+    }
+  }, [stream.user_login]);
+
+  const handleWebViewError = useCallback((syntheticEvent: any) => {
+    const { nativeEvent } = syntheticEvent;
+    console.error('❌ Stream load error:', stream.user_login, nativeEvent);
+
+    // Provide more specific error messages
+    let errorMessage = 'Failed to load stream';
+    if (nativeEvent.description?.includes('network')) {
+      errorMessage = 'Network error - Check connection';
+    } else if (nativeEvent.description?.includes('parent')) {
+      errorMessage = 'Twitch embed error - Try refreshing';
+    } else if (nativeEvent.code === -1009) {
+      errorMessage = 'No internet connection';
+    }
+
+    setError(errorMessage);
+    setIsLoading(false);
+  }, [stream.user_login]);
+
+  const handleWebViewLoadStart = useCallback(() => {
+    console.log('🔄 Stream loading started:', stream.user_login);
+    setIsLoading(true);
+    setError(null);
+
+    // Set a timeout for loading
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+    }
+
+    loadingTimeoutRef.current = setTimeout(() => {
+      if (isLoading) {
+        setError('Stream loading timeout - Try refreshing');
+        setIsLoading(false);
+      }
+    }, 15000); // 15 second timeout
+  }, [stream.user_login, isLoading]);
+  
+  // Handle retry
+  const handleRetry = useCallback(() => {
+    setError(null);
+    setIsLoading(true);
+    webViewRef.current?.reload();
+  }, []);
+  
   // Handle mute toggle
   const handleMuteToggle = useCallback(() => {
     onMuteToggle?.();
   }, [onMuteToggle]);
   
-  // Retry mechanism
-  const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 3;
-  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // WebView event handlers with improved error handling
-  const handleWebViewLoad = useCallback(() => {
-    console.log('✅ WebView loaded successfully for:', stream.user_login);
-    setIsLoading(false);
-    setError(null);
-    setRetryCount(0);
-  }, [stream.user_login]);
+  const embedUrl = getTwitchEmbedUrl();
 
-  const handleWebViewError = useCallback((syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.error('❌ WebView error for', stream.user_login, ':', nativeEvent);
-    
-    const errorMessage = nativeEvent.description || 'Stream failed to load';
-    setError(errorMessage);
-    setIsLoading(false);
-    
-    // Auto-retry logic
-    if (retryCount < maxRetries) {
-      console.log(`🔄 Auto-retrying stream load (${retryCount + 1}/${maxRetries})`);
-      retryTimeoutRef.current = setTimeout(() => {
-        setRetryCount(prev => prev + 1);
-        setError(null);
-        setIsLoading(true);
-        webViewRef.current?.reload();
-      }, 2000 * (retryCount + 1)); // Exponential backoff
-    }
-  }, [stream.user_login, retryCount, maxRetries]);
-
-  const handleWebViewLoadStart = useCallback(() => {
-    console.log('🔄 WebView load started for:', stream.user_login);
-    setIsLoading(true);
-    setError(null);
-  }, [stream.user_login]);
-
-  const handleWebViewMessage = useCallback((event: any) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      console.log('📨 WebView message:', data);
-      
-      // Handle specific message types if needed
-      if (data.type === 'player_ready') {
-        setIsLoading(false);
-        setError(null);
-      } else if (data.type === 'player_error') {
-        setError(data.message || 'Player error occurred');
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.log('WebView message (non-JSON):', event.nativeEvent.data);
-    }
-  }, []);
-  
-  // Manual retry function
-  const handleRetry = useCallback(() => {
-    setError(null);
-    setIsLoading(true);
-    setRetryCount(0);
-    webViewRef.current?.reload();
-  }, []);
-  
-  // Cleanup timers on unmount
+  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      if (controlsTimer.current) {
-        clearTimeout(controlsTimer.current);
-      }
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
       }
     };
   }, []);
-  
-  // Loading timeout to prevent infinite loading
-  useEffect(() => {
-    const loadingTimeout = setTimeout(() => {
-      if (isLoading && !error) {
-        console.log('⏰ Loading timeout for stream:', stream.user_login);
-        setError('Stream is taking too long to load');
-        setIsLoading(false);
-      }
-    }, 15000); // 15 second timeout
-    
-    return () => clearTimeout(loadingTimeout);
-  }, [isLoading, error, stream.user_login]);
-  
+
   return (
     <Animated.View style={[styles.container, { width, height }, containerStyle]}>
       <TouchableOpacity
@@ -264,22 +281,8 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
           onLoad={handleWebViewLoad}
           onError={handleWebViewError}
           onLoadStart={handleWebViewLoadStart}
-          onMessage={handleWebViewMessage}
           allowsInlineMediaPlayback={true}
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          startInLoadingState={false}
-          scalesPageToFit={true}
-          bounces={false}
-          scrollEnabled={false}
-          showsHorizontalScrollIndicator={false}
-          showsVerticalScrollIndicator={false}
-          originWhitelist={['*']}
-          mixedContentMode="compatibility"
-          thirdPartyCookiesEnabled={true}
-          sharedCookiesEnabled={true}
-          userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
           javaScriptEnabled={true}
           domStorageEnabled={true}
           startInLoadingState={false}
@@ -288,18 +291,22 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
           scrollEnabled={false}
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
-          originWhitelist={['https://*']}
+          originWhitelist={['https://*', 'http://*', 'data:']}
           mixedContentMode={'compatibility'}
           allowsFullscreenVideo={false}
           allowsProtectedMedia={true}
-          userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1"
+          thirdPartyCookiesEnabled={true}
+          sharedCookiesEnabled={true}
+          cacheEnabled={false}
+          incognito={false}
+          userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
         />
         
         {/* Loading Overlay */}
         {isLoading && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color={ModernTheme.colors.primary[500]} />
-            <Text style={styles.loadingText}>Loading stream...</Text>
+            <Text style={styles.loadingText}>Loading {stream.user_name}...</Text>
           </View>
         )}
         
@@ -307,24 +314,9 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
         {error && (
           <View style={styles.errorOverlay}>
             <Text style={styles.errorText}>{error}</Text>
-            <View style={styles.errorActions}>
-              <TouchableOpacity
-                style={styles.retryButton}
-                onPress={handleRetry}
-              >
-                <Text style={styles.retryText}>Retry ({retryCount}/{maxRetries})</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.openExternalButton}
-                onPress={() => {
-                  const twitchUrl = `https://twitch.tv/${stream.user_login}`;
-                  // Open in external browser as fallback
-                  console.log('Opening Twitch in external browser:', twitchUrl);
-                }}
-              >
-                <Text style={styles.openExternalText}>Open in Twitch</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
           </View>
         )}
         
@@ -337,11 +329,13 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
             >
               <View style={styles.streamInfo}>
                 <View style={styles.platformBadge}>
-                  <Text style={styles.platformText}>TWITCH</Text>
+                  <Text style={styles.platformText}>LIVE</Text>
                 </View>
-                <View style={styles.liveIndicator}>
-                  <View style={[styles.liveDot, { backgroundColor: ModernTheme.colors.status.live }]} />
-                  <Text style={styles.liveText}>LIVE</Text>
+                <View style={styles.viewerInfo}>
+                  <Eye size={12} color={ModernTheme.colors.text.primary} />
+                  <Text style={styles.viewerText}>
+                    {stream.viewer_count?.toLocaleString() || '0'}
+                  </Text>
                 </View>
               </View>
               <Text style={styles.streamTitle} numberOfLines={1}>
@@ -350,14 +344,6 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
               <Text style={styles.streamGame} numberOfLines={1}>
                 {stream.game_name}
               </Text>
-              {stream.viewer_count && (
-                <View style={styles.viewerInfo}>
-                  <Eye size={12} color={ModernTheme.colors.text.secondary} />
-                  <Text style={styles.viewerCount}>
-                    {stream.viewer_count.toLocaleString()} viewers
-                  </Text>
-                </View>
-              )}
             </LinearGradient>
           </View>
         )}
@@ -371,22 +357,6 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
             >
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handlePlayPause}
-                  >
-                    <LinearGradient
-                      colors={ModernTheme.colors.gradients.primary}
-                      style={styles.controlButtonGradient}
-                    >
-                      {isPlaying ? (
-                        <Pause size={16} color="#fff" />
-                      ) : (
-                        <Play size={16} color="#fff" />
-                      )}
-                    </LinearGradient>
-                  </TouchableOpacity>
-                  
                   <TouchableOpacity
                     style={styles.controlButton}
                     onPress={handleMuteToggle}
@@ -405,19 +375,22 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
                 </View>
                 
                 <View style={styles.rightControls}>
-                  <TouchableOpacity style={styles.controlButton}>
+                  <TouchableOpacity
+                    style={styles.controlButton}
+                    onPress={() => console.log('Open external')}
+                  >
                     <LinearGradient
                       colors={ModernTheme.colors.gradients.primary}
                       style={styles.controlButtonGradient}
                     >
-                      <Settings size={16} color="#fff" />
+                      <ExternalLink size={16} color="#fff" />
                     </LinearGradient>
                   </TouchableOpacity>
                   
                   {onRemove && (
                     <TouchableOpacity
                       style={styles.controlButton}
-                      onPress={() => onRemove()}
+                      onPress={onRemove}
                     >
                       <LinearGradient
                         colors={ModernTheme.colors.gradients.danger}
@@ -454,31 +427,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     margin: ModernTheme.spacing.xs,
     ...ModernTheme.shadows.md,
-  },
+  } as ViewStyle,
   touchArea: {
     flex: 1,
     position: 'relative',
-  },
+  } as ViewStyle,
   video: {
     flex: 1,
     backgroundColor: '#000',
-  },
+  } as ViewStyle,
   loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: ModernTheme.colors.text.secondary,
-    fontSize: ModernTheme.typography.sizes.sm,
-    marginTop: ModernTheme.spacing.sm,
-  },
-  errorOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -487,68 +445,70 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.9)',
     justifyContent: 'center',
     alignItems: 'center',
+  } as ViewStyle,
+  loadingText: {
+    color: ModernTheme.colors.text.secondary,
+    fontSize: ModernTheme.typography.sizes.sm,
+    marginTop: ModernTheme.spacing.sm,
+    fontWeight: ModernTheme.typography.weights.medium,
+  } as TextStyle,
+  errorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: ModernTheme.spacing.md,
-  },
+  } as ViewStyle,
   errorText: {
     color: ModernTheme.colors.text.error,
     fontSize: ModernTheme.typography.sizes.sm,
     textAlign: 'center',
     marginBottom: ModernTheme.spacing.md,
-  },
-  errorActions: {
-    flexDirection: 'row',
-    gap: ModernTheme.spacing.sm,
-  },
+    fontWeight: ModernTheme.typography.weights.medium,
+  } as TextStyle,
   retryButton: {
     backgroundColor: ModernTheme.colors.primary[500],
     paddingHorizontal: ModernTheme.spacing.md,
     paddingVertical: ModernTheme.spacing.sm,
     borderRadius: ModernTheme.borderRadius.md,
-  },
+  } as ViewStyle,
   retryText: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
-  },
-  openExternalButton: {
-    backgroundColor: ModernTheme.colors.twitch,
-    paddingHorizontal: ModernTheme.spacing.md,
-    paddingVertical: ModernTheme.spacing.sm,
-    borderRadius: ModernTheme.borderRadius.md,
-  },
-  openExternalText: {
-    color: ModernTheme.colors.text.primary,
-    fontSize: ModernTheme.typography.sizes.sm,
-    fontWeight: ModernTheme.typography.weights.semibold,
-  },
+  } as TextStyle,
   infoOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-  },
+  } as ViewStyle,
   infoGradient: {
     padding: ModernTheme.spacing.sm,
-  },
+  } as ViewStyle,
   streamInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: ModernTheme.spacing.sm,
     marginBottom: ModernTheme.spacing.xs,
-  },
+  } as ViewStyle,
   platformBadge: {
-    backgroundColor: ModernTheme.colors.twitch,
+    backgroundColor: ModernTheme.colors.status.live,
     paddingHorizontal: ModernTheme.spacing.sm,
     paddingVertical: ModernTheme.spacing.xs,
     borderRadius: ModernTheme.borderRadius.sm,
-  },
+  } as ViewStyle,
   platformText: {
     color: ModernTheme.colors.text.primary,
     fontSize: 10,
     fontWeight: ModernTheme.typography.weights.bold,
     letterSpacing: 0.5,
-  },
-  liveIndicator: {
+  } as TextStyle,
+  viewerInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
@@ -556,65 +516,49 @@ const styles = StyleSheet.create({
     paddingVertical: ModernTheme.spacing.xs,
     borderRadius: ModernTheme.borderRadius.sm,
     gap: ModernTheme.spacing.xs,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  liveText: {
+  } as ViewStyle,
+  viewerText: {
     color: ModernTheme.colors.text.primary,
     fontSize: 10,
     fontWeight: ModernTheme.typography.weights.semibold,
-    letterSpacing: 0.5,
-  },
+  } as TextStyle,
   streamTitle: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
     marginBottom: 2,
-  },
+  } as TextStyle,
   streamGame: {
     color: ModernTheme.colors.text.accent,
     fontSize: ModernTheme.typography.sizes.xs,
     fontWeight: ModernTheme.typography.weights.medium,
-  },
-  viewerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: ModernTheme.spacing.xs,
-    marginTop: ModernTheme.spacing.xs,
-  },
-  viewerCount: {
-    color: ModernTheme.colors.text.secondary,
-    fontSize: ModernTheme.typography.sizes.xs,
-  },
+  } as TextStyle,
   controlsOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-  },
+  } as ViewStyle,
   controlsGradient: {
     padding: ModernTheme.spacing.sm,
-  },
+  } as ViewStyle,
   controlsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
+  } as ViewStyle,
   leftControls: {
     flexDirection: 'row',
     gap: ModernTheme.spacing.sm,
-  },
+  } as ViewStyle,
   rightControls: {
     flexDirection: 'row',
     gap: ModernTheme.spacing.sm,
-  },
+  } as ViewStyle,
   controlButton: {
     borderRadius: ModernTheme.borderRadius.md,
     overflow: 'hidden',
-  },
+  } as ViewStyle,
   controlButtonGradient: {
     width: 32,
     height: 32,
@@ -622,7 +566,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
+  } as ViewStyle,
   activeIndicator: {
     position: 'absolute',
     top: 0,
@@ -630,13 +574,13 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: ModernTheme.borderRadius.lg,
-  },
+    borderWidth: 3,
+    borderColor: ModernTheme.colors.primary[500],
+  } as ViewStyle,
   activeGradient: {
     flex: 1,
     borderRadius: ModernTheme.borderRadius.lg,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
+  } as ViewStyle,
 });
 
-export default EnhancedVideoPlayer;
+export default FixedVideoPlayer;
