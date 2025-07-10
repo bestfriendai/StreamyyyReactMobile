@@ -57,13 +57,12 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
   // Calculate grid dimensions
   const getGridDimensions = useCallback(() => {
     const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-    const headerHeight = 140; // Increased for better header
-    const controlsHeight = 100; // Increased for better controls
+    const controlsHeight = 100; // Approximate height for controls
     const padding = ModernTheme.spacing.md;
-    const spacing = ModernTheme.spacing.xs; // Reduced spacing for better fit
+    const spacing = ModernTheme.spacing.xs;
 
     const availableWidth = screenWidth - (padding * 2);
-    const availableHeight = screenHeight - headerHeight - controlsHeight - (padding * 2);
+    const availableHeight = screenHeight - controlsHeight - (padding * 2);
 
     let columns = 1;
     let rows = 1;
@@ -159,9 +158,9 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
   
   // Toggle controls visibility
   const toggleControls = useCallback(() => {
-    setShowControls(!showControls);
-    controlsOpacity.value = withTiming(showControls ? 0 : 1, { duration: 200 });
-  }, [showControls]);
+    setShowControls((prev) => !prev);
+    controlsOpacity.value = withTiming(showControls ? 0 : 1, { duration: 300 });
+  }, [showControls, controlsOpacity]);
   
   // Animated styles
   const gridStyle = useAnimatedStyle(() => ({
@@ -172,7 +171,50 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
     opacity: controlsOpacity.value,
   }));
   
-  // Render empty slot
+  const renderStreamItem = useCallback(
+    (stream: TwitchStream | null, index: number) => {
+      if (!stream) {
+        return renderEmptySlot(index);
+      }
+
+      const isMuted = globalMute || activeStreamId !== stream.id;
+
+      return (
+        <Animated.View
+          key={stream.id}
+          style={[
+            styles.streamContainer,
+            {
+              width: gridDimensions.itemWidth,
+              height: gridDimensions.itemHeight,
+            },
+          ]}
+        >
+          <DirectTwitchPlayer
+            stream={stream}
+            isMuted={isMuted}
+            width={gridDimensions.itemWidth}
+            height={gridDimensions.itemHeight}
+            onPress={() => setActiveStreamId(stream.id)}
+            onRemove={() => handleRemoveStream(stream.id)}
+            onMuteToggle={() => {
+              if (activeStreamId === stream.id) {
+                handleGlobalMuteToggle();
+              } else {
+                setActiveStreamId(stream.id);
+                if (globalMute) {
+                  handleGlobalMuteToggle();
+                }
+              }
+            }}
+            showControls={showControls}
+          />
+        </Animated.View>
+      );
+    },
+    [gridDimensions, globalMute, activeStreamId, handleRemoveStream, renderEmptySlot]
+  );
+
   const renderEmptySlot = useCallback((index: number) => (
     <TouchableOpacity
       key={`empty-${index}`}
@@ -213,205 +255,71 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
       </LinearGradient>
     </TouchableOpacity>
   ), [gridDimensions]);
-  
-  // Render grid items in proper rows and columns
-  const renderGridItems = useMemo(() => {
-    const { columns, rows, itemWidth, itemHeight, spacing } = gridDimensions;
-    const totalSlots = columns * rows;
-    const displayStreams = activeStreams.slice(0, totalSlots);
 
-    const gridRows = [];
+  const renderControls = () => (
+    <Animated.View style={[styles.controlsContainer, controlsStyle]}>
+      <View style={styles.layoutControls}>
+        <ControlButton onPress={() => handleLayoutChange('1x1')} icon={Square} label="1x1" />
+        <ControlButton onPress={() => handleLayoutChange('2x2')} icon={Grid2X2} label="2x2" />
+        <ControlButton onPress={() => handleLayoutChange('3x3')} icon={Grid3X3} label="3x3" />
+      </View>
+      <View style={styles.actionControls}>
+        <ControlButton onPress={handleGlobalMuteToggle} icon={globalMute ? VolumeX : Volume2} label="Mute All" />
+        <ControlButton onPress={handleClearAll} icon={RotateCcw} label="Clear All" />
+        <ControlButton onPress={toggleControls} icon={Settings} label="Settings" />
+      </View>
+    </Animated.View>
+  );
 
-    // Create rows
-    for (let row = 0; row < rows; row++) {
-      const rowItems = [];
-
-      // Create columns for this row
-      for (let col = 0; col < columns; col++) {
-        const streamIndex = row * columns + col;
-        const stream = displayStreams[streamIndex];
-
-        if (stream) {
-          // Add stream player
-          rowItems.push(
-            <DirectTwitchPlayer
-              key={stream.id}
-              stream={stream}
-              width={itemWidth}
-              height={itemHeight}
-              isActive={activeStreamId === stream.id}
-              isMuted={globalMute && activeStreamId !== stream.id}
-              onPress={() => setActiveStreamId(stream.id)}
-              onRemove={() => handleRemoveStream(stream.id)}
-              onMuteToggle={() => setActiveStreamId(activeStreamId === stream.id ? null : stream.id)}
-              showControls={showControls}
-            />
-          );
-        } else {
-          // Add empty slot
-          rowItems.push(renderEmptySlot(`${row}-${col}`));
-        }
-      }
-
-      // Add the row
-      gridRows.push(
-        <View
-          key={`row-${row}`}
-          style={[
-            styles.gridRow,
-            {
-              gap: spacing,
-            }
-          ]}
-        >
-          {rowItems}
-        </View>
-      );
-    }
-
-    return gridRows;
-  }, [
-    activeStreams,
-    gridDimensions,
-    activeStreamId,
-    globalMute,
-    showControls,
-    handleRemoveStream,
-    renderEmptySlot,
-  ]);
-  
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <LinearGradient
-          colors={['rgba(0, 0, 0, 0.95)', 'rgba(0, 0, 0, 0.8)']}
-          style={styles.headerGradient}
-        >
-          <View style={styles.headerContent}>
-            <View style={styles.headerLeft}>
-              <View style={styles.titleContainer}>
-                <Monitor size={24} color={ModernTheme.colors.primary[400]} />
-                <Text style={styles.headerTitle}>Multi-Stream Viewer</Text>
-              </View>
-              <View style={styles.streamInfo}>
-                <View style={styles.streamCount}>
-                  <Text style={styles.streamCountNumber}>{activeStreams.length}</Text>
-                  <Text style={styles.streamCountText}>of {gridDimensions.totalSlots} streams</Text>
-                </View>
-                {activeStreamId && (
-                  <View style={styles.activeStreamInfo}>
-                    <View style={styles.liveDot} />
-                    <Text style={styles.activeStreamText}>
-                      {activeStreams.find(s => s.id === activeStreamId)?.user_name || 'Unknown'}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
-
-            <View style={styles.headerRight}>
-              <TouchableOpacity
-                style={[styles.headerButton, globalMute && styles.headerButtonMuted]}
-                onPress={handleGlobalMuteToggle}
-              >
-                <LinearGradient
-                  colors={globalMute ?
-                    ['rgba(239, 68, 68, 0.2)', 'rgba(239, 68, 68, 0.1)'] :
-                    ['rgba(34, 197, 94, 0.2)', 'rgba(34, 197, 94, 0.1)']
-                  }
-                  style={styles.headerButtonGradient}
-                >
-                  {globalMute ? (
-                    <VolumeX size={18} color={ModernTheme.colors.text.primary} />
-                  ) : (
-                    <Volume2 size={18} color={ModernTheme.colors.text.primary} />
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={toggleControls}
-              >
-                <LinearGradient
-                  colors={['rgba(139, 92, 246, 0.2)', 'rgba(139, 92, 246, 0.1)']}
-                  style={styles.headerButtonGradient}
-                >
-                  <Settings size={18} color={ModernTheme.colors.text.primary} />
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </View>
-          
-          {/* Layout Controls */}
-          <Animated.View style={[styles.layoutControls, controlsStyle]}>
-            <Text style={styles.controlsLabel}>Layout:</Text>
-            <View style={styles.layoutButtons}>
-              {(['1x1', '2x2', '3x3', '4x4'] as GridLayout[]).map((layoutOption) => {
-                const isActive = layout === layoutOption;
-                const IconComponent = layoutOption === '1x1' ? Square : 
-                                   layoutOption === '2x2' ? Grid2X2 : Grid3X3;
-                
-                return (
-                  <TouchableOpacity
-                    key={layoutOption}
-                    style={[styles.layoutButton, isActive && styles.layoutButtonActive]}
-                    onPress={() => handleLayoutChange(layoutOption)}
-                  >
-                    <IconComponent size={16} color={ModernTheme.colors.text.primary} />
-                    <Text style={[styles.layoutButtonText, isActive && styles.layoutButtonTextActive]}>
-                      {layoutOption}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            
-            {activeStreams.length > 0 && (
-              <TouchableOpacity
-                style={styles.clearButton}
-                onPress={handleClearAll}
-              >
-                <RotateCcw size={16} color={ModernTheme.colors.text.error} />
-                <Text style={styles.clearButtonText}>Clear All</Text>
-              </TouchableOpacity>
-            )}
-          </Animated.View>
-        </LinearGradient>
-      </View>
-      
-      {/* Grid */}
-      <View style={styles.content}>
-        <Animated.View style={[styles.grid, gridStyle]}>
-          <View
-            style={[
-              styles.gridContainer,
-              {
-                gap: gridDimensions.spacing,
-              }
-            ]}
-          >
-            {renderGridItems}
-          </View>
-        </Animated.View>
-      </View>
-      
-      {/* Empty State */}
-      {activeStreams.length === 0 && (
-        <View style={styles.emptyState}>
-          <Monitor size={64} color={ModernTheme.colors.text.secondary} />
-          <Text style={styles.emptyStateTitle}>No Active Streams</Text>
-          <Text style={styles.emptyStateSubtitle}>
-            Go to Discover to add streams to your multi-view
-          </Text>
-        </View>
-      )}
+      <Animated.View style={[styles.gridContainer, gridStyle]}>
+        {Array.from({ length: gridDimensions.totalSlots }).map((_, index) => {
+          const stream = activeStreams[index] || null;
+          return renderStreamItem(stream, index);
+        })}
+      </Animated.View>
+      {renderControls()}
     </View>
   );
 };
 
+
+const ControlButton: React.FC<{ onPress: () => void; icon: React.ElementType; label: string }> = ({ onPress, icon: Icon, label }) => (
+  <TouchableOpacity onPress={onPress} style={styles.controlButton}>
+    <Icon size={24} color={ModernTheme.colors.primary} />
+    <Text style={styles.controlLabel}>{label}</Text>
+  </TouchableOpacity>
+);
+
 const styles = StyleSheet.create({
+  controlsContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: ModernTheme.colors.background,
+    padding: ModernTheme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: ModernTheme.colors.border,
+  },
+  layoutControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: ModernTheme.spacing.md,
+  },
+  actionControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  controlButton: {
+    alignItems: 'center',
+  },
+  controlLabel: {
+    color: ModernTheme.colors.textSecondary,
+    fontSize: 12,
+    marginTop: ModernTheme.spacing.xs,
+  },
   container: {
     flex: 1,
     backgroundColor: ModernTheme.colors.background.primary,
@@ -506,14 +414,6 @@ const styles = StyleSheet.create({
   headerButtonMuted: {
     opacity: 0.8,
   } as ViewStyle,
-  layoutControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: ModernTheme.borderRadius.md,
-    padding: ModernTheme.spacing.md,
-  } as ViewStyle,
   controlsLabel: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
@@ -561,13 +461,13 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: ModernTheme.spacing.md,
   } as ViewStyle,
-  grid: {
-    flex: 1,
-  } as ViewStyle,
   gridContainer: {
     flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: ModernTheme.spacing.md,
   } as ViewStyle,
   gridRow: {
     flexDirection: 'row',
