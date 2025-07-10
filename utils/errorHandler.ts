@@ -107,7 +107,7 @@ export class ErrorHandler {
  */
 export function setupGlobalErrorHandlers() {
   // Handle unhandled promise rejections
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && window.addEventListener) {
     window.addEventListener('unhandledrejection', (event) => {
       console.group('🚨 Unhandled Promise Rejection');
       console.error('Reason:', event.reason);

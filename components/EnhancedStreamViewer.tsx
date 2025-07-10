@@ -245,13 +245,13 @@ export function EnhancedStreamViewer({
         </iframe>
       </div>
       <script>
-        document.addEventListener('fullscreenchange', function() {
+        document['addEventListener']('fullscreenchange', function() {
           if (document.fullscreenElement) {
             document.exitFullscreen();
           }
         });
         
-        window.addEventListener('message', function(event) {
+        window['addEventListener']('message', function(event) {
           try {
             const data = JSON.parse(event.data);
             if (data.action === 'mute' || data.action === 'unmute') {
@@ -264,7 +264,7 @@ export function EnhancedStreamViewer({
 
         // Hide loading when iframe loads
         const iframe = document.querySelector('iframe');
-        iframe.addEventListener('load', function() {
+        iframe['addEventListener']('load', function() {
           document.querySelector('.loading').style.display = 'none';
         });
       </script>

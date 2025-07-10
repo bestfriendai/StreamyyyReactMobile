@@ -12,7 +12,7 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import { ClerkProvider } from '@clerk/clerk-expo';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { useFrameworkReady } from '@/hooks/useFrameworkReady';
+// import { useFrameworkReady } from '@/hooks/useFrameworkReady'; // Temporarily commented out to debug
 import { AuthProvider } from '@/contexts/AuthContext';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandler';
 
@@ -21,7 +21,7 @@ const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  useFrameworkReady();
+  // useFrameworkReady(); // Temporarily commented out to debug
 
   const [fontsLoaded, fontError] = useFonts({
     'Inter-Regular': Inter_400Regular,

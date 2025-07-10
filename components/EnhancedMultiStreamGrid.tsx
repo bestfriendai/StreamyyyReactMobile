@@ -218,13 +218,13 @@ const StreamCell: React.FC<{
       </div>
       <script>
         // Disable fullscreen attempts
-        document.addEventListener('fullscreenchange', function() {
+        document['addEventListener']('fullscreenchange', function() {
           if (document.fullscreenElement) {
             document.exitFullscreen();
           }
         });
         
-        window.addEventListener('message', function(event) {
+        window['addEventListener']('message', function(event) {
           try {
             const data = JSON.parse(event.data);
             if (data.action === 'mute' || data.action === 'unmute') {

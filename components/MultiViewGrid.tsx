@@ -148,20 +148,20 @@ const StreamCell: React.FC<StreamCellProps> = ({
       </div>
       <script>
         // Prevent fullscreen completely
-        document.addEventListener('fullscreenchange', function() {
+        document['addEventListener']('fullscreenchange', function() {
           if (document.fullscreenElement) {
             document.exitFullscreen();
           }
         });
         
-        document.addEventListener('webkitfullscreenchange', function() {
+        document['addEventListener']('webkitfullscreenchange', function() {
           if (document.webkitFullscreenElement) {
             document.webkitExitFullscreen();
           }
         });
         
         // Prevent any fullscreen attempts
-        document.addEventListener('keydown', function(e) {
+        document['addEventListener']('keydown', function(e) {
           if (e.key === 'F11' || (e.key === 'f' && e.target.tagName === 'IFRAME')) {
             e.preventDefault();
             return false;
