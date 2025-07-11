@@ -9,6 +9,7 @@ import {
   Alert,
   Platform,
   Linking,
+  Pressable,
 } from 'react-native';
 import { MotiView, AnimatePresence } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -37,6 +38,8 @@ import {
   Trash2,
   RefreshCw,
   Bug,
+  Sparkles,
+  Zap,
 } from 'lucide-react-native';
 import { ModernTheme } from '@/theme/modernTheme';
 import Animated, {
@@ -45,9 +48,13 @@ import Animated, {
   withSpring,
   withTiming,
   interpolate,
+  FadeIn,
+  SlideInRight,
+  SlideInDown,
 } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ErrorTestComponent } from './ErrorTestComponent';
+import { HapticFeedback } from '@/utils/haptics';
 
 interface SettingsItem {
   id: string;
@@ -88,19 +95,23 @@ export const EnhancedSettingsScreen: React.FC = () => {
   
   // Handle setting toggle
   const handleToggle = useCallback((key: string, value: boolean) => {
+    HapticFeedback.light();
+    
     setSettings(prev => ({ ...prev, [key]: value }));
     
     // Save to AsyncStorage
     AsyncStorage.setItem(`setting_${key}`, JSON.stringify(value));
     
-    // Provide haptic feedback if enabled
-    if (settings.hapticFeedback && Platform.OS === 'ios') {
-      // TODO: Add haptic feedback
+    // Special feedback for important toggles
+    if (key === 'hapticFeedback' && value) {
+      setTimeout(() => HapticFeedback.success(), 200);
     }
-  }, [settings.hapticFeedback]);
+  }, []);
   
   // Handle section toggle
   const handleSectionToggle = useCallback((sectionId: string) => {
+    HapticFeedback.light();
+    
     setExpandedSections(prev => 
       prev.includes(sectionId) 
         ? prev.filter(id => id !== sectionId)
@@ -129,12 +140,15 @@ export const EnhancedSettingsScreen: React.FC = () => {
   }, []);
   
   const handleClearCache = useCallback(() => {
+    HapticFeedback.warning();
+    
     Alert.alert(
       'Clear Cache',
       'This will clear all cached data. Are you sure?',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Clear', style: 'destructive', onPress: () => {
+          HapticFeedback.success();
           // TODO: Implement cache clearing
           Alert.alert('Success', 'Cache cleared successfully!');
         }}
@@ -143,12 +157,15 @@ export const EnhancedSettingsScreen: React.FC = () => {
   }, []);
   
   const handleResetSettings = useCallback(() => {
+    HapticFeedback.warning();
+    
     Alert.alert(
       'Reset Settings',
       'This will reset all settings to default values. Are you sure?',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Reset', style: 'destructive', onPress: () => {
+          HapticFeedback.success();
           setSettings({
             notifications: true,
             autoplay: true,
@@ -370,14 +387,17 @@ export const EnhancedSettingsScreen: React.FC = () => {
     const IconComponent = item.icon;
     
     return (
-      <TouchableOpacity
+      <Pressable
         key={item.id}
-        style={[
+        style={({ pressed }) => [
           styles.settingItem,
           item.destructive && styles.destructiveItem,
+          pressed && { transform: [{ scale: 0.98 }] }
         ]}
-        onPress={item.onPress}
-        activeOpacity={0.7}
+        onPress={() => {
+          HapticFeedback.light();
+          item.onPress?.();
+        }}
       >
         <LinearGradient
           colors={item.destructive 
@@ -448,7 +468,7 @@ export const EnhancedSettingsScreen: React.FC = () => {
             )}
           </View>
         </LinearGradient>
-      </TouchableOpacity>
+      </Pressable>
     );
   }, []);
   
@@ -458,10 +478,12 @@ export const EnhancedSettingsScreen: React.FC = () => {
     
     return (
       <View key={section.id} style={styles.section}>
-        <TouchableOpacity
-          style={styles.sectionHeader}
+        <Pressable
+          style={({ pressed }) => [
+            styles.sectionHeader,
+            pressed && { transform: [{ scale: 0.98 }] }
+          ]}
           onPress={() => handleSectionToggle(section.id)}
-          activeOpacity={0.7}
         >
           <Text style={styles.sectionTitle}>{section.title}</Text>
           <Animated.View
@@ -471,18 +493,22 @@ export const EnhancedSettingsScreen: React.FC = () => {
           >
             <ChevronRight size={20} color={ModernTheme.colors.text.secondary} />
           </Animated.View>
-        </TouchableOpacity>
+        </Pressable>
         
         {isExpanded && (
-          <MotiView
-            from={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ type: 'timing', duration: 300 }}
+          <Animated.View 
+            entering={SlideInDown.delay(100)}
             style={styles.sectionContent}
           >
-            {section.items.map(renderSettingItem)}
-          </MotiView>
+            {section.items.map((item, index) => (
+              <Animated.View 
+                key={item.id}
+                entering={FadeIn.delay(index * 50)}
+              >
+                {renderSettingItem(item)}
+              </Animated.View>
+            ))}
+          </Animated.View>
         )}
       </View>
     );

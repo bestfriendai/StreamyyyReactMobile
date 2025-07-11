@@ -3,6 +3,8 @@
  * Provides comprehensive performance tracking and optimization recommendations
  */
 
+import React from 'react';
+
 interface PerformanceMetrics {
   componentRenderCount: number;
   memoryUsage: number;
@@ -45,7 +47,7 @@ class PerformanceMonitor {
   private memoryHistory: MemoryMetrics[] = [];
   private streamMetrics: Map<string, StreamMetrics> = new Map();
   private fpsTimer: NodeJS.Timeout | null = null;
-  private memoryTimer: NodeJS.Timeout | null = null;
+  private memoryTimer: ReturnType<typeof setInterval> | null = null;
   private isMonitoring: boolean = false;
 
   constructor() {
@@ -178,10 +180,10 @@ class PerformanceMonitor {
     const startTime = performance.now();
     
     try {
-      const response = await fetch(url, { 
-        method: 'HEAD',
-        timeout: 5000,
-      });
+      const response = await Promise.race([
+        fetch(url, { method: 'HEAD' }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Request timeout')), 5000))
+      ]) as Response;
       
       const latency = performance.now() - startTime;
       this.metrics.networkLatency = latency;
@@ -434,7 +436,14 @@ export const performanceMonitor = new PerformanceMonitor();
 // React hook for performance monitoring
 export const usePerformanceMonitor = () => {
   const [isMonitoring, setIsMonitoring] = React.useState(false);
-  const [report, setReport] = React.useState(null);
+  const [report, setReport] = React.useState<{
+    summary: any;
+    recommendations: string[];
+    metrics: PerformanceMetrics;
+    renderHistory: RenderMetrics[];
+    memoryHistory: MemoryMetrics[];
+    streamMetrics: StreamMetrics[];
+  } | null>(null);
   
   const startMonitoring = React.useCallback(() => {
     performanceMonitor.startMonitoring();

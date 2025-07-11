@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { NavigationHeader } from '@/components/NavigationHeader';
 import { 
   Crown, 
   Check, 
@@ -22,7 +23,8 @@ import {
   TrendingUp,
   Users,
   Grid,
-  Settings
+  Settings,
+  CreditCard
 } from 'lucide-react-native';
 import Animated, {
   useAnimatedStyle,
@@ -239,7 +241,7 @@ export default function SubscriptionScreen() {
           onPressOut={handlePressOut}
         >
           <LinearGradient
-            colors={isCurrentPlan ? plan.gradient : ['rgba(42, 42, 42, 0.8)', 'rgba(58, 58, 58, 0.8)']}
+            colors={isCurrentPlan ? plan.gradient as any : ['rgba(42, 42, 42, 0.8)', 'rgba(58, 58, 58, 0.8)']}
             style={styles.planGradient}
           >
             {plan.recommended && (
@@ -257,7 +259,7 @@ export default function SubscriptionScreen() {
             <View style={styles.planHeader}>
               <View style={styles.planIconContainer}>
                 <LinearGradient
-                  colors={plan.gradient}
+                  colors={plan.gradient as any}
                   style={styles.planIcon}
                 >
                   <IconComponent size={24} color="#fff" />
@@ -310,7 +312,7 @@ export default function SubscriptionScreen() {
                   disabled={isProcessing}
                 >
                   <LinearGradient
-                    colors={plan.gradient}
+                    colors={plan.gradient as any}
                     style={styles.subscribeGradient}
                   >
                     <Text style={styles.subscribeText}>
@@ -326,11 +328,24 @@ export default function SubscriptionScreen() {
     );
   };
 
+  const currentPlan = plans.find(p => p.id === tier);
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <LinearGradient
         colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']}
         style={styles.background}
+      />
+      
+      <NavigationHeader
+        title="Premium"
+        subtitle={`Current: ${currentPlan?.displayName || 'Free'}`}
+        variant="transparent"
+        rightElement={
+          <TouchableOpacity style={{ padding: 4 }}>
+            <CreditCard size={20} color="#8B5CF6" />
+          </TouchableOpacity>
+        }
       />
       
       <ScrollView
@@ -460,6 +475,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 120,
+    paddingTop: 0,
   },
   header: {
     padding: 24,

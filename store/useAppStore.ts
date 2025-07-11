@@ -245,16 +245,7 @@ export const useAppStore = create<AppState>()(
 );
 
 // Performance monitoring subscription
-useAppStore.subscribe(
-  (state) => state.activeStreams.length,
-  (streamCount) => {
-    if (streamCount > 0) {
-      useAppStore.getState().updatePerformanceMetrics({
-        renderCount: useAppStore.getState().performanceMetrics.renderCount + 1,
-      });
-    }
-  }
-);
+// TODO: Implement performance monitoring when metrics are added to AppState
 
 // Optimized selectors with shallow equality for better performance
 import { shallow } from 'zustand/shallow';
@@ -316,4 +307,5 @@ export const useActiveStreamCount = () => useAppStore(state => state.activeStrea
 export const useCanAddMoreStreams = () => useAppStore(state => state.canAddMoreStreams(state.activeStreams.length));
 export const useStreamById = (id: string) => useAppStore(state => state.activeStreams.find(s => s.id === id));
 export const useLayoutById = (id: string) => useAppStore(state => state.savedLayouts.find(l => l.id === id));
-export const usePerformanceMetrics = () => useAppStore(state => state.performanceMetrics, shallow);
+// TODO: Add performance metrics to AppState interface
+// export const usePerformanceMetrics = () => useAppStore(state => state.performanceMetrics, shallow);

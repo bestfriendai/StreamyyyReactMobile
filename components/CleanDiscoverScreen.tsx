@@ -11,8 +11,10 @@ import {
   ViewStyle,
   TextStyle,
   FlatList,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import {
   Search,
   Filter,
@@ -22,6 +24,9 @@ import {
   Grid3X3,
   List,
   X,
+  Sparkles,
+  Users,
+  Clock,
 } from 'lucide-react-native';
 import { TwitchStream, TwitchGame } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
@@ -32,7 +37,11 @@ import Animated, {
   withSpring,
   withTiming,
   FadeIn,
+  SlideInDown,
+  withRepeat,
+  withSequence,
 } from 'react-native-reanimated';
+import { HapticFeedback } from '@/utils/haptics';
 
 interface CleanDiscoverScreenProps {
   streams: TwitchStream[];
@@ -85,6 +94,19 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
   // Animation values
   const searchBarScale = useSharedValue(1);
   const filtersHeight = useSharedValue(0);
+  const sparkleRotation = useSharedValue(0);
+  const headerOffset = useSharedValue(0);
+
+  // Sparkle animation
+  React.useEffect(() => {
+    sparkleRotation.value = withRepeat(
+      withSequence(
+        withTiming(360, { duration: 2000 }),
+        withTiming(0, { duration: 0 })
+      ),
+      -1
+    );
+  }, []);
   
   // Calculate grid dimensions
   const getGridDimensions = useCallback(() => {
@@ -146,14 +168,32 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
       searchBarScale.value = withSpring(1);
     });
     
+    // Haptic feedback for search
+    if (query.length === 1) {
+      HapticFeedback.light();
+    }
+    
     setSearchFilters(prev => ({ ...prev, query }));
   }, []);
   
   // Toggle filters
   const toggleFilters = useCallback(() => {
+    HapticFeedback.medium();
     setShowFilters(!showFilters);
-    filtersHeight.value = withTiming(showFilters ? 0 : 120, { duration: 300 });
+    filtersHeight.value = withTiming(showFilters ? 0 : 140, { duration: 300 });
   }, [showFilters]);
+
+  // Handle view mode change
+  const handleViewModeChange = useCallback((mode: ViewMode) => {
+    HapticFeedback.light();
+    setViewMode(mode);
+  }, []);
+
+  // Handle sort change
+  const handleSortChange = useCallback((sort: SortBy) => {
+    HapticFeedback.light();
+    setSearchFilters(prev => ({ ...prev, sortBy: sort }));
+  }, []);
   
   // Animated styles
   const searchBarStyle = useAnimatedStyle(() => ({
@@ -162,7 +202,15 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
   
   const filtersStyle = useAnimatedStyle(() => ({
     height: filtersHeight.value,
-    opacity: filtersHeight.value / 120,
+    opacity: filtersHeight.value / 140,
+  }));
+
+  const sparkleStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${sparkleRotation.value}deg` }],
+  }));
+
+  const headerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: headerOffset.value }],
   }));
   
   // Render stream item
@@ -206,10 +254,29 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
           style={styles.headerGradient}
         >
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>🎮 Discover Streams</Text>
+            <View style={styles.titleContainer}>
+              <Text style={styles.headerTitle}>Discover</Text>
+              <Animated.View style={sparkleStyle}>
+                <Sparkles size={24} color={ModernTheme.colors.primary[400]} />
+              </Animated.View>
+            </View>
             <Text style={styles.headerSubtitle}>
-              {filteredStreams.length} streams • {games.length} games
+              {filteredStreams.length} live streams • {games.length} trending games
             </Text>
+            
+            {/* Quick Stats */}
+            <View style={styles.quickStats}>
+              <View style={styles.statItem}>
+                <Users size={14} color={ModernTheme.colors.text.secondary} />
+                <Text style={styles.statText}>
+                  {filteredStreams.reduce((sum, stream) => sum + stream.viewer_count, 0).toLocaleString()} viewers
+                </Text>
+              </View>
+              <View style={styles.statItem}>
+                <TrendingUp size={14} color={ModernTheme.colors.success[500]} />
+                <Text style={styles.statText}>Live now</Text>
+              </View>
+            </View>
           </View>
           
           {/* Search Bar */}
@@ -241,16 +308,20 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
               
               <TouchableOpacity
                 style={[styles.controlButton, viewMode === 'grid' && styles.controlButtonActive]}
-                onPress={() => setViewMode('grid')}
+                onPress={() => handleViewModeChange('grid')}
+                accessibilityLabel="Grid view"
+                accessibilityRole="button"
               >
-                <Grid3X3 size={18} color={ModernTheme.colors.text.primary} />
+                <Grid3X3 size={18} color={viewMode === 'grid' ? '#000' : ModernTheme.colors.text.primary} />
               </TouchableOpacity>
               
               <TouchableOpacity
                 style={[styles.controlButton, viewMode === 'list' && styles.controlButtonActive]}
-                onPress={() => setViewMode('list')}
+                onPress={() => handleViewModeChange('list')}
+                accessibilityLabel="List view"
+                accessibilityRole="button"
               >
-                <List size={18} color={ModernTheme.colors.text.primary} />
+                <List size={18} color={viewMode === 'list' ? '#000' : ModernTheme.colors.text.primary} />
               </TouchableOpacity>
             </View>
           </Animated.View>
@@ -261,23 +332,35 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
               <View style={styles.filterRow}>
                 <Text style={styles.filterLabel}>Sort by:</Text>
                 <View style={styles.filterButtons}>
-                  {(['viewers', 'recent', 'alphabetical'] as SortBy[]).map((sort) => (
-                    <TouchableOpacity
-                      key={sort}
-                      style={[
-                        styles.filterButton,
-                        searchFilters.sortBy === sort && styles.filterButtonActive
-                      ]}
-                      onPress={() => setSearchFilters(prev => ({ ...prev, sortBy: sort }))}
-                    >
-                      <Text style={[
-                        styles.filterButtonText,
-                        searchFilters.sortBy === sort && styles.filterButtonTextActive
-                      ]}>
-                        {sort === 'viewers' ? 'Viewers' : sort === 'recent' ? 'Recent' : 'A-Z'}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                  {(['viewers', 'recent', 'alphabetical'] as SortBy[]).map((sort) => {
+                    const isActive = searchFilters.sortBy === sort;
+                    const icon = sort === 'viewers' ? <Eye size={12} color={isActive ? '#000' : ModernTheme.colors.text.secondary} /> :
+                                sort === 'recent' ? <Clock size={12} color={isActive ? '#000' : ModernTheme.colors.text.secondary} /> :
+                                <TrendingUp size={12} color={isActive ? '#000' : ModernTheme.colors.text.secondary} />;
+                    
+                    return (
+                      <TouchableOpacity
+                        key={sort}
+                        style={[
+                          styles.filterButton,
+                          isActive && styles.filterButtonActive
+                        ]}
+                        onPress={() => handleSortChange(sort)}
+                        accessibilityLabel={`Sort by ${sort}`}
+                        accessibilityRole="button"
+                      >
+                        <View style={styles.filterButtonContent}>
+                          {icon}
+                          <Text style={[
+                            styles.filterButtonText,
+                            isActive && styles.filterButtonTextActive
+                          ]}>
+                            {sort === 'viewers' ? 'Viewers' : sort === 'recent' ? 'Recent' : 'A-Z'}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               </View>
             </View>
@@ -289,8 +372,33 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
       <View style={styles.content}>
         {isLoading && filteredStreams.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={ModernTheme.colors.primary[500]} />
-            <Text style={styles.loadingText}>Loading streams...</Text>
+            <Animated.View entering={SlideInDown.delay(200)}>
+              <ActivityIndicator size="large" color={ModernTheme.colors.primary[500]} />
+              <Text style={styles.loadingText}>Discovering amazing streams...</Text>
+              <Text style={styles.loadingSubtext}>Hang tight while we find the best content</Text>
+            </Animated.View>
+          </View>
+        ) : filteredStreams.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Animated.View entering={SlideInDown.delay(200)} style={styles.emptyContent}>
+              <Search size={48} color={ModernTheme.colors.text.secondary} />
+              <Text style={styles.emptyTitle}>No streams found</Text>
+              <Text style={styles.emptySubtitle}>
+                {searchFilters.query ? 
+                  `No results for "${searchFilters.query}"` : 
+                  'Try adjusting your filters or refreshing'
+                }
+              </Text>
+              <TouchableOpacity 
+                style={styles.emptyButton} 
+                onPress={() => {
+                  setSearchFilters({ query: '', sortBy: 'viewers', minViewers: 0 });
+                  handleRefresh();
+                }}
+              >
+                <Text style={styles.emptyButtonText}>Clear filters & refresh</Text>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
         ) : (
           <FlatList
@@ -340,6 +448,27 @@ const styles = StyleSheet.create({
   headerContent: {
     marginBottom: ModernTheme.spacing.md,
   } as ViewStyle,
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: ModernTheme.spacing.sm,
+    marginBottom: 4,
+  } as ViewStyle,
+  quickStats: {
+    flexDirection: 'row',
+    gap: ModernTheme.spacing.md,
+    marginTop: ModernTheme.spacing.sm,
+  } as ViewStyle,
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: ModernTheme.spacing.xs,
+  } as ViewStyle,
+  statText: {
+    color: ModernTheme.colors.text.secondary,
+    fontSize: ModernTheme.typography.sizes.xs,
+    fontWeight: ModernTheme.typography.weights.medium,
+  } as TextStyle,
   headerTitle: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes['2xl'],
@@ -378,6 +507,11 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   controlButtonActive: {
     backgroundColor: ModernTheme.colors.primary[500],
+    shadowColor: ModernTheme.colors.primary[500],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   } as ViewStyle,
   filtersPanel: {
     overflow: 'hidden',
@@ -407,9 +541,21 @@ const styles = StyleSheet.create({
     borderRadius: ModernTheme.borderRadius.sm,
     paddingHorizontal: ModernTheme.spacing.sm,
     paddingVertical: ModernTheme.spacing.xs,
+    minWidth: 80,
+  } as ViewStyle,
+  filterButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: ModernTheme.spacing.xs,
+    justifyContent: 'center',
   } as ViewStyle,
   filterButtonActive: {
     backgroundColor: ModernTheme.colors.primary[500],
+    shadowColor: ModernTheme.colors.primary[500],
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
   } as ViewStyle,
   filterButtonText: {
     color: ModernTheme.colors.text.secondary,
@@ -429,8 +575,51 @@ const styles = StyleSheet.create({
     gap: ModernTheme.spacing.md,
   } as ViewStyle,
   loadingText: {
+    color: ModernTheme.colors.text.primary,
+    fontSize: ModernTheme.typography.sizes.lg,
+    fontWeight: ModernTheme.typography.weights.medium,
+    textAlign: 'center',
+    marginTop: ModernTheme.spacing.md,
+  } as TextStyle,
+  loadingSubtext: {
+    color: ModernTheme.colors.text.secondary,
+    fontSize: ModernTheme.typography.sizes.sm,
+    textAlign: 'center',
+    marginTop: ModernTheme.spacing.xs,
+  } as TextStyle,
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: ModernTheme.spacing.xl,
+  } as ViewStyle,
+  emptyContent: {
+    alignItems: 'center',
+    gap: ModernTheme.spacing.md,
+  } as ViewStyle,
+  emptyTitle: {
+    color: ModernTheme.colors.text.primary,
+    fontSize: ModernTheme.typography.sizes.xl,
+    fontWeight: ModernTheme.typography.weights.semibold,
+    textAlign: 'center',
+  } as TextStyle,
+  emptySubtitle: {
     color: ModernTheme.colors.text.secondary,
     fontSize: ModernTheme.typography.sizes.md,
+    textAlign: 'center',
+    lineHeight: 20,
+  } as TextStyle,
+  emptyButton: {
+    backgroundColor: ModernTheme.colors.primary[500],
+    borderRadius: ModernTheme.borderRadius.md,
+    paddingHorizontal: ModernTheme.spacing.lg,
+    paddingVertical: ModernTheme.spacing.sm,
+    marginTop: ModernTheme.spacing.sm,
+  } as ViewStyle,
+  emptyButtonText: {
+    color: '#000',
+    fontSize: ModernTheme.typography.sizes.md,
+    fontWeight: ModernTheme.typography.weights.medium,
   } as TextStyle,
   streamsList: {
     padding: ModernTheme.spacing.md,

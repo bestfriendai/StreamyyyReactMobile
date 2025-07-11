@@ -203,50 +203,98 @@ class TwitchAPI {
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
+        // Create AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
         const response = await fetch(url.toString(), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Client-Id': this.clientId!,
             'Content-Type': 'application/json',
+            'Accept': 'application/vnd.twitchtv.v5+json',
+            'User-Agent': 'StreamYYY/1.0 (Multi-Streaming App)',
           },
-          timeout: 10000, // 10 second timeout
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           const errorText = await response.text();
+          let errorData: any = {};
           
-          // Handle rate limiting
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            // Error text is not JSON
+          }
+          
+          // Handle rate limiting with detailed response
           if (response.status === 429) {
             const retryAfter = response.headers.get('Retry-After');
-            const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : (attempt + 1) * 2000;
-            console.warn(`Rate limited, waiting ${waitTime}ms before retry ${attempt + 1}/${retries}`);
-            await new Promise(resolve => setTimeout(resolve, waitTime));
-            continue;
-          }
-
-          // Handle token expiration
-          if (response.status === 401) {
-            console.warn('Token expired, refreshing and retrying...');
-            this.accessToken = null;
-            this.tokenExpiry = 0;
+            const rateLimitRemaining = response.headers.get('Ratelimit-Remaining');
+            const rateLimitReset = response.headers.get('Ratelimit-Reset');
+            
+            const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : Math.min((attempt + 1) * 3000, 30000);
+            
+            console.warn(`🚫 Rate limited (${rateLimitRemaining} remaining, resets at ${rateLimitReset})`);
+            console.warn(`⏱️ Waiting ${waitTime}ms before retry ${attempt + 1}/${retries}`);
+            
             if (attempt < retries) {
+              await new Promise(resolve => setTimeout(resolve, waitTime));
               continue;
             }
           }
 
-          // Handle server errors with backoff
+          // Handle token expiration with better logic
+          if (response.status === 401) {
+            console.warn('🔑 Token expired or invalid, refreshing and retrying...');
+            this.accessToken = null;
+            this.tokenExpiry = 0;
+            this.clearCache(); // Clear cache on auth failure
+            
+            if (attempt < retries) {
+              // Get new token and retry
+              await this.getAccessToken();
+              continue;
+            }
+          }
+
+          // Handle server errors with exponential backoff
           if (response.status >= 500 && attempt < retries) {
-            const backoffTime = Math.min(1000 * Math.pow(2, attempt), 10000);
-            console.warn(`Server error ${response.status}, retrying in ${backoffTime}ms (attempt ${attempt + 1}/${retries})`);
+            const backoffTime = Math.min(1000 * Math.pow(2, attempt), 30000);
+            console.warn(`🔧 Server error ${response.status}, retrying in ${backoffTime}ms (attempt ${attempt + 1}/${retries})`);
             await new Promise(resolve => setTimeout(resolve, backoffTime));
             continue;
           }
 
-          console.error(`API request failed: ${response.status} ${response.statusText}`, errorText);
-          throw new Error(`Twitch API request failed: ${response.status} ${response.statusText}`);
+          // Handle specific API errors
+          if (response.status === 400) {
+            console.error(`❌ Bad Request: ${errorData.message || errorText}`);
+            throw new Error(`Invalid request: ${errorData.message || 'Bad request parameters'}`);
+          }
+
+          if (response.status === 403) {
+            console.error(`❌ Forbidden: ${errorData.message || errorText}`);
+            throw new Error(`Access denied: ${errorData.message || 'Insufficient permissions'}`);
+          }
+
+          if (response.status === 404) {
+            console.error(`❌ Not Found: ${errorData.message || errorText}`);
+            throw new Error(`Resource not found: ${errorData.message || 'Endpoint not found'}`);
+          }
+
+          console.error(`❌ API request failed: ${response.status} ${response.statusText}`, errorData.message || errorText);
+          throw new Error(`Twitch API request failed: ${response.status} ${response.statusText} - ${errorData.message || errorText}`);
         }
 
         const data = await response.json();
+        
+        // Validate response structure
+        if (!data || typeof data !== 'object') {
+          throw new Error('Invalid response format from Twitch API');
+        }
         
         // Cache successful response
         if (useCache) {
@@ -262,24 +310,36 @@ class TwitchAPI {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
         
-        // Network errors or timeouts
-        if (error instanceof TypeError || error.message.includes('timeout')) {
+        // Handle abort/timeout errors
+        if (lastError.name === 'AbortError' || lastError.message.includes('aborted')) {
           if (attempt < retries) {
-            const backoffTime = Math.min(1000 * Math.pow(2, attempt), 10000);
-            console.warn(`Network error, retrying in ${backoffTime}ms (attempt ${attempt + 1}/${retries}):`, error.message);
+            const backoffTime = Math.min(2000 * Math.pow(2, attempt), 15000);
+            console.warn(`⏱️ Request timeout, retrying in ${backoffTime}ms (attempt ${attempt + 1}/${retries})`);
             await new Promise(resolve => setTimeout(resolve, backoffTime));
             continue;
           }
+          throw new Error('Request timeout - Twitch API is not responding');
+        }
+        
+        // Network errors
+        if (lastError instanceof TypeError || lastError.message.includes('fetch')) {
+          if (attempt < retries) {
+            const backoffTime = Math.min(1000 * Math.pow(2, attempt), 10000);
+            console.warn(`🌐 Network error, retrying in ${backoffTime}ms (attempt ${attempt + 1}/${retries}):`, lastError.message);
+            await new Promise(resolve => setTimeout(resolve, backoffTime));
+            continue;
+          }
+          throw new Error('Network error - Check your internet connection');
         }
         
         // If it's not a retryable error, throw immediately
-        throw error;
+        throw lastError;
       }
     }
 
     // If we've exhausted all retries
     console.error(`❌ Request failed after ${retries} retries`);
-    throw lastError || new Error('Request failed after retries');
+    throw lastError || new Error('Request failed after multiple retries');
   }
 
   async getTopStreams(first: number = 20, after?: string): Promise<{ data: TwitchStream[]; pagination: { cursor?: string } }> {

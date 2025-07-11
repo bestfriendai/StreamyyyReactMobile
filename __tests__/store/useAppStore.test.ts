@@ -30,6 +30,9 @@ describe('useAppStore', () => {
       chatEnabled: true,
       notificationsEnabled: true,
       hapticsEnabled: true,
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false,
+      customerId: null,
       // Mock functions
       addStream: jest.fn(),
       removeStream: jest.fn(),
@@ -313,7 +316,7 @@ describe('useAppStore', () => {
         try {
           await result.current.saveLayout(mockLayout);
         } catch (error) {
-          expect(error.message).toBe('Save failed');
+          expect((error as Error).message).toBe('Save failed');
         }
       });
 

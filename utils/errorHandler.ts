@@ -235,10 +235,10 @@ export function setupGlobalErrorHandlers() {
   }
   
   // React Native specific error handling
-  if (typeof global !== 'undefined' && global.ErrorUtils) {
-    const originalHandler = global.ErrorUtils.getGlobalHandler();
+  if (typeof global !== 'undefined' && (global as any).ErrorUtils) {
+    const originalHandler = (global as any).ErrorUtils.getGlobalHandler();
     
-    global.ErrorUtils.setGlobalHandler((error, isFatal) => {
+    (global as any).ErrorUtils.setGlobalHandler((error: any, isFatal: any) => {
       console.group('🚨 React Native Global Error');
       console.error('Error:', error);
       console.error('Is Fatal:', isFatal);

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Alert, View } from 'react-native';
+import { Alert, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CleanDiscoverScreen } from '@/components/CleanDiscoverScreen';
+import { NavigationHeader } from '@/components/NavigationHeader';
 import { TwitchStream, TwitchGame, fetchTopStreams, fetchTopGames } from '@/services/twitchApi';
 import { useStreamManager } from '@/hooks/useStreamManager';
+import { RefreshCw, Filter } from 'lucide-react-native';
 
 export default function DiscoverScreen() {
   const [streams, setStreams] = useState<TwitchStream[]>([]);
@@ -93,7 +95,26 @@ export default function DiscoverScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <NavigationHeader
+          title="Discover"
+          subtitle="Find trending streams & games"
+          rightElement={
+            <TouchableOpacity
+              onPress={handleRefresh}
+              style={{ padding: 4 }}
+              disabled={loading}
+            >
+              <RefreshCw 
+                size={20} 
+                color={loading ? '#6B7280' : '#8B5CF6'} 
+                style={{ 
+                  transform: [{ rotate: loading ? '180deg' : '0deg' }] 
+                }}
+              />
+            </TouchableOpacity>
+          }
+        />
         <CleanDiscoverScreen
           streams={streams}
           games={games}

@@ -307,4 +307,217 @@ export const getTypography = (size: keyof typeof ModernTheme.typography.sizes, w
   };
 };
 
-export default ModernTheme;
+// Advanced theme utilities
+export const themeUtils = {
+  // Get appropriate text color for background
+  getContrastText: (backgroundColor: string) => {
+    // Simplified contrast calculation - in production use a proper library
+    const hex = backgroundColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return brightness > 128 ? ModernTheme.colors.text.primary : '#ffffff';
+  },
+
+  // Apply opacity to color
+  withOpacity: (color: string, opacity: number) => {
+    if (color.includes('rgba')) {
+      return color.replace(/[^,]+(?=\))/, opacity.toString());
+    }
+    // Convert hex to rgba
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  },
+
+  // Generate responsive spacing
+  responsiveSpacing: (baseSize: keyof typeof ModernTheme.spacing, multiplier: number = 1) => {
+    return ModernTheme.spacing[baseSize] * multiplier;
+  },
+
+  // Get platform-specific shadows
+  getPlatformShadow: (level: keyof typeof ModernTheme.shadows) => {
+    return ModernTheme.shadows[level];
+  },
+
+  // Generate component variants
+  createButtonVariant: ({
+    backgroundColor,
+    textColor,
+    borderColor,
+    size = 'md'
+  }: {
+    backgroundColor: string;
+    textColor: string;
+    borderColor?: string;
+    size?: keyof typeof ModernTheme.components.button.height;
+  }) => ({
+    backgroundColor,
+    borderColor: borderColor || 'transparent',
+    borderWidth: borderColor ? 1 : 0,
+    height: ModernTheme.components.button.height[size],
+    paddingHorizontal: ModernTheme.components.button.padding[size].horizontal,
+    paddingVertical: ModernTheme.components.button.padding[size].vertical,
+    borderRadius: ModernTheme.borderRadius.md,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    textStyle: {
+      color: textColor,
+      fontSize: ModernTheme.typography.sizes[size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'md'],
+      fontWeight: ModernTheme.typography.weights.medium,
+      fontFamily: ModernTheme.typography.fonts.primary,
+    }
+  }),
+
+  // Create card variants
+  createCardVariant: ({
+    variant = 'default',
+    elevation = 'md'
+  }: {
+    variant?: 'default' | 'outlined' | 'filled' | 'glass';
+    elevation?: keyof typeof ModernTheme.shadows;
+  }) => {
+    const baseCard = {
+      padding: ModernTheme.components.card.padding,
+      borderRadius: ModernTheme.components.card.borderRadius,
+      ...ModernTheme.shadows[elevation],
+    };
+
+    switch (variant) {
+      case 'outlined':
+        return {
+          ...baseCard,
+          backgroundColor: 'transparent',
+          borderWidth: 1,
+          borderColor: ModernTheme.colors.border.primary,
+        };
+      case 'filled':
+        return {
+          ...baseCard,
+          backgroundColor: ModernTheme.colors.background.secondary,
+        };
+      case 'glass':
+        return {
+          ...baseCard,
+          backgroundColor: themeUtils.withOpacity(ModernTheme.colors.background.card, 0.8),
+          backdropFilter: 'blur(10px)',
+        };
+      default:
+        return {
+          ...baseCard,
+          backgroundColor: ModernTheme.colors.background.card,
+        };
+    }
+  },
+
+  // Generate consistent focus styles
+  focusStyle: {
+    borderColor: ModernTheme.colors.accent[500],
+    borderWidth: 2,
+    shadowColor: ModernTheme.colors.accent[500],
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+
+  // Generate hover styles
+  hoverStyle: {
+    backgroundColor: ModernTheme.colors.interactive.hover,
+    transform: [{ scale: 1.02 }],
+  },
+
+  // Generate pressed styles
+  pressedStyle: {
+    backgroundColor: ModernTheme.colors.interactive.pressed,
+    transform: [{ scale: 0.98 }],
+  },
+
+  // Generate disabled styles
+  disabledStyle: {
+    backgroundColor: ModernTheme.colors.interactive.disabled,
+    opacity: 0.6,
+  },
+};
+
+// Pre-built component styles for consistency
+export const componentStyles = {
+  // Primary button
+  primaryButton: themeUtils.createButtonVariant({
+    backgroundColor: ModernTheme.colors.accent[500],
+    textColor: '#ffffff',
+  }),
+
+  // Secondary button
+  secondaryButton: themeUtils.createButtonVariant({
+    backgroundColor: 'transparent',
+    textColor: ModernTheme.colors.text.primary,
+    borderColor: ModernTheme.colors.border.accent,
+  }),
+
+  // Danger button
+  dangerButton: themeUtils.createButtonVariant({
+    backgroundColor: ModernTheme.colors.error[500],
+    textColor: '#ffffff',
+  }),
+
+  // Success button
+  successButton: themeUtils.createButtonVariant({
+    backgroundColor: ModernTheme.colors.success[500],
+    textColor: '#ffffff',
+  }),
+
+  // Default card
+  defaultCard: themeUtils.createCardVariant({ variant: 'default' }),
+
+  // Glass card
+  glassCard: themeUtils.createCardVariant({ variant: 'glass' }),
+
+  // Outlined card
+  outlinedCard: themeUtils.createCardVariant({ variant: 'outlined' }),
+};
+
+// Theme validation utilities
+export const themeValidation = {
+  // Check if color has sufficient contrast
+  hasGoodContrast: (foreground: string, background: string, threshold: number = 4.5) => {
+    // Simplified contrast ratio calculation
+    // In production, use a proper color contrast library
+    return true; // Placeholder
+  },
+
+  // Validate theme colors
+  validateTheme: () => {
+    const issues: string[] = [];
+    
+    // Check if essential colors are defined
+    if (!ModernTheme.colors.text.primary) {
+      issues.push('Missing primary text color');
+    }
+    
+    if (!ModernTheme.colors.background.primary) {
+      issues.push('Missing primary background color');
+    }
+    
+    return {
+      valid: issues.length === 0,
+      issues,
+    };
+  },
+};
+
+// Export enhanced theme with utilities
+export const EnhancedTheme = {
+  ...ModernTheme,
+  utils: themeUtils,
+  components: {
+    ...ModernTheme.components,
+    styles: componentStyles,
+  },
+  validation: themeValidation,
+};
+
+export default EnhancedTheme;

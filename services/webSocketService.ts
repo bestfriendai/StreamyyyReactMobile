@@ -126,7 +126,7 @@ class WebSocketService extends EventEmitter {
     if (this.isDestroyed) return;
 
     return withErrorHandling(async () => {
-      logDebug('WebSocket connecting', { userId, roomId });
+      logDebug('WebSocket connecting', { userId, roomId, url: this.config.url });
       
       this.connectionState.userId = userId;
       this.connectionState.roomId = roomId;
@@ -134,10 +134,20 @@ class WebSocketService extends EventEmitter {
       
       this.emit('connecting', this.connectionState);
 
+      // Validate connection parameters
+      if (!userId || userId.trim().length === 0) {
+        throw new Error('Invalid user ID provided for WebSocket connection');
+      }
+
       // Build connection URL with auth params
       const url = new URL(this.config.url);
       url.searchParams.set('userId', userId);
-      if (roomId) url.searchParams.set('roomId', roomId);
+      url.searchParams.set('clientId', this.generateClientId());
+      url.searchParams.set('version', '1.0');
+      
+      if (roomId) {
+        url.searchParams.set('roomId', roomId);
+      }
 
       // Add auth token if available
       const authToken = await AsyncStorage.getItem('auth_token');
@@ -145,27 +155,59 @@ class WebSocketService extends EventEmitter {
         url.searchParams.set('token', authToken);
       }
 
-      this.ws = new WebSocket(url.toString(), this.config.protocols);
+      // Add device info for better debugging
+      const deviceInfo = this.getDeviceInfo();
+      if (deviceInfo.platform) {
+        url.searchParams.set('platform', deviceInfo.platform);
+      }
+
+      logDebug('WebSocket URL constructed', { 
+        url: url.toString().replace(/token=[^&]+/, 'token=***'),
+        protocols: this.config.protocols 
+      });
+
+      try {
+        this.ws = new WebSocket(url.toString(), this.config.protocols);
+      } catch (error) {
+        throw new Error(`Failed to create WebSocket connection: ${error.message}`);
+      }
       
       // Set up event handlers
       this.setupEventHandlers();
 
-      // Start connection timeout
+      // Start connection timeout with progressive warnings
+      const timeoutWarning = setTimeout(() => {
+        if (this.connectionState.isConnecting) {
+          logDebug('WebSocket connection taking longer than expected...');
+          this.emit('connection_slow', { elapsed: this.config.timeout / 2 });
+        }
+      }, this.config.timeout / 2);
+
       const timeout = setTimeout(() => {
         if (this.connectionState.isConnecting) {
-          this.handleConnectionError(new Error('Connection timeout'));
+          this.handleConnectionError(new Error('Connection timeout - server not responding'));
         }
+        clearTimeout(timeoutWarning);
       }, this.config.timeout);
 
       // Wait for connection to establish
       return new Promise<void>((resolve, reject) => {
-        const onOpen = () => {
+        const cleanup = () => {
           clearTimeout(timeout);
+          clearTimeout(timeoutWarning);
+          this.removeListener('connected', onOpen);
+          this.removeListener('error', onError);
+        };
+
+        const onOpen = () => {
+          cleanup();
+          logDebug('WebSocket connection established successfully');
           resolve();
         };
 
         const onError = (error: Error) => {
-          clearTimeout(timeout);
+          cleanup();
+          logError('WebSocket connection failed', error);
           reject(error);
         };
 
@@ -173,7 +215,29 @@ class WebSocketService extends EventEmitter {
         this.once('error', onError);
       });
 
-    }, { component: 'WebSocketService', action: 'connect' });
+    }, { component: 'WebSocketService', action: 'connect', additionalData: { userId, roomId } });
+  }
+
+  /**
+   * Generate unique client ID for this session
+   */
+  private generateClientId(): string {
+    return `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * Get device information for debugging
+   */
+  private getDeviceInfo() {
+    try {
+      return {
+        platform: typeof navigator !== 'undefined' ? navigator.platform : 'unknown',
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+        connection: (navigator as any)?.connection?.effectiveType || 'unknown',
+      };
+    } catch {
+      return { platform: 'unknown', userAgent: 'unknown', connection: 'unknown' };
+    }
   }
 
   /**

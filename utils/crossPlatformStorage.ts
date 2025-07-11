@@ -88,7 +88,8 @@ class CrossPlatformStorageAdapter implements StorageAdapter {
       } else if (this.isWeb) {
         return Object.keys(localStorage);
       } else {
-        return AsyncStorage.getAllKeys();
+        const keys = await AsyncStorage.getAllKeys();
+        return [...keys];
       }
     } catch (error) {
       console.error('Error getting all keys from storage:', error);
@@ -103,7 +104,8 @@ class CrossPlatformStorageAdapter implements StorageAdapter {
       } else if (this.isWeb) {
         return keys.map(key => [key, localStorage.getItem(key)]);
       } else {
-        return AsyncStorage.multiGet(keys);
+        const result = await AsyncStorage.multiGet(keys);
+        return [...result];
       }
     } catch (error) {
       console.error('Error getting multiple items from storage:', error);

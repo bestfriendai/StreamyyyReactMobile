@@ -1,13 +1,84 @@
 /**
  * Unified Twitch Player Component
- * Consolidates all Twitch player functionality into a single, reusable component
- * Supports multiple modes: basic, enhanced, debug, optimized, etc.
+ * A clean, unified approach to Twitch stream embedding
  */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert, ActivityIndicator, Dimensions } from 'react-native';
+
+import React, { useState, useRef } from 'react';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { twitchApi } from '@/services/twitchApi';
-import { performanceMonitor } from '@/utils/performanceMonitor';
-import { ErrorHandler } from '@/utils/errorHandler';
-import { StreamComponentConfig, StreamQuality } from '@/types/stream';
-import { config } from '@/config';\n\n/**\n * Player mode types\n */\nexport type PlayerMode = 'basic' | 'enhanced' | 'debug' | 'optimized' | 'pip' | 'autoplay';\n\n/**\n * Player configuration interface\n */\nexport interface TwitchPlayerConfig extends StreamComponentConfig {\n  mode?: PlayerMode;\n  username: string;\n  width?: number;\n  height?: number;\n  aspectRatio?: number;\n  onLoad?: () => void;\n  onError?: (error: Error) => void;\n  onReady?: () => void;\n  onOffline?: () => void;\n  debug?: boolean;\n  retryAttempts?: number;\n  retryDelay?: number;\n  parentDomains?: string[];\n  allowFullscreen?: boolean;\n  showChat?: boolean;\n  showControls?: boolean;\n  volume?: number;\n}\n\n/**\n * Player state interface\n */\ninterface PlayerState {\n  isLoading: boolean;\n  isReady: boolean;\n  isOffline: boolean;\n  hasError: boolean;\n  errorMessage: string | null;\n  retryCount: number;\n  loadStartTime: number;\n  lastQuality: StreamQuality;\n}\n\n/**\n * WebView message types\n */\ninterface WebViewMessage {\n  type: 'ready' | 'offline' | 'error' | 'quality-change' | 'volume-change';\n  data?: any;\n}\n\n/**\n * Unified Twitch Player Component\n */\nexport const UnifiedTwitchPlayer: React.FC<TwitchPlayerConfig> = ({\n  mode = 'basic',\n  username,\n  width,\n  height,\n  aspectRatio = 16 / 9,\n  autoPlay = true,\n  muted = true,\n  quality = 'auto',\n  enableChat = false,\n  enableControls = true,\n  theme = 'dark',\n  errorRetryCount = 3,\n  refreshInterval = 0,\n  onLoad,\n  onError,\n  onReady,\n  onOffline,\n  debug = false,\n  retryAttempts = 3,\n  retryDelay = 2000,\n  parentDomains = [],\n  allowFullscreen = true,\n  showChat = false,\n  showControls = true,\n  volume = 0.5,\n  ...props\n}) => {\n  const webViewRef = useRef<WebView>(null);\n  const [playerState, setPlayerState] = useState<PlayerState>({\n    isLoading: true,\n    isReady: false,\n    isOffline: false,\n    hasError: false,\n    errorMessage: null,\n    retryCount: 0,\n    loadStartTime: Date.now(),\n    lastQuality: quality,\n  });\n  \n  const [dimensions, setDimensions] = useState(() => {\n    const screenData = Dimensions.get('window');\n    return {\n      width: width || screenData.width,\n      height: height || screenData.width / aspectRatio,\n    };\n  });\n\n  /**\n   * Generate embed URL with all necessary parameters\n   */\n  const generateEmbedUrl = useCallback(() => {\n    try {\n      const baseUrl = 'https://player.twitch.tv/';\n      const params = new URLSearchParams({\n        channel: username.toLowerCase(),\n        muted: muted.toString(),\n        autoplay: autoPlay.toString(),\n        controls: showControls.toString(),\n        quality: quality,\n        volume: volume.toString(),\n        time: '0s',\n      });\n\n      // Add parent domains for iframe embedding\n      const domains = [\n        'localhost',\n        '127.0.0.1',\n        'expo.dev',\n        'exp.host',\n        'reactnative.dev',\n        'streamyyy.com',\n        ...parentDomains,\n      ];\n      \n      domains.forEach(domain => {\n        params.append('parent', domain);\n      });\n\n      // Add mode-specific parameters\n      switch (mode) {\n        case 'debug':\n          params.append('debug', 'true');\n          break;\n        case 'optimized':\n          params.append('low_latency', 'true');\n          params.append('quality', 'chunked');\n          break;\n        case 'pip':\n          params.append('controls', 'false');\n          params.append('muted', 'true');\n          break;\n      }\n\n      return `${baseUrl}?${params.toString()}`;\n    } catch (error) {\n      ErrorHandler.handleStreamError(error as Error, username, {\n        component: 'UnifiedTwitchPlayer',\n        action: 'generateEmbedUrl',\n        additionalData: { mode, username }\n      });\n      throw error;\n    }\n  }, [username, muted, autoPlay, showControls, quality, volume, mode, parentDomains]);\n\n  /**\n   * Handle WebView message from Twitch player\n   */\n  const handleWebViewMessage = useCallback((event: any) => {\n    try {\n      const message: WebViewMessage = JSON.parse(event.nativeEvent.data);\n      \n      switch (message.type) {\n        case 'ready':\n          setPlayerState(prev => ({ ...prev, isReady: true, isLoading: false }));\n          onReady?.();\n          break;\n          \n        case 'offline':\n          setPlayerState(prev => ({ ...prev, isOffline: true, isLoading: false }));\n          onOffline?.();\n          break;\n          \n        case 'error':\n          const error = new Error(message.data?.message || 'Player error');\n          setPlayerState(prev => ({\n            ...prev,\n            hasError: true,\n            errorMessage: error.message,\n            isLoading: false,\n          }));\n          onError?.(error);\n          break;\n          \n        case 'quality-change':\n          setPlayerState(prev => ({ ...prev, lastQuality: message.data?.quality || quality }));\n          break;\n      }\n    } catch (error) {\n      if (debug) {\n        console.warn('Failed to parse WebView message:', error);\n      }\n    }\n  }, [onReady, onOffline, onError, quality, debug]);\n\n  /**\n   * Handle WebView load start\n   */\n  const handleLoadStart = useCallback(() => {\n    setPlayerState(prev => ({\n      ...prev,\n      isLoading: true,\n      loadStartTime: Date.now(),\n    }));\n    \n    if (debug) {\n      console.log(`[${mode}] Loading Twitch player for ${username}`);\n    }\n  }, [username, mode, debug]);\n\n  /**\n   * Handle WebView load end\n   */\n  const handleLoadEnd = useCallback(() => {\n    const loadTime = Date.now() - playerState.loadStartTime;\n    \n    setPlayerState(prev => ({ ...prev, isLoading: false }));\n    \n    // Track performance\n    performanceMonitor.trackStreamLoad(username, loadTime);\n    \n    if (debug) {\n      console.log(`[${mode}] Twitch player loaded for ${username} in ${loadTime}ms`);\n    }\n    \n    onLoad?.();\n  }, [username, mode, debug, onLoad, playerState.loadStartTime]);\n\n  /**\n   * Handle WebView error\n   */\n  const handleError = useCallback((error: any) => {\n    const errorMessage = error.nativeEvent?.description || 'Failed to load stream';\n    const streamError = new Error(errorMessage);\n    \n    setPlayerState(prev => ({\n      ...prev,\n      hasError: true,\n      errorMessage,\n      isLoading: false,\n    }));\n    \n    // Track error\n    performanceMonitor.trackStreamError(username, 'load_error');\n    \n    ErrorHandler.handleStreamError(streamError, username, {\n      component: 'UnifiedTwitchPlayer',\n      action: 'handleError',\n      additionalData: { mode, error: errorMessage }\n    });\n    \n    onError?.(streamError);\n  }, [username, mode, onError]);\n\n  /**\n   * Retry loading the stream\n   */\n  const retryLoad = useCallback(() => {\n    if (playerState.retryCount >= retryAttempts) {\n      if (debug) {\n        console.warn(`[${mode}] Max retry attempts reached for ${username}`);\n      }\n      return;\n    }\n    \n    setPlayerState(prev => ({\n      ...prev,\n      retryCount: prev.retryCount + 1,\n      hasError: false,\n      errorMessage: null,\n      isLoading: true,\n    }));\n    \n    setTimeout(() => {\n      webViewRef.current?.reload();\n    }, retryDelay);\n    \n    if (debug) {\n      console.log(`[${mode}] Retrying load for ${username} (attempt ${playerState.retryCount + 1})`);\n    }\n  }, [username, mode, debug, retryAttempts, retryDelay, playerState.retryCount]);\n\n  /**\n   * Handle dimension changes\n   */\n  useEffect(() => {\n    const subscription = Dimensions.addEventListener('change', ({ window }) => {\n      setDimensions({\n        width: width || window.width,\n        height: height || window.width / aspectRatio,\n      });\n    });\n    \n    return () => subscription?.remove();\n  }, [width, height, aspectRatio]);\n\n  /**\n   * Auto-refresh functionality\n   */\n  useEffect(() => {\n    if (refreshInterval > 0) {\n      const interval = setInterval(() => {\n        webViewRef.current?.reload();\n      }, refreshInterval);\n      \n      return () => clearInterval(interval);\n    }\n  }, [refreshInterval]);\n\n  /**\n   * Generate injected JavaScript for enhanced functionality\n   */\n  const getInjectedJavaScript = useCallback(() => {\n    return `\n      // Enhanced Twitch player integration\n      (function() {\n        // Send ready message when player is initialized\n        setTimeout(() => {\n          window.ReactNativeWebView.postMessage(JSON.stringify({\n            type: 'ready',\n            data: { timestamp: Date.now() }\n          }));\n        }, 1000);\n        \n        // Monitor for offline status\n        const checkOffline = () => {\n          const offlineElements = document.querySelectorAll('[data-a-target=\"player-offline\"]');\n          if (offlineElements.length > 0) {\n            window.ReactNativeWebView.postMessage(JSON.stringify({\n              type: 'offline',\n              data: { timestamp: Date.now() }\n            }));\n          }\n        };\n        \n        // Check for offline status periodically\n        setInterval(checkOffline, 5000);\n        \n        // Monitor for errors\n        window.addEventListener('error', (event) => {\n          window.ReactNativeWebView.postMessage(JSON.stringify({\n            type: 'error',\n            data: { \n              message: event.message,\n              filename: event.filename,\n              lineno: event.lineno,\n              timestamp: Date.now()\n            }\n          }));\n        });\n        \n        ${debug ? `\n          // Debug mode: log all events\n          console.log('[UnifiedTwitchPlayer] Injected JavaScript loaded');\n          \n          // Override console methods to send to React Native\n          const originalLog = console.log;\n          console.log = function(...args) {\n            originalLog.apply(console, args);\n            window.ReactNativeWebView.postMessage(JSON.stringify({\n              type: 'debug',\n              data: { message: args.join(' '), timestamp: Date.now() }\n            }));\n          };\n        ` : ''}\n      })();\n      \n      true; // Required for injected JavaScript\n    `;\n  }, [debug]);\n\n  /**\n   * Render error state\n   */\n  if (playerState.hasError) {\n    return (\n      <View style={[styles.container, { width: dimensions.width, height: dimensions.height }]}>\n        <View style={styles.errorContainer}>\n          <Text style={styles.errorIcon}>⚠️</Text>\n          <Text style={styles.errorTitle}>Stream Error</Text>\n          <Text style={styles.errorMessage}>\n            {playerState.errorMessage || 'Unable to load stream'}\n          </Text>\n          {playerState.retryCount < retryAttempts && (\n            <Text style={styles.retryButton} onPress={retryLoad}>\n              🔄 Retry ({playerState.retryCount + 1}/{retryAttempts})\n            </Text>\n          )}\n        </View>\n      </View>\n    );\n  }\n\n  /**\n   * Render offline state\n   */\n  if (playerState.isOffline) {\n    return (\n      <View style={[styles.container, { width: dimensions.width, height: dimensions.height }]}>\n        <View style={styles.offlineContainer}>\n          <Text style={styles.offlineIcon}>📡</Text>\n          <Text style={styles.offlineTitle}>{username} is offline</Text>\n          <Text style={styles.offlineMessage}>This channel is currently not live</Text>\n        </View>\n      </View>\n    );\n  }\n\n  /**\n   * Render main player\n   */\n  return (\n    <View style={[styles.container, { width: dimensions.width, height: dimensions.height }]}>\n      {playerState.isLoading && (\n        <View style={styles.loadingContainer}>\n          <ActivityIndicator size=\"large\" color=\"#9146FF\" />\n          <Text style={styles.loadingText}>Loading {username}...</Text>\n          {debug && (\n            <Text style={styles.debugText}>\n              Mode: {mode} | Quality: {quality} | Retry: {playerState.retryCount}\n            </Text>\n          )}\n        </View>\n      )}\n      \n      <WebView\n        ref={webViewRef}\n        source={{ uri: generateEmbedUrl() }}\n        style={[styles.webView, { opacity: playerState.isLoading ? 0 : 1 }]}\n        onLoadStart={handleLoadStart}\n        onLoadEnd={handleLoadEnd}\n        onError={handleError}\n        onMessage={handleWebViewMessage}\n        injectedJavaScript={getInjectedJavaScript()}\n        allowsFullscreenVideo={allowFullscreen}\n        mediaPlaybackRequiresUserAction={false}\n        allowsInlineMediaPlayback\n        javaScriptEnabled\n        domStorageEnabled\n        startInLoadingState\n        scalesPageToFit\n        {...props}\n      />\n    </View>\n  );\n};\n\n/**\n * Styles for the unified player\n */\nconst styles = StyleSheet.create({\n  container: {\n    backgroundColor: '#000',\n    borderRadius: 8,\n    overflow: 'hidden',\n    position: 'relative',\n  },\n  webView: {\n    flex: 1,\n    backgroundColor: '#000',\n  },\n  loadingContainer: {\n    ...StyleSheet.absoluteFillObject,\n    backgroundColor: '#000',\n    justifyContent: 'center',\n    alignItems: 'center',\n    zIndex: 10,\n  },\n  loadingText: {\n    color: '#fff',\n    fontSize: 16,\n    marginTop: 12,\n    fontWeight: '500',\n  },\n  debugText: {\n    color: '#999',\n    fontSize: 12,\n    marginTop: 8,\n    textAlign: 'center',\n  },\n  errorContainer: {\n    flex: 1,\n    justifyContent: 'center',\n    alignItems: 'center',\n    backgroundColor: '#1a1a1a',\n    padding: 20,\n  },\n  errorIcon: {\n    fontSize: 48,\n    marginBottom: 16,\n  },\n  errorTitle: {\n    color: '#fff',\n    fontSize: 18,\n    fontWeight: '600',\n    marginBottom: 8,\n  },\n  errorMessage: {\n    color: '#999',\n    fontSize: 14,\n    textAlign: 'center',\n    lineHeight: 20,\n    marginBottom: 20,\n  },\n  retryButton: {\n    color: '#9146FF',\n    fontSize: 16,\n    fontWeight: '600',\n    padding: 12,\n    borderWidth: 1,\n    borderColor: '#9146FF',\n    borderRadius: 8,\n    textAlign: 'center',\n    minWidth: 120,\n  },\n  offlineContainer: {\n    flex: 1,\n    justifyContent: 'center',\n    alignItems: 'center',\n    backgroundColor: '#1a1a1a',\n    padding: 20,\n  },\n  offlineIcon: {\n    fontSize: 48,\n    marginBottom: 16,\n  },\n  offlineTitle: {\n    color: '#fff',\n    fontSize: 18,\n    fontWeight: '600',\n    marginBottom: 8,\n  },\n  offlineMessage: {\n    color: '#999',\n    fontSize: 14,\n    textAlign: 'center',\n  },\n});\n\nexport default UnifiedTwitchPlayer;
+
+interface UnifiedTwitchPlayerProps {
+  streamId: string;
+  onLoad?: () => void;
+  onError?: (error: any) => void;
+  style?: any;
+}
+
+export const UnifiedTwitchPlayer: React.FC<UnifiedTwitchPlayerProps> = ({
+  streamId,
+  onLoad,
+  onError,
+  style,
+}) => {
+  const [loading, setLoading] = useState(true);
+  const webViewRef = useRef<WebView>(null);
+
+  // Simple parent domain configuration that works
+  const embedUrl = `https://player.twitch.tv/?channel=${streamId}&parent=localhost&parent=expo.dev&muted=true&autoplay=true&controls=true`;
+
+  const handleLoadEnd = () => {
+    setLoading(false);
+    onLoad?.();
+  };
+
+  const handleError = (event: any) => {
+    setLoading(false);
+    onError?.(event);
+  };
+
+  return (
+    <View style={[styles.container, style]}>
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#9146FF" />
+        </View>
+      )}
+      
+      <WebView
+        ref={webViewRef}
+        source={{ uri: embedUrl }}
+        style={styles.webview}
+        onLoadEnd={handleLoadEnd}
+        onError={handleError}
+        allowsInlineMediaPlayback
+        mediaPlaybackRequiresUserAction={false}
+        javaScriptEnabled
+        domStorageEnabled
+        startInLoadingState={true}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  webview: {
+    flex: 1,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+    zIndex: 1,
+  },
+});
+
+export default UnifiedTwitchPlayer;

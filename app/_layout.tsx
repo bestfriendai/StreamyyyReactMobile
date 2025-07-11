@@ -13,7 +13,10 @@ import * as SplashScreen from 'expo-splash-screen';
 import { ClerkProvider } from '@clerk/clerk-expo';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandler';
+import { TamaguiProvider } from '@tamagui/core';
+import config from '../tamagui.config';
 
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -42,15 +45,19 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <ClerkProvider publishableKey={clerkPublishableKey}>
-        <AuthProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="light" backgroundColor="#000" />
-        </AuthProvider>
-      </ClerkProvider>
+      <TamaguiProvider config={config}>
+        <ThemeProvider defaultMode="dark">
+          <ClerkProvider publishableKey={clerkPublishableKey}>
+            <AuthProvider>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <StatusBar style="light" backgroundColor="#000" />
+            </AuthProvider>
+          </ClerkProvider>
+        </ThemeProvider>
+      </TamaguiProvider>
     </ErrorBoundary>
   );
 }

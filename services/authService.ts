@@ -169,46 +169,182 @@ class AuthService {
     });
   }
 
-  // Sync Clerk user with our database
+  // Enhanced Clerk user sync with our database
   async syncClerkUserWithDatabase(clerkUser: any): Promise<User | null> {
     try {
-      const userId = clerkUser.id;
-      const email = clerkUser.emailAddresses[0]?.emailAddress || '';
-      const name = clerkUser.firstName && clerkUser.lastName 
-        ? `${clerkUser.firstName} ${clerkUser.lastName}`
-        : clerkUser.firstName || clerkUser.username || 'User';
-      const avatar = clerkUser.imageUrl;
+      console.log('🔄 Syncing Clerk user with database', { userId: clerkUser.id });
+      
+      // Validate Clerk user data
+      if (!clerkUser || !clerkUser.id) {
+        console.error('❌ Invalid Clerk user data provided');
+        return null;
+      }
 
-      // Check if user exists in our database
-      let user = await databaseService.getUserProfile(userId);
+      const userId = clerkUser.id;
+      const email = clerkUser.emailAddresses?.[0]?.emailAddress || clerkUser.emailAddress || '';
+      const firstName = clerkUser.firstName || '';
+      const lastName = clerkUser.lastName || '';
+      const username = clerkUser.username || '';
+      
+      // Construct name with fallbacks
+      const name = firstName && lastName 
+        ? `${firstName} ${lastName}`
+        : firstName || username || `User ${userId.slice(-4)}`;
+      
+      const avatar = clerkUser.imageUrl || clerkUser.profileImageUrl || '';
+
+      // Validate required fields
+      if (!email) {
+        console.warn('⚠️ No email found for Clerk user, using fallback');
+      }
+
+      console.log('📋 User data extracted from Clerk', { 
+        userId, 
+        email: email ? 'present' : 'missing', 
+        name, 
+        avatar: avatar ? 'present' : 'missing' 
+      });
+
+      // Check if user exists in our database with retry logic
+      let user = await this.retryDatabaseOperation(() => 
+        databaseService.getUserProfile(userId)
+      );
       
       if (!user) {
+        console.log('👤 Creating new user profile in database');
+        
         // Create new user profile in our database
-        const success = await databaseService.createUserProfile(userId, email, name, avatar);
+        const success = await this.retryDatabaseOperation(() =>
+          databaseService.createUserProfile(userId, email, name, avatar)
+        );
+        
         if (success) {
-          user = await databaseService.getUserProfile(userId);
+          user = await this.retryDatabaseOperation(() =>
+            databaseService.getUserProfile(userId)
+          );
+          
+          if (user) {
+            console.log('✅ New user profile created successfully');
+          } else {
+            console.error('❌ Failed to retrieve newly created user profile');
+          }
+        } else {
+          console.error('❌ Failed to create user profile in database');
+          return null;
         }
       } else {
+        console.log('🔄 Updating existing user profile with latest Clerk data');
+        
         // Update existing user profile with latest info from Clerk
-        await databaseService.updateUserProfile(userId, {
-          email,
-          name,
-          avatar,
-          updated_at: new Date().toISOString(),
-        });
-        user = await databaseService.getUserProfile(userId);
+        const updateSuccess = await this.retryDatabaseOperation(() =>
+          databaseService.updateUserProfile(userId, {
+            email,
+            name,
+            avatar,
+            updated_at: new Date().toISOString(),
+          })
+        );
+        
+        if (updateSuccess) {
+          user = await this.retryDatabaseOperation(() =>
+            databaseService.getUserProfile(userId)
+          );
+          
+          if (user) {
+            console.log('✅ User profile updated successfully');
+          }
+        } else {
+          console.warn('⚠️ Failed to update user profile, using cached data');
+        }
       }
 
       if (user) {
+        // Store user session locally
         await this.storeUserSession(user);
+        
+        // Validate user data integrity
+        if (!this.validateUserData(user)) {
+          console.warn('⚠️ User data validation failed, but continuing');
+        }
+        
+        console.log('✅ User sync completed successfully', { 
+          userId: user.id, 
+          subscription: user.subscription_tier 
+        });
+        
         return user;
       }
 
+      console.error('❌ Failed to sync user - no user data available');
       return null;
     } catch (error) {
-      console.error('Error syncing Clerk user with database:', error);
+      console.error('❌ Error syncing Clerk user with database:', error);
+      
+      // Try to recover with cached user data
+      try {
+        const cachedUser = await this.getCurrentUser();
+        if (cachedUser && cachedUser.id === clerkUser.id) {
+          console.log('🔄 Using cached user data as fallback');
+          return cachedUser;
+        }
+      } catch (cacheError) {
+        console.error('❌ Failed to retrieve cached user data:', cacheError);
+      }
+      
       return null;
     }
+  }
+
+  // Helper method to retry database operations
+  private async retryDatabaseOperation<T>(
+    operation: () => Promise<T>, 
+    maxRetries: number = 3,
+    delay: number = 1000
+  ): Promise<T> {
+    let lastError: any;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+        console.warn(`Database operation failed (attempt ${attempt}/${maxRetries}):`, error);
+        
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, delay * attempt));
+        }
+      }
+    }
+    
+    throw lastError;
+  }
+
+  // Validate user data integrity
+  private validateUserData(user: User): boolean {
+    const requiredFields = ['id', 'email', 'name', 'subscription_tier', 'subscription_status'];
+    
+    for (const field of requiredFields) {
+      if (!user[field as keyof User]) {
+        console.warn(`⚠️ Missing required user field: ${field}`);
+        return false;
+      }
+    }
+    
+    // Validate subscription tier
+    const validTiers = ['free', 'pro', 'premium'];
+    if (!validTiers.includes(user.subscription_tier)) {
+      console.warn(`⚠️ Invalid subscription tier: ${user.subscription_tier}`);
+      return false;
+    }
+    
+    // Validate subscription status
+    const validStatuses = ['active', 'inactive', 'cancelled', 'past_due'];
+    if (!validStatuses.includes(user.subscription_status)) {
+      console.warn(`⚠️ Invalid subscription status: ${user.subscription_status}`);
+      return false;
+    }
+    
+    return true;
   }
 
   private async storeUserSession(user: User): Promise<void> {

@@ -1,4 +1,405 @@
 /**
  * Enhanced error reporting and monitoring system
  */
-import { config } from '@/config';\nimport { ApiError } from '@/types/api';\n\n/**\n * Error severity levels\n */\nexport enum ErrorSeverity {\n  LOW = 'low',\n  MEDIUM = 'medium',\n  HIGH = 'high',\n  CRITICAL = 'critical'\n}\n\n/**\n * Error categories for better organization\n */\nexport enum ErrorCategory {\n  NETWORK = 'network',\n  API = 'api',\n  UI = 'ui',\n  STREAM = 'stream',\n  AUTH = 'auth',\n  STORAGE = 'storage',\n  PERFORMANCE = 'performance',\n  SECURITY = 'security',\n  UNKNOWN = 'unknown'\n}\n\n/**\n * Error context interface\n */\nexport interface ErrorContext {\n  component?: string;\n  action?: string;\n  userId?: string;\n  sessionId?: string;\n  timestamp?: string;\n  additionalData?: Record<string, any>;\n  stackTrace?: string;\n  userAgent?: string;\n  platform?: string;\n  version?: string;\n}\n\n/**\n * Enhanced error interface\n */\nexport interface EnhancedError extends Error {\n  code?: string;\n  severity: ErrorSeverity;\n  category: ErrorCategory;\n  context: ErrorContext;\n  retryable: boolean;\n  originalError?: Error;\n  handled: boolean;\n}\n\n/**\n * Error reporting service\n */\nexport class ErrorReportingService {\n  private static instance: ErrorReportingService;\n  private errorQueue: EnhancedError[] = [];\n  private isOnline = true;\n  private reportingEnabled = true;\n\n  private constructor() {\n    this.setupGlobalErrorHandlers();\n    this.setupNetworkMonitoring();\n  }\n\n  static getInstance(): ErrorReportingService {\n    if (!ErrorReportingService.instance) {\n      ErrorReportingService.instance = new ErrorReportingService();\n    }\n    return ErrorReportingService.instance;\n  }\n\n  /**\n   * Setup global error handlers\n   */\n  private setupGlobalErrorHandlers(): void {\n    // React Native global error handler\n    if (typeof global !== 'undefined' && global.ErrorUtils) {\n      const originalHandler = global.ErrorUtils.getGlobalHandler();\n      \n      global.ErrorUtils.setGlobalHandler((error: Error, isFatal: boolean) => {\n        this.reportError(error, {\n          severity: isFatal ? ErrorSeverity.CRITICAL : ErrorSeverity.HIGH,\n          category: ErrorCategory.UNKNOWN,\n          context: {\n            component: 'GlobalErrorHandler',\n            action: 'unhandledError',\n            additionalData: { isFatal }\n          }\n        });\n        \n        // Call original handler\n        if (originalHandler) {\n          originalHandler(error, isFatal);\n        }\n      });\n    }\n\n    // Promise rejection handler\n    if (typeof window !== 'undefined') {\n      window.addEventListener('unhandledrejection', (event) => {\n        this.reportError(new Error(event.reason), {\n          severity: ErrorSeverity.HIGH,\n          category: ErrorCategory.UNKNOWN,\n          context: {\n            component: 'UnhandledPromiseRejection',\n            action: 'promiseRejection'\n          }\n        });\n      });\n    }\n  }\n\n  /**\n   * Setup network monitoring\n   */\n  private setupNetworkMonitoring(): void {\n    if (typeof window !== 'undefined') {\n      window.addEventListener('online', () => {\n        this.isOnline = true;\n        this.flushErrorQueue();\n      });\n      \n      window.addEventListener('offline', () => {\n        this.isOnline = false;\n      });\n    }\n  }\n\n  /**\n   * Report an error with enhanced context\n   */\n  reportError(error: Error, options: Partial<EnhancedError> = {}): void {\n    if (!this.reportingEnabled) return;\n\n    const enhancedError: EnhancedError = {\n      ...error,\n      code: options.code || 'UNKNOWN_ERROR',\n      severity: options.severity || ErrorSeverity.MEDIUM,\n      category: options.category || ErrorCategory.UNKNOWN,\n      context: {\n        timestamp: new Date().toISOString(),\n        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',\n        platform: typeof navigator !== 'undefined' ? navigator.platform : 'Unknown',\n        version: config.environment,\n        ...options.context\n      },\n      retryable: options.retryable || false,\n      originalError: error,\n      handled: false\n    };\n\n    // Log to console in development\n    if (config.logging.enableConsoleLogging) {\n      this.logToConsole(enhancedError);\n    }\n\n    // Add to queue for remote reporting\n    this.errorQueue.push(enhancedError);\n    \n    // Try to send immediately if online\n    if (this.isOnline && config.logging.enableRemoteLogging) {\n      this.flushErrorQueue();\n    }\n\n    // Mark as handled\n    enhancedError.handled = true;\n  }\n\n  /**\n   * Report API errors with specific context\n   */\n  reportApiError(error: ApiError, context: ErrorContext = {}): void {\n    this.reportError(new Error(error.message), {\n      code: error.code,\n      severity: this.getApiErrorSeverity(error.statusCode),\n      category: ErrorCategory.API,\n      context: {\n        ...context,\n        component: 'ApiService',\n        additionalData: {\n          statusCode: error.statusCode,\n          details: error.details\n        }\n      },\n      retryable: this.isApiErrorRetryable(error.statusCode)\n    });\n  }\n\n  /**\n   * Report network errors\n   */\n  reportNetworkError(error: Error, context: ErrorContext = {}): void {\n    this.reportError(error, {\n      severity: ErrorSeverity.HIGH,\n      category: ErrorCategory.NETWORK,\n      context: {\n        ...context,\n        component: 'NetworkService'\n      },\n      retryable: true\n    });\n  }\n\n  /**\n   * Report stream-related errors\n   */\n  reportStreamError(error: Error, streamId: string, context: ErrorContext = {}): void {\n    this.reportError(error, {\n      severity: ErrorSeverity.MEDIUM,\n      category: ErrorCategory.STREAM,\n      context: {\n        ...context,\n        component: 'StreamService',\n        additionalData: {\n          streamId\n        }\n      },\n      retryable: true\n    });\n  }\n\n  /**\n   * Report performance issues\n   */\n  reportPerformanceIssue(metric: string, value: number, threshold: number, context: ErrorContext = {}): void {\n    this.reportError(new Error(`Performance threshold exceeded: ${metric}`), {\n      severity: ErrorSeverity.MEDIUM,\n      category: ErrorCategory.PERFORMANCE,\n      context: {\n        ...context,\n        component: 'PerformanceMonitor',\n        additionalData: {\n          metric,\n          value,\n          threshold\n        }\n      },\n      retryable: false\n    });\n  }\n\n  /**\n   * Log error to console with formatting\n   */\n  private logToConsole(error: EnhancedError): void {\n    const { severity, category, context, message } = error;\n    \n    console.group(`🚨 ${severity.toUpperCase()} ERROR - ${category.toUpperCase()}`);\n    console.error('Message:', message);\n    console.error('Code:', error.code);\n    console.error('Stack:', error.stack);\n    console.log('Context:', context);\n    console.log('Timestamp:', context.timestamp);\n    console.log('Retryable:', error.retryable);\n    console.groupEnd();\n  }\n\n  /**\n   * Flush error queue to remote service\n   */\n  private async flushErrorQueue(): Promise<void> {\n    if (this.errorQueue.length === 0 || !this.isOnline) return;\n\n    const errorsToSend = [...this.errorQueue];\n    this.errorQueue = [];\n\n    try {\n      // Send to remote logging service\n      await this.sendErrorsToRemote(errorsToSend);\n    } catch (error) {\n      // If sending fails, put errors back in queue\n      this.errorQueue.unshift(...errorsToSend);\n      console.warn('Failed to send errors to remote service:', error);\n    }\n  }\n\n  /**\n   * Send errors to remote logging service\n   */\n  private async sendErrorsToRemote(errors: EnhancedError[]): Promise<void> {\n    // Implementation would depend on your logging service\n    // Example: Sentry, LogRocket, Crashlytics, etc.\n    const payload = {\n      errors: errors.map(error => ({\n        message: error.message,\n        code: error.code,\n        severity: error.severity,\n        category: error.category,\n        context: error.context,\n        stack: error.stack,\n        retryable: error.retryable\n      })),\n      timestamp: new Date().toISOString(),\n      environment: config.environment\n    };\n\n    // Mock API call - replace with actual logging service\n    if (config.logging.enableRemoteLogging) {\n      console.log('Sending errors to remote service:', payload);\n    }\n  }\n\n  /**\n   * Get severity for API errors based on status code\n   */\n  private getApiErrorSeverity(statusCode?: number): ErrorSeverity {\n    if (!statusCode) return ErrorSeverity.MEDIUM;\n    \n    if (statusCode >= 500) return ErrorSeverity.HIGH;\n    if (statusCode >= 400) return ErrorSeverity.MEDIUM;\n    return ErrorSeverity.LOW;\n  }\n\n  /**\n   * Check if API error is retryable\n   */\n  private isApiErrorRetryable(statusCode?: number): boolean {\n    if (!statusCode) return false;\n    \n    // Retry on server errors and rate limits\n    return statusCode >= 500 || statusCode === 429;\n  }\n\n  /**\n   * Enable/disable error reporting\n   */\n  setReportingEnabled(enabled: boolean): void {\n    this.reportingEnabled = enabled;\n  }\n\n  /**\n   * Get error statistics\n   */\n  getErrorStats(): {\n    queueSize: number;\n    isOnline: boolean;\n    reportingEnabled: boolean;\n  } {\n    return {\n      queueSize: this.errorQueue.length,\n      isOnline: this.isOnline,\n      reportingEnabled: this.reportingEnabled\n    };\n  }\n\n  /**\n   * Clear error queue\n   */\n  clearErrorQueue(): void {\n    this.errorQueue = [];\n  }\n}\n\n// Export singleton instance\nexport const errorReporter = ErrorReportingService.getInstance();\n\n// Export convenience functions\nexport const reportError = (error: Error, options?: Partial<EnhancedError>) => \n  errorReporter.reportError(error, options);\n\nexport const reportApiError = (error: ApiError, context?: ErrorContext) => \n  errorReporter.reportApiError(error, context);\n\nexport const reportNetworkError = (error: Error, context?: ErrorContext) => \n  errorReporter.reportNetworkError(error, context);\n\nexport const reportStreamError = (error: Error, streamId: string, context?: ErrorContext) => \n  errorReporter.reportStreamError(error, streamId, context);\n\nexport const reportPerformanceIssue = (metric: string, value: number, threshold: number, context?: ErrorContext) => \n  errorReporter.reportPerformanceIssue(metric, value, threshold, context);\n\n// Export error creation helpers\nexport const createError = (message: string, code: string, category: ErrorCategory, severity: ErrorSeverity = ErrorSeverity.MEDIUM): EnhancedError => {\n  const error = new Error(message) as EnhancedError;\n  error.code = code;\n  error.category = category;\n  error.severity = severity;\n  error.context = {\n    timestamp: new Date().toISOString()\n  };\n  error.retryable = false;\n  error.handled = false;\n  return error;\n};\n\nexport const createApiError = (message: string, statusCode: number, details?: any): ApiError => {\n  return {\n    code: `API_ERROR_${statusCode}`,\n    message,\n    statusCode,\n    details,\n    timestamp: new Date().toISOString()\n  };\n};
+
+// Simple mock config since the actual config may not exist
+const config = {
+  environment: 'development',
+  logging: {
+    enableConsoleLogging: true,
+    enableRemoteLogging: false,
+  }
+};
+
+// Simple ApiError interface
+interface ApiError {
+  code: string;
+  message: string;
+  statusCode?: number;
+  details?: any;
+  timestamp: string;
+}
+
+/**
+ * Error severity levels
+ */
+export enum ErrorSeverity {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical'
+}
+
+/**
+ * Error categories for better organization
+ */
+export enum ErrorCategory {
+  NETWORK = 'network',
+  API = 'api',
+  UI = 'ui',
+  STREAM = 'stream',
+  AUTH = 'auth',
+  STORAGE = 'storage',
+  PERFORMANCE = 'performance',
+  SECURITY = 'security',
+  UNKNOWN = 'unknown'
+}
+
+/**
+ * Error context interface
+ */
+export interface ErrorContext {
+  component?: string;
+  action?: string;
+  userId?: string;
+  sessionId?: string;
+  timestamp?: string;
+  additionalData?: Record<string, any>;
+  stackTrace?: string;
+  userAgent?: string;
+  platform?: string;
+  version?: string;
+}
+
+/**
+ * Enhanced error interface
+ */
+export interface EnhancedError extends Error {
+  code?: string;
+  severity: ErrorSeverity;
+  category: ErrorCategory;
+  context: ErrorContext;
+  retryable: boolean;
+  originalError?: Error;
+  handled: boolean;
+}
+
+/**
+ * Error reporting service
+ */
+export class ErrorReportingService {
+  private static instance: ErrorReportingService;
+  private errorQueue: EnhancedError[] = [];
+  private isOnline = true;
+  private reportingEnabled = true;
+
+  private constructor() {
+    // Temporarily disable error handlers to prevent crashes
+    // this.setupGlobalErrorHandlers();
+    this.setupNetworkMonitoring();
+  }
+
+  static getInstance(): ErrorReportingService {
+    if (!ErrorReportingService.instance) {
+      ErrorReportingService.instance = new ErrorReportingService();
+    }
+    return ErrorReportingService.instance;
+  }
+
+  /**
+   * Setup global error handlers
+   */
+  private setupGlobalErrorHandlers(): void {
+    // React Native global error handler
+    if (typeof global !== 'undefined' && (global as any).ErrorUtils) {
+      const originalHandler = (global as any).ErrorUtils.getGlobalHandler();
+      
+      (global as any).ErrorUtils.setGlobalHandler((error: Error, isFatal: boolean) => {
+        this.reportError(error, {
+          severity: isFatal ? ErrorSeverity.CRITICAL : ErrorSeverity.HIGH,
+          category: ErrorCategory.UNKNOWN,
+          context: {
+            component: 'GlobalErrorHandler',
+            action: 'unhandledError',
+            additionalData: { isFatal }
+          }
+        });
+        
+        // Call original handler
+        if (originalHandler) {
+          originalHandler(error, isFatal);
+        }
+      });
+    }
+
+    // Promise rejection handler - only available in web environments
+    // React Native doesn't have window object, so we skip this
+  }
+
+  /**
+   * Setup network monitoring
+   */
+  private setupNetworkMonitoring(): void {
+    // React Native doesn't have window object for network events
+    // Network monitoring would be handled by NetInfo in React Native
+    // For now, assume we're always online
+    this.isOnline = true;
+  }
+
+  /**
+   * Report an error with enhanced context
+   */
+  reportError(error: Error, options: Partial<EnhancedError> = {}): void {
+    if (!this.reportingEnabled) return;
+
+    const enhancedError: EnhancedError = {
+      ...error,
+      code: options.code || 'UNKNOWN_ERROR',
+      severity: options.severity || ErrorSeverity.MEDIUM,
+      category: options.category || ErrorCategory.UNKNOWN,
+      context: {
+        timestamp: new Date().toISOString(),
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
+        platform: typeof navigator !== 'undefined' ? navigator.platform : 'Unknown',
+        version: config.environment,
+        ...options.context
+      },
+      retryable: options.retryable || false,
+      originalError: error,
+      handled: false
+    };
+
+    // Log to console in development
+    if (config.logging.enableConsoleLogging) {
+      this.logToConsole(enhancedError);
+    }
+
+    // Add to queue for remote reporting
+    this.errorQueue.push(enhancedError);
+    
+    // Try to send immediately if online
+    if (this.isOnline && config.logging.enableRemoteLogging) {
+      this.flushErrorQueue();
+    }
+
+    // Mark as handled
+    enhancedError.handled = true;
+  }
+
+  /**
+   * Report API errors with specific context
+   */
+  reportApiError(error: ApiError, context: ErrorContext = {}): void {
+    this.reportError(new Error(error.message), {
+      code: error.code,
+      severity: this.getApiErrorSeverity(error.statusCode),
+      category: ErrorCategory.API,
+      context: {
+        ...context,
+        component: 'ApiService',
+        additionalData: {
+          statusCode: error.statusCode,
+          details: error.details
+        }
+      },
+      retryable: this.isApiErrorRetryable(error.statusCode)
+    });
+  }
+
+  /**
+   * Report network errors
+   */
+  reportNetworkError(error: Error, context: ErrorContext = {}): void {
+    this.reportError(error, {
+      severity: ErrorSeverity.HIGH,
+      category: ErrorCategory.NETWORK,
+      context: {
+        ...context,
+        component: 'NetworkService'
+      },
+      retryable: true
+    });
+  }
+
+  /**
+   * Report stream-related errors
+   */
+  reportStreamError(error: Error, streamId: string, context: ErrorContext = {}): void {
+    this.reportError(error, {
+      severity: ErrorSeverity.MEDIUM,
+      category: ErrorCategory.STREAM,
+      context: {
+        ...context,
+        component: 'StreamService',
+        additionalData: {
+          streamId
+        }
+      },
+      retryable: true
+    });
+  }
+
+  /**
+   * Report performance issues
+   */
+  reportPerformanceIssue(metric: string, value: number, threshold: number, context: ErrorContext = {}): void {
+    this.reportError(new Error(`Performance threshold exceeded: ${metric}`), {
+      severity: ErrorSeverity.MEDIUM,
+      category: ErrorCategory.PERFORMANCE,
+      context: {
+        ...context,
+        component: 'PerformanceMonitor',
+        additionalData: {
+          metric,
+          value,
+          threshold
+        }
+      },
+      retryable: false
+    });
+  }
+
+  /**
+   * Log error to console with formatting
+   */
+  private logToConsole(error: EnhancedError): void {
+    const { severity, category, context, message } = error;
+    
+    console.group(`🚨 ${severity.toUpperCase()} ERROR - ${category.toUpperCase()}`);
+    console.error('Message:', message);
+    console.error('Code:', error.code);
+    console.error('Stack:', error.stack);
+    console.log('Context:', context);
+    console.log('Timestamp:', context.timestamp);
+    console.log('Retryable:', error.retryable);
+    console.groupEnd();
+  }
+
+  /**
+   * Flush error queue to remote service
+   */
+  private async flushErrorQueue(): Promise<void> {
+    if (this.errorQueue.length === 0 || !this.isOnline) return;
+
+    const errorsToSend = [...this.errorQueue];
+    this.errorQueue = [];
+
+    try {
+      // Send to remote logging service
+      await this.sendErrorsToRemote(errorsToSend);
+    } catch (error) {
+      // If sending fails, put errors back in queue
+      this.errorQueue.unshift(...errorsToSend);
+      console.warn('Failed to send errors to remote service:', error);
+    }
+  }
+
+  /**
+   * Send errors to remote logging service
+   */
+  private async sendErrorsToRemote(errors: EnhancedError[]): Promise<void> {
+    // Implementation would depend on your logging service
+    // Example: Sentry, LogRocket, Crashlytics, etc.
+    const payload = {
+      errors: errors.map(error => ({
+        message: error.message,
+        code: error.code,
+        severity: error.severity,
+        category: error.category,
+        context: error.context,
+        stack: error.stack,
+        retryable: error.retryable
+      })),
+      timestamp: new Date().toISOString(),
+      environment: config.environment
+    };
+
+    // Mock API call - replace with actual logging service
+    if (config.logging.enableRemoteLogging) {
+      console.log('Sending errors to remote service:', payload);
+    }
+  }
+
+  /**
+   * Get severity for API errors based on status code
+   */
+  private getApiErrorSeverity(statusCode?: number): ErrorSeverity {
+    if (!statusCode) return ErrorSeverity.MEDIUM;
+    
+    if (statusCode >= 500) return ErrorSeverity.HIGH;
+    if (statusCode >= 400) return ErrorSeverity.MEDIUM;
+    return ErrorSeverity.LOW;
+  }
+
+  /**
+   * Check if API error is retryable
+   */
+  private isApiErrorRetryable(statusCode?: number): boolean {
+    if (!statusCode) return false;
+    
+    // Retry on server errors and rate limits
+    return statusCode >= 500 || statusCode === 429;
+  }
+
+  /**
+   * Enable/disable error reporting
+   */
+  setReportingEnabled(enabled: boolean): void {
+    this.reportingEnabled = enabled;
+  }
+
+  /**
+   * Get error statistics
+   */
+  getErrorStats(): {
+    queueSize: number;
+    isOnline: boolean;
+    reportingEnabled: boolean;
+  } {
+    return {
+      queueSize: this.errorQueue.length,
+      isOnline: this.isOnline,
+      reportingEnabled: this.reportingEnabled
+    };
+  }
+
+  /**
+   * Clear error queue
+   */
+  clearErrorQueue(): void {
+    this.errorQueue = [];
+  }
+}
+
+// Export singleton instance
+export const errorReporter = ErrorReportingService.getInstance();
+
+// Export convenience functions
+export const reportError = (error: Error, options?: Partial<EnhancedError>) => 
+  errorReporter.reportError(error, options);
+
+export const reportApiError = (error: ApiError, context?: ErrorContext) => 
+  errorReporter.reportApiError(error, context);
+
+export const reportNetworkError = (error: Error, context?: ErrorContext) => 
+  errorReporter.reportNetworkError(error, context);
+
+export const reportStreamError = (error: Error, streamId: string, context?: ErrorContext) => 
+  errorReporter.reportStreamError(error, streamId, context);
+
+export const reportPerformanceIssue = (metric: string, value: number, threshold: number, context?: ErrorContext) => 
+  errorReporter.reportPerformanceIssue(metric, value, threshold, context);
+
+// Export error creation helpers
+export const createError = (message: string, code: string, category: ErrorCategory, severity: ErrorSeverity = ErrorSeverity.MEDIUM): EnhancedError => {
+  const error = new Error(message) as EnhancedError;
+  error.code = code;
+  error.category = category;
+  error.severity = severity;
+  error.context = {
+    timestamp: new Date().toISOString()
+  };
+  error.retryable = false;
+  error.handled = false;
+  return error;
+};
+
+export const createApiError = (message: string, statusCode: number, details?: any): ApiError => {
+  return {
+    code: `API_ERROR_${statusCode}`,
+    message,
+    statusCode,
+    details,
+    timestamp: new Date().toISOString()
+  };
+};

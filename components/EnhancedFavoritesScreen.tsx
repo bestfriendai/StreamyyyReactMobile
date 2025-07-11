@@ -61,7 +61,14 @@ interface FavoriteStream {
   addedAt: Date;
 }
 
-export function EnhancedFavoritesScreen() {
+interface FavoritesScreenProps {
+  searchQuery?: string;
+  selectedCategory?: string;
+  onStreamSelect?: (stream: any) => void;
+  onToggleFavorite?: (streamId: string) => void;
+}
+
+export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
   const { favorites, removeFavorite, addToMultiView } = useStreamManager();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -321,15 +328,19 @@ export function EnhancedFavoritesScreen() {
 
           {/* Enhanced Action Buttons */}
           <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.playButton]}
+            <Pressable
+              style={({ pressed }) => [
+                styles.actionButton, 
+                styles.playButton,
+                pressed && { transform: [{ scale: 0.95 }] }
+              ]}
               onPress={() => {
+                HapticFeedback.medium();
                 cardScale.value = withSpring(1.05, { damping: 15 }, () => {
                   cardScale.value = withSpring(1);
                 });
                 handleAddToMultiView(stream);
               }}
-              activeOpacity={0.7}
             >
               <LinearGradient
                 colors={['#8B5CF6', '#7C3AED', '#6366F1']}
@@ -340,15 +351,19 @@ export function EnhancedFavoritesScreen() {
                 <Plus size={16} color="#fff" />
                 <Text style={styles.actionText}>Add</Text>
               </LinearGradient>
-            </TouchableOpacity>
+            </Pressable>
             
-            <TouchableOpacity
-              style={[styles.actionButton, styles.bookmarkButton]}
+            <Pressable
+              style={({ pressed }) => [
+                styles.actionButton, 
+                styles.bookmarkButton,
+                pressed && { transform: [{ scale: 0.95 }] }
+              ]}
               onPress={() => {
+                HapticFeedback.light();
                 // Toggle bookmark/priority
                 Alert.alert('Bookmark', 'Stream bookmarked!');
               }}
-              activeOpacity={0.7}
             >
               <LinearGradient
                 colors={['#F59E0B', '#D97706']}
@@ -358,15 +373,19 @@ export function EnhancedFavoritesScreen() {
               >
                 <Bookmark size={16} color="#fff" />
               </LinearGradient>
-            </TouchableOpacity>
+            </Pressable>
             
-            <TouchableOpacity
-              style={[styles.actionButton, styles.moreButton]}
+            <Pressable
+              style={({ pressed }) => [
+                styles.actionButton, 
+                styles.moreButton,
+                pressed && { transform: [{ scale: 0.95 }] }
+              ]}
               onPress={() => {
+                HapticFeedback.light();
                 // Show more options
                 Alert.alert('More Options', 'Share, Remove, Settings...');
               }}
-              activeOpacity={0.7}
             >
               <LinearGradient
                 colors={['rgba(55, 65, 81, 0.8)', 'rgba(31, 41, 55, 0.8)']}
@@ -374,7 +393,7 @@ export function EnhancedFavoritesScreen() {
               >
                 <MoreVertical size={16} color="#fff" />
               </LinearGradient>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </LinearGradient>
         </Animated.View>
