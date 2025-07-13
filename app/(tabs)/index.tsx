@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Alert, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CleanDiscoverScreen } from '@/components/CleanDiscoverScreen';
+import { EnhancedDiscoverScreenV3 } from '@/components/EnhancedDiscoverScreenV3';
 import { NavigationHeader } from '@/components/NavigationHeader';
 import { TwitchStream, TwitchGame, fetchTopStreams, fetchTopGames } from '@/services/twitchApi';
 import { useStreamManager } from '@/hooks/useStreamManager';
@@ -96,7 +96,7 @@ export default function DiscoverScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <CleanDiscoverScreen
+        <EnhancedDiscoverScreenV3
           streams={streams}
           games={games}
           onStreamSelect={handleStreamSelect}
