@@ -656,45 +656,55 @@ export const OptimizedMultiStreamGrid: React.FC<OptimizedMultiStreamGridProps> =
       );
     }
     
-    // Default grid layout for other configurations
+    // Default grid layout for other configurations - organize into proper rows
+    const rows = [];
+    for (let i = 0; i < streams.length; i += gridDimensions.columns) {
+      rows.push(streams.slice(i, i + gridDimensions.columns));
+    }
+    
     return (
-      <Animated.View style={[styles.gridContainer, gridAnimatedStyle]}>
-        {streams.map((stream, index) => {
-          const row = Math.floor(index / gridDimensions.columns);
-          const col = index % gridDimensions.columns;
-          
-          return (
-            <Animated.View
-              key={stream.id}
-              layout={Layout.springify()}
-              entering={FadeIn.delay(index * 100)}
-              exiting={FadeOut}
-              style={[
-                styles.streamCell,
-                {
-                  width: gridDimensions.cellWidth,
-                  height: gridDimensions.cellHeight,
-                  marginRight: col < gridDimensions.columns - 1 ? gridDimensions.gap : 0,
-                  marginBottom: row < Math.ceil(streams.length / gridDimensions.columns) - 1 ? gridDimensions.gap : 0,
-                }
-              ]}
-            >
-              <StreamPlayerCard
-                stream={stream}
-                width={gridDimensions.cellWidth}
-                height={gridDimensions.cellHeight}
-                isActive={activeStreamId === stream.id}
-                isMuted={globalMute || activeStreamId !== stream.id}
-                onPress={() => handleStreamPress(stream)}
-                onLongPress={() => handleStreamLongPress(stream)}
-                onRemove={() => removeStream(stream.id)}
-                showQuality
-                showViewers
-                compact={gridDimensions.cellWidth < 200}
-              />
-            </Animated.View>
-          );
-        })}
+      <Animated.View style={[gridAnimatedStyle, {
+        paddingHorizontal: gridDimensions.padding,
+        width: SCREEN_WIDTH,
+      }]}>
+        {rows.map((rowStreams, rowIndex) => (
+          <View key={`row-${rowIndex}`} style={{
+            flexDirection: 'row',
+            justifyContent: rowStreams.length < gridDimensions.columns ? 'flex-start' : 'space-between',
+            marginBottom: rowIndex < rows.length - 1 ? gridDimensions.gap : 0,
+          }}>
+            {rowStreams.map((stream, colIndex) => (
+              <Animated.View
+                key={stream.id}
+                layout={Layout.springify()}
+                entering={FadeIn.delay((rowIndex * gridDimensions.columns + colIndex) * 100)}
+                exiting={FadeOut}
+                style={[
+                  styles.streamCell,
+                  {
+                    width: gridDimensions.cellWidth,
+                    height: gridDimensions.cellHeight,
+                    marginRight: colIndex < rowStreams.length - 1 && rowStreams.length === gridDimensions.columns ? gridDimensions.gap : 0,
+                  }
+                ]}
+              >
+                <StreamPlayerCard
+                  stream={stream}
+                  width={gridDimensions.cellWidth}
+                  height={gridDimensions.cellHeight}
+                  isActive={activeStreamId === stream.id}
+                  isMuted={globalMute || activeStreamId !== stream.id}
+                  onPress={() => handleStreamPress(stream)}
+                  onLongPress={() => handleStreamLongPress(stream)}
+                  onRemove={() => removeStream(stream.id)}
+                  showQuality
+                  showViewers
+                  compact={gridDimensions.cellWidth < 200}
+                />
+              </Animated.View>
+            ))}
+          </View>
+        ))}
       </Animated.View>
     );
   };
@@ -1129,7 +1139,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'flex-start',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between', // Distribute streams evenly
     paddingHorizontal: SCREEN_WIDTH < 400 ? 4 : 8, // Responsive padding
   },
   streamCell: {
