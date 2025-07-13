@@ -728,7 +728,7 @@ export const OptimizedMultiStreamGrid: React.FC<OptimizedMultiStreamGridProps> =
           <StreamPlayerCard
             stream={stream}
             width={SCREEN_WIDTH - (ModernTheme.spacing.md * 2)}
-            height={Math.floor((SCREEN_WIDTH - (ModernTheme.spacing.md * 2)) / 2.1)}
+            height={Math.floor((SCREEN_WIDTH - (ModernTheme.spacing.md * 2)) / 1.6)}
             isActive={activeStreamId === stream.id}
             isMuted={globalMute || activeStreamId !== stream.id}
             onPress={() => handleStreamPress(stream)}
@@ -776,29 +776,39 @@ export const OptimizedMultiStreamGrid: React.FC<OptimizedMultiStreamGridProps> =
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.pipSecondaryContent}
           >
-            {secondaryStreams.map((stream, index) => (
-              <Animated.View
-                key={stream.id}
-                layout={Layout.springify()}
-                entering={FadeIn.delay(index * 100)}
-                style={[
-                  styles.pipSecondaryItem,
-                  { marginRight: index < secondaryStreams.length - 1 ? ModernTheme.spacing.sm : 0 }
-                ]}
-              >
-                <StreamPlayerCard
-                  stream={stream}
-                  width={120}
-                  height={68}
-                  isActive={false}
-                  isMuted={true}
-                  onPress={() => setActiveStreamId(stream.id)}
-                  onLongPress={() => handleStreamLongPress(stream)}
-                  onRemove={() => removeStream(stream.id)}
-                  compact
-                />
-              </Animated.View>
-            ))}
+            {secondaryStreams.map((stream, index) => {
+              // Calculate responsive size that fits properly in view
+              const containerPadding = ModernTheme.spacing.md * 2;
+              const gapBetweenStreams = ModernTheme.spacing.sm;
+              const availableWidth = SCREEN_WIDTH - containerPadding;
+              const maxStreamsVisible = 3; // Show max 3 streams before scrolling
+              const streamWidth = Math.min(140, Math.floor((availableWidth - (gapBetweenStreams * (maxStreamsVisible - 1))) / maxStreamsVisible));
+              const streamHeight = Math.floor(streamWidth * 0.5625); // 16:9 aspect ratio
+              
+              return (
+                <Animated.View
+                  key={stream.id}
+                  layout={Layout.springify()}
+                  entering={FadeIn.delay(index * 100)}
+                  style={[
+                    styles.pipSecondaryItem,
+                    { marginRight: index < secondaryStreams.length - 1 ? ModernTheme.spacing.sm : 0 }
+                  ]}
+                >
+                  <StreamPlayerCard
+                    stream={stream}
+                    width={streamWidth}
+                    height={streamHeight}
+                    isActive={false}
+                    isMuted={true}
+                    onPress={() => setActiveStreamId(stream.id)}
+                    onLongPress={() => handleStreamLongPress(stream)}
+                    onRemove={() => removeStream(stream.id)}
+                    compact
+                  />
+                </Animated.View>
+              );
+            })}
           </ScrollView>
         )}
       </View>
@@ -1150,7 +1160,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   stackContent: {
-    paddingBottom: ModernTheme.spacing.xl,
+    paddingBottom: ModernTheme.spacing.xl * 4,
+    paddingTop: ModernTheme.spacing.sm,
   },
   stackItem: {
     borderRadius: ModernTheme.borderRadius.lg,
@@ -1169,6 +1180,7 @@ const styles = StyleSheet.create({
   },
   pipSecondaryContent: {
     paddingBottom: ModernTheme.spacing.md,
+    paddingHorizontal: ModernTheme.spacing.md,
   },
   pipSecondaryItem: {
     borderRadius: ModernTheme.borderRadius.md,
