@@ -103,35 +103,35 @@ const GAME_CATEGORIES: GameCategory[] = [
     name: 'Gaming',
     icon: <Gamepad2 size={16} color="#fff" />,
     gradient: ['#EF4444', '#F97316'],
-    gameIds: ['32982', '21779', '33214', '511224', '27471', '460630', '18122', '29595', '493057', '516575'], // Popular games: Fortnite, League of Legends, Fortnite, Apex Legends, Minecraft, etc.
+    gameIds: ['32982', '21779', '33214', '511224', '27471', '460630', '18122', '29595', '493057', '516575', '512710', '1469308723', '65632', '138585', '490100', '491931', '506416', '1678052513', '1229128718', '515025'], // Popular games: Fortnite, League of Legends, Valorant, Apex Legends, Minecraft, Call of Duty, etc.
   },
   {
     id: 'irl',
     name: 'Just Chatting',
     icon: <Users size={16} color="#fff" />,
     gradient: ['#06B6D4', '#0891B2'],
-    gameIds: ['509658', '509659', '509664', '509663'], // Just Chatting, Travel & Outdoors, Pools Hot Tubs and Beaches, ASMR
+    gameIds: ['509658', '509659', '509664', '509663', '509670', '509671', '509672', '509673', '509674', '509675'], // Just Chatting, Travel & Outdoors, Pools Hot Tubs and Beaches, ASMR, Talk Shows, Food & Drink, etc.
   },
   {
     id: 'music',
     name: 'Music',
     icon: <Music size={16} color="#fff" />,
     gradient: ['#10B981', '#059669'],
-    gameIds: ['26936', '509662', '417752'], // Music, DJ, Rocksmith 2014
+    gameIds: ['26936', '509662', '417752', '488190', '26936', '509662'], // Music, DJ, Rocksmith 2014, Guitar Hero Live, etc.
   },
   {
     id: 'art',
     name: 'Art',
     icon: <Star size={16} color="#fff" />,
     gradient: ['#F59E0B', '#D97706'],
-    gameIds: ['509660', '509661'], // Art, Makers & Crafting
+    gameIds: ['509660', '509661', '1469308723', '488552'], // Art, Makers & Crafting, Software and Game Development, etc.
   },
   {
     id: 'sports',
     name: 'Sports',
     icon: <Play size={16} color="#fff" />,
     gradient: ['#8B5CF6', '#7C3AED'],
-    gameIds: ['518203', '512980', '1869092879'], // Sports, Virtual Casino, FIFA 23
+    gameIds: ['518203', '512980', '1869092879', '1745202732', '512804', '1158884259'], // Sports, Virtual Casino, FIFA 23, NBA 2K, etc.
   },
 ];
 
@@ -167,6 +167,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
   const [liveStreamers, setLiveStreamers] = useState(0);
   const [categoryStreams, setCategoryStreams] = useState<TwitchStream[]>([]);
   const [loadingCategory, setLoadingCategory] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   
   // Animation values
   const searchBarScale = useSharedValue(1);
@@ -312,7 +313,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
           title: `${selectedCategoryData.name} Streams`,
           subtitle: `${categoryStreams.length} live streams in ${selectedCategoryData.name.toLowerCase()}`,
           icon: selectedCategoryData.icon,
-          streams: categoryStreams.slice(0, 24), // Increased from 12 to 24 streams for selected category
+          streams: categoryStreams.slice(0, 50), // Increased from 24 to 50 streams for selected category
         });
       }
     } else if (selectedCategory === 'all') {
@@ -320,12 +321,12 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
       GAME_CATEGORIES.slice(1).forEach(category => {
         const catStreams = streams
           .filter(stream => category.gameIds?.includes(stream.game_id))
-          .slice(0, 12); // Increased from 6 to 12 streams per category
+          .slice(0, 20); // Increased from 12 to 20 streams per category
         
         if (catStreams.length > 0) {
           sections.push({
             title: category.name,
-            subtitle: `${catStreams.length} live streams`,
+            subtitle: `${catStreams.length}+ live streams`,
             icon: category.icon,
             streams: catStreams,
           });
@@ -384,7 +385,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
       // Fetch streams for each game ID in the category
       for (const gameId of category.gameIds) {
         try {
-          const gameStreams = await twitchApi.getStreamsByGame(gameId, 50); // Increased from 20 to 50
+          const gameStreams = await twitchApi.getStreamsByGame(gameId, 100); // Increased from 50 to 100
           allCategoryStreams.push(...gameStreams);
         } catch (error) {
           console.warn(`Failed to fetch streams for game ${gameId}:`, error);
@@ -397,7 +398,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
       );
       
       uniqueStreams.sort((a, b) => b.viewer_count - a.viewer_count);
-      setCategoryStreams(uniqueStreams.slice(0, 200)); // Increased from 50 to 200 streams
+      setCategoryStreams(uniqueStreams.slice(0, 500)); // Increased from 200 to 500 streams
     } catch (error) {
       console.error('Error loading category streams:', error);
       setCategoryStreams([]);
@@ -481,46 +482,97 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
     </TouchableOpacity>
   );
 
+  // Handle see all button press
+  const handleSeeAll = useCallback((sectionTitle: string) => {
+    const newExpanded = new Set(expandedSections);
+    if (expandedSections.has(sectionTitle)) {
+      newExpanded.delete(sectionTitle);
+    } else {
+      newExpanded.add(sectionTitle);
+    }
+    setExpandedSections(newExpanded);
+  }, [expandedSections]);
+
   // Render stream section
-  const renderStreamSection = ({ item }: { item: StreamSection }) => (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionTitleContainer}>
-          {item.icon}
-          <View style={styles.sectionTextContainer}>
-            <Text style={styles.sectionTitle}>{item.title}</Text>
-            <Text style={styles.sectionSubtitle}>{item.subtitle}</Text>
+  const renderStreamSection = ({ item }: { item: StreamSection }) => {
+    const isExpanded = expandedSections.has(item.title);
+    const displayStreams = isExpanded ? item.streams : item.streams.slice(0, 6);
+    
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleContainer}>
+            {item.icon}
+            <View style={styles.sectionTextContainer}>
+              <Text style={styles.sectionTitle}>{item.title}</Text>
+              <Text style={styles.sectionSubtitle}>{item.subtitle}</Text>
+            </View>
           </View>
+          {item.streams.length > 6 && (
+            <TouchableOpacity 
+              style={styles.seeAllButton}
+              onPress={() => handleSeeAll(item.title)}
+            >
+              <Text style={styles.seeAllText}>
+                {isExpanded ? 'Show Less' : 'See All'}
+              </Text>
+              <ChevronRight 
+                size={16} 
+                color={ModernTheme.colors.primary[400]} 
+                style={{ transform: [{ rotate: isExpanded ? '90deg' : '0deg' }] }}
+              />
+            </TouchableOpacity>
+          )}
         </View>
-        <TouchableOpacity style={styles.seeAllButton}>
-          <Text style={styles.seeAllText}>See All</Text>
-          <ChevronRight size={16} color={ModernTheme.colors.primary[400]} />
-        </TouchableOpacity>
-      </View>
-      
-      <FlatList
-        data={item.streams}
-        renderItem={({ item: stream }) => (
-          <View style={styles.streamItem}>
-            <StreamPreviewCard
-              stream={stream}
-              onPress={() => onStreamSelect(stream)}
-              onAddStream={() => onAddStream(stream)}
-              onToggleFavorite={() => onToggleFavorite(stream.user_id)}
-              isFavorite={isFavorite(stream.user_id)}
-              isActive={isStreamActive(stream.id)}
-              width={gridDimensions.itemWidth}
-              height={gridDimensions.itemHeight}
-            />
-          </View>
+        
+        {isExpanded ? (
+          <FlatList
+            data={displayStreams}
+            renderItem={({ item: stream }) => (
+              <View style={styles.streamItem}>
+                <StreamPreviewCard
+                  stream={stream}
+                  onPress={() => onStreamSelect(stream)}
+                  onAddStream={() => onAddStream(stream)}
+                  onToggleFavorite={() => onToggleFavorite(stream.user_id)}
+                  isFavorite={isFavorite(stream.user_id)}
+                  isActive={isStreamActive(stream.id)}
+                  width={gridDimensions.itemWidth}
+                  height={gridDimensions.itemHeight}
+                />
+              </View>
+            )}
+            keyExtractor={(stream) => stream.id}
+            numColumns={2}
+            scrollEnabled={false}
+            contentContainerStyle={styles.gridList}
+          />
+        ) : (
+          <FlatList
+            data={displayStreams}
+            renderItem={({ item: stream }) => (
+              <View style={styles.streamItem}>
+                <StreamPreviewCard
+                  stream={stream}
+                  onPress={() => onStreamSelect(stream)}
+                  onAddStream={() => onAddStream(stream)}
+                  onToggleFavorite={() => onToggleFavorite(stream.user_id)}
+                  isFavorite={isFavorite(stream.user_id)}
+                  isActive={isStreamActive(stream.id)}
+                  width={gridDimensions.itemWidth}
+                  height={gridDimensions.itemHeight}
+                />
+              </View>
+            )}
+            keyExtractor={(stream) => stream.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          />
         )}
-        keyExtractor={(stream) => stream.id}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalList}
-      />
-    </View>
-  );
+      </View>
+    );
+  };
 
   if (isLoading && streams.length === 0) {
     return (
@@ -937,6 +989,10 @@ const styles = StyleSheet.create({
     fontWeight: ModernTheme.typography.weights.medium,
   },
   horizontalList: {
+    paddingHorizontal: ModernTheme.spacing.md,
+    gap: ModernTheme.spacing.sm,
+  },
+  gridList: {
     paddingHorizontal: ModernTheme.spacing.md,
     gap: ModernTheme.spacing.sm,
   },
