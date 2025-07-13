@@ -154,12 +154,9 @@ export const OptimizedMultiStreamGrid: React.FC<OptimizedMultiStreamGridProps> =
     const bottomTabHeight = 100; // Tab bar space
     const availableHeight = SCREEN_HEIGHT - headerHeight - bottomTabHeight - insets.top - insets.bottom;
     
-    const basePadding = ModernTheme.spacing.md;
-    const baseGap = ModernTheme.spacing.xs;
-    
     // Responsive padding and gap based on screen size
-    const padding = isLandscape ? ModernTheme.spacing.sm : basePadding;
-    const gap = isLandscape ? ModernTheme.spacing.xs / 2 : baseGap;
+    const padding = SCREEN_WIDTH < 400 ? 4 : 8; // More padding on larger screens
+    const gap = SCREEN_WIDTH < 400 ? 2 : 4; // Smaller gap on small screens
     
     const containerWidth = availableWidth - (padding * 2);
     const containerHeight = availableHeight - (padding * 2);
@@ -201,17 +198,47 @@ export const OptimizedMultiStreamGrid: React.FC<OptimizedMultiStreamGridProps> =
       }
     }
 
-    // Calculate optimal cell dimensions
-    const cellWidth = (containerWidth - (gap * (columns - 1))) / columns;
+    // Calculate cell dimensions properly accounting for gaps
+    let cellWidth = (containerWidth - (gap * (columns - 1))) / columns;
+    let cellHeight = (containerHeight - (gap * (rows - 1))) / rows;
     
-    // Maintain 16:9 aspect ratio for video content, but adapt for different view modes
-    let aspectRatio = 16 / 9;
-    if (viewMode === 'stack') aspectRatio = 21 / 9; // Wider for stacked view
-    if (viewMode === 'pip') aspectRatio = 16 / 9;
+    // Ensure cells don't exceed reasonable bounds for responsive design
+    const maxCellWidth = containerWidth / columns - gap;
+    const maxCellHeight = containerHeight / rows - gap;
     
-    const idealCellHeight = cellWidth / aspectRatio;
-    const maxCellHeight = (containerHeight - (gap * (rows - 1))) / rows;
-    const cellHeight = Math.min(idealCellHeight, maxCellHeight);
+    cellWidth = Math.min(cellWidth, maxCellWidth);
+    cellHeight = Math.min(cellHeight, maxCellHeight);
+    
+    // For 2x2 grid, ensure cells are properly sized for side-by-side display
+    if (columns === 2 && rows === 2) {
+      // Calculate available width after padding
+      const paddingHorizontal = SCREEN_WIDTH < 400 ? 4 : 8;
+      const availableWidth = SCREEN_WIDTH - (paddingHorizontal * 2);
+      
+      // Force exact calculation for 2x2 layout: (available width - gap between columns) / 2
+      cellWidth = Math.floor((availableWidth - gap) / 2);
+      // For 2x2, also ensure height accounts for gap between rows
+      cellHeight = Math.floor((containerHeight - gap) / 2);
+      
+      // Ensure minimum viable size but don't exceed calculated size
+      const minSize = 100;
+      cellWidth = Math.max(cellWidth, minSize);
+      cellHeight = Math.max(cellHeight, minSize);
+      
+      // Debug logging for 2x2 grid
+      console.log('2x2 Grid Debug:', {
+        SCREEN_WIDTH,
+        paddingHorizontal,
+        availableWidth,
+        containerWidth,
+        containerHeight,
+        gap,
+        cellWidth,
+        cellHeight,
+        totalWidthNeeded: (cellWidth * 2) + gap,
+        fitsInContainer: (cellWidth * 2) + gap <= availableWidth
+      });
+    }
 
     return {
       columns,
@@ -533,46 +560,144 @@ export const OptimizedMultiStreamGrid: React.FC<OptimizedMultiStreamGridProps> =
     }
   };
 
-  const renderGridView = (streams: TwitchStream[]) => (
-    <Animated.View style={[styles.gridContainer, gridAnimatedStyle]}>
-      {streams.map((stream, index) => {
-        const row = Math.floor(index / gridDimensions.columns);
-        const col = index % gridDimensions.columns;
-        
-        return (
-          <Animated.View
-            key={stream.id}
-            layout={Layout.springify()}
-            entering={FadeIn.delay(index * 100)}
-            exiting={FadeOut}
-            style={[
-              styles.streamCell,
-              {
-                width: gridDimensions.cellWidth,
-                height: gridDimensions.cellHeight,
-                marginLeft: col > 0 ? gridDimensions.gap : 0,
-                marginTop: row > 0 ? gridDimensions.gap : 0,
-              }
-            ]}
-          >
-            <StreamPlayerCard
-              stream={stream}
-              width={gridDimensions.cellWidth}
-              height={gridDimensions.cellHeight}
-              isActive={activeStreamId === stream.id}
-              isMuted={globalMute || activeStreamId !== stream.id}
-              onPress={() => handleStreamPress(stream)}
-              onLongPress={() => handleStreamLongPress(stream)}
-              onRemove={() => removeStream(stream.id)}
-              showQuality
-              showViewers
-              compact={gridDimensions.cellWidth < 200}
-            />
-          </Animated.View>
-        );
-      })}
-    </Animated.View>
-  );
+  const renderGridView = (streams: TwitchStream[]) => {
+    // Special handling for 2x2 grid to ensure side-by-side layout
+    if (layout === '2x2' && gridDimensions.columns === 2) {
+      const paddingHorizontal = SCREEN_WIDTH < 400 ? 4 : 8;
+      const availableWidth = SCREEN_WIDTH - (paddingHorizontal * 2);
+      const gap = gridDimensions.gap;
+      // Calculate cell width to ensure two cells fit side-by-side
+      const cellWidth = Math.floor((availableWidth - gap) / 2);
+      
+      // Create rows explicitly for 2x2 layout
+      const topRow = streams.slice(0, 2);
+      const bottomRow = streams.slice(2, 4);
+      
+      return (
+        <Animated.View style={[gridAnimatedStyle, {
+          paddingHorizontal,
+          width: SCREEN_WIDTH,
+        }]}>
+          {/* Top Row */}
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginBottom: gap,
+          }}>
+            {topRow.map((stream, index) => (
+              <Animated.View
+                key={stream.id}
+                layout={Layout.springify()}
+                entering={FadeIn.delay(index * 100)}
+                exiting={FadeOut}
+                style={[
+                  styles.streamCell,
+                  {
+                    width: cellWidth,
+                    height: gridDimensions.cellHeight,
+                  }
+                ]}
+              >
+                <StreamPlayerCard
+                  stream={stream}
+                  width={cellWidth}
+                  height={gridDimensions.cellHeight}
+                  isActive={activeStreamId === stream.id}
+                  isMuted={globalMute || activeStreamId !== stream.id}
+                  onPress={() => handleStreamPress(stream)}
+                  onLongPress={() => handleStreamLongPress(stream)}
+                  onRemove={() => removeStream(stream.id)}
+                  showQuality
+                  showViewers
+                  compact={cellWidth < 200}
+                />
+              </Animated.View>
+            ))}
+          </View>
+          
+          {/* Bottom Row */}
+          {bottomRow.length > 0 && (
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+            }}>
+              {bottomRow.map((stream, index) => (
+                <Animated.View
+                  key={stream.id}
+                  layout={Layout.springify()}
+                  entering={FadeIn.delay((index + 2) * 100)}
+                  exiting={FadeOut}
+                  style={[
+                    styles.streamCell,
+                    {
+                      width: cellWidth,
+                      height: gridDimensions.cellHeight,
+                    }
+                  ]}
+                >
+                  <StreamPlayerCard
+                    stream={stream}
+                    width={cellWidth}
+                    height={gridDimensions.cellHeight}
+                    isActive={activeStreamId === stream.id}
+                    isMuted={globalMute || activeStreamId !== stream.id}
+                    onPress={() => handleStreamPress(stream)}
+                    onLongPress={() => handleStreamLongPress(stream)}
+                    onRemove={() => removeStream(stream.id)}
+                    showQuality
+                    showViewers
+                    compact={cellWidth < 200}
+                  />
+                </Animated.View>
+              ))}
+            </View>
+          )}
+        </Animated.View>
+      );
+    }
+    
+    // Default grid layout for other configurations
+    return (
+      <Animated.View style={[styles.gridContainer, gridAnimatedStyle]}>
+        {streams.map((stream, index) => {
+          const row = Math.floor(index / gridDimensions.columns);
+          const col = index % gridDimensions.columns;
+          
+          return (
+            <Animated.View
+              key={stream.id}
+              layout={Layout.springify()}
+              entering={FadeIn.delay(index * 100)}
+              exiting={FadeOut}
+              style={[
+                styles.streamCell,
+                {
+                  width: gridDimensions.cellWidth,
+                  height: gridDimensions.cellHeight,
+                  marginRight: col < gridDimensions.columns - 1 ? gridDimensions.gap : 0,
+                  marginBottom: row < Math.ceil(streams.length / gridDimensions.columns) - 1 ? gridDimensions.gap : 0,
+                }
+              ]}
+            >
+              <StreamPlayerCard
+                stream={stream}
+                width={gridDimensions.cellWidth}
+                height={gridDimensions.cellHeight}
+                isActive={activeStreamId === stream.id}
+                isMuted={globalMute || activeStreamId !== stream.id}
+                onPress={() => handleStreamPress(stream)}
+                onLongPress={() => handleStreamLongPress(stream)}
+                onRemove={() => removeStream(stream.id)}
+                showQuality
+                showViewers
+                compact={gridDimensions.cellWidth < 200}
+              />
+            </Animated.View>
+          );
+        })}
+      </Animated.View>
+    );
+  };
 
   const renderStackView = (streams: TwitchStream[]) => (
     <ScrollView
@@ -998,12 +1123,14 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingVertical: ModernTheme.spacing.md,
+    paddingVertical: 2, // Minimal padding
   },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    paddingHorizontal: SCREEN_WIDTH < 400 ? 4 : 8, // Responsive padding
   },
   streamCell: {
     borderRadius: ModernTheme.borderRadius.lg,

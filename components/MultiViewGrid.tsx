@@ -326,17 +326,30 @@ export const MultiViewGrid: React.FC<MultiViewGridProps> = ({
   const maxStreams = columns * rows;
   const displayStreams = activeStreams.slice(0, maxStreams);
 
-  // Calculate cell dimensions with improved sizing
-  const padding = 12;
-  const gap = 6;
-  const availableWidth = SCREEN_WIDTH - padding * 2;
-  const availableHeight = SCREEN_HEIGHT - 180; // Reduced reserved space for better stream visibility
+  // Force massive stream dimensions - ignore calculated values for maximum size
+  const padding = 0; // No padding for absolute maximum space
+  const gap = 0; // No gap for absolute maximum space
   
-  const cellWidth = (availableWidth - gap * (columns - 1)) / columns;
-  const cellHeight = Math.min(
-    (availableHeight - gap * (rows - 1)) / rows,
-    (cellWidth * 9) / 16 // Maintain 16:9 aspect ratio
-  );
+  // Force absolutely massive dimensions - streams must dominate the screen
+   let minCellWidth, minCellHeight;
+   
+   if (columns === 2) {
+     // For 2x2 grid, make each stream take up nearly half the screen
+     minCellWidth = SCREEN_WIDTH / 2; // Exactly half screen width
+     minCellHeight = (SCREEN_HEIGHT - 150) / 2; // Nearly half screen height
+   } else if (columns === 1) {
+     // For single stream, take up most of the screen
+     minCellWidth = SCREEN_WIDTH - 20;
+     minCellHeight = SCREEN_HEIGHT - 200;
+   } else {
+     // For 3x3 or larger grids, still make them as large as possible
+     minCellWidth = (SCREEN_WIDTH - 20) / columns;
+     minCellHeight = (SCREEN_HEIGHT - 200) / rows;
+   }
+   
+   // Force minimum huge sizes regardless of calculations
+   minCellWidth = Math.max(minCellWidth, SCREEN_WIDTH * 0.45); // At least 45% of screen width
+   minCellHeight = Math.max(minCellHeight, SCREEN_HEIGHT * 0.35); // At least 35% of screen height
 
   if (displayStreams.length === 0) {
     return (
@@ -379,16 +392,16 @@ export const MultiViewGrid: React.FC<MultiViewGridProps> = ({
                 style={[
                   styles.cellWrapper,
                   {
-                    width: cellWidth,
-                    height: cellHeight,
-                    marginRight: columnIndex < rowStreams.length - 1 ? gap : 0,
+                    width: minCellWidth,
+                    height: minCellHeight,
+                    marginRight: 0, // No gap for absolute maximum space
                   }
                 ]}
               >
                 <StreamCell
                   stream={stream}
-                  width={cellWidth}
-                  height={cellHeight}
+                  width={minCellWidth}
+                  height={minCellHeight}
                   onRemove={() => removeStream(stream.id)}
                   isActive={activeStreamId === stream.id}
                   onPress={() => setActiveStreamId(stream.id)}
@@ -408,7 +421,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0a',
   },
   gridContainer: {
-    padding: 12,
+    padding: 0, // No padding for absolute maximum space
     paddingBottom: 100,
   },
   grid: {
@@ -418,7 +431,7 @@ const styles = StyleSheet.create({
   gridRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 6,
+    marginBottom: 0, // No gap for absolute maximum space
   },
   cellWrapper: {
     // marginRight is handled dynamically in the component

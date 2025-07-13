@@ -56,25 +56,30 @@ export default function DiscoverScreen() {
     }
   };
 
-  const handleStreamSelect = (stream: TwitchStream) => {
-    addStream(stream);
-    Alert.alert(
-      'Stream Added',
-      `${stream.user_name} has been added to your multi-view!`,
-      [
-        { text: 'OK' },
-        { text: 'Go to Multi-View', onPress: () => {
-          // TODO: Navigate to grid tab
-        }}
-      ]
-    );
+  const handleStreamSelect = async (stream: TwitchStream) => {
+    const result = await addStream(stream);
+    if (result.success) {
+      Alert.alert(
+        'Stream Added',
+        result.message,
+        [
+          { text: 'OK' },
+          { text: 'Go to Multi-View', onPress: () => {
+            // TODO: Navigate to grid tab
+          }}
+        ]
+      );
+    } else {
+      Alert.alert('Error', result.message);
+    }
   };
 
   const handleAddStream = async (stream: TwitchStream) => {
     try {
-      addStream(stream);
-      return { success: true, message: 'Stream added successfully!' };
+      const result = await addStream(stream);
+      return result;
     } catch (error) {
+      console.error('Error in handleAddStream:', error);
       return { success: false, message: 'Failed to add stream' };
     }
   };
