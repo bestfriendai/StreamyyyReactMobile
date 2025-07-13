@@ -103,35 +103,35 @@ const GAME_CATEGORIES: GameCategory[] = [
     name: 'Gaming',
     icon: <Gamepad2 size={16} color="#fff" />,
     gradient: ['#EF4444', '#F97316'],
-    gameIds: ['509658', '32982', '21779', '33214'], // Popular game IDs
+    gameIds: ['32982', '21779', '33214', '511224', '27471', '460630', '18122', '29595', '493057', '516575'], // Popular games: Fortnite, League of Legends, Fortnite, Apex Legends, Minecraft, etc.
   },
   {
     id: 'irl',
     name: 'Just Chatting',
     icon: <Users size={16} color="#fff" />,
     gradient: ['#06B6D4', '#0891B2'],
-    gameIds: ['509658'], // Just Chatting
+    gameIds: ['509658', '509659', '509664', '509663'], // Just Chatting, Travel & Outdoors, Pools Hot Tubs and Beaches, ASMR
   },
   {
     id: 'music',
     name: 'Music',
     icon: <Music size={16} color="#fff" />,
     gradient: ['#10B981', '#059669'],
-    gameIds: ['26936'], // Music
+    gameIds: ['26936', '509662', '417752'], // Music, DJ, Rocksmith 2014
   },
   {
     id: 'art',
     name: 'Art',
     icon: <Star size={16} color="#fff" />,
     gradient: ['#F59E0B', '#D97706'],
-    gameIds: ['509660'], // Art
+    gameIds: ['509660', '509661'], // Art, Makers & Crafting
   },
   {
     id: 'sports',
     name: 'Sports',
     icon: <Play size={16} color="#fff" />,
     gradient: ['#8B5CF6', '#7C3AED'],
-    gameIds: ['518203'], // Sports
+    gameIds: ['518203', '512980', '1869092879'], // Sports, Virtual Casino, FIFA 23
   },
 ];
 
@@ -163,8 +163,10 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [featuredStreams, setFeaturedStreams] = useState<TwitchStream[]>([]);
   const [trendingGames, setTrendingGames] = useState<TwitchGame[]>([]);
-  const [totalViewers, setTotalViewers] = useState<number>(0);
-  const [liveStreamers, setLiveStreamers] = useState<number>(0);
+  const [totalViewers, setTotalViewers] = useState(0);
+  const [liveStreamers, setLiveStreamers] = useState(0);
+  const [categoryStreams, setCategoryStreams] = useState<TwitchStream[]>([]);
+  const [loadingCategory, setLoadingCategory] = useState(false);
   
   // Animation values
   const searchBarScale = useSharedValue(1);
@@ -177,6 +179,13 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
   useEffect(() => {
     loadAdditionalData();
   }, []);
+
+  // Load category streams when component mounts with a selected category
+  useEffect(() => {
+    if (selectedCategory !== 'all') {
+      loadCategoryStreams(selectedCategory);
+    }
+  }, [selectedCategory, loadCategoryStreams]);
 
   const loadAdditionalData = async () => {
     try {
@@ -234,14 +243,21 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
   
   // Filter and sort streams
   const filteredStreams = useMemo(() => {
-    let filtered = streams.filter(stream => {
+    // Use category-specific streams if a category is selected and we have them
+    const sourceStreams = searchFilters.category !== 'all' && categoryStreams.length > 0 
+      ? categoryStreams 
+      : streams;
+    
+    let filtered = sourceStreams.filter(stream => {
       const matchesQuery = !searchFilters.query || 
         stream.user_name.toLowerCase().includes(searchFilters.query.toLowerCase()) ||
         stream.game_name.toLowerCase().includes(searchFilters.query.toLowerCase());
       
       const matchesViewers = stream.viewer_count >= searchFilters.minViewers;
       
+      // If using category streams, they're already filtered by category
       const matchesCategory = searchFilters.category === 'all' || 
+        categoryStreams.length > 0 || 
         GAME_CATEGORIES.find(cat => cat.id === searchFilters.category)?.gameIds?.includes(stream.game_id);
       
       return matchesQuery && matchesViewers && matchesCategory;
@@ -261,7 +277,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
     }
     
     return filtered;
-  }, [streams, searchFilters]);
+  }, [streams, categoryStreams, searchFilters]);
 
   // Create stream sections
   const streamSections: StreamSection[] = useMemo(() => {
@@ -289,23 +305,36 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
     }
 
     // Category-specific sections
-    GAME_CATEGORIES.slice(1).forEach(category => {
-      const categoryStreams = streams
-        .filter(stream => category.gameIds?.includes(stream.game_id))
-        .slice(0, 6);
-      
-      if (categoryStreams.length > 0) {
+    if (selectedCategory !== 'all' && categoryStreams.length > 0) {
+      const selectedCategoryData = GAME_CATEGORIES.find(cat => cat.id === selectedCategory);
+      if (selectedCategoryData) {
         sections.push({
-          title: category.name,
-          subtitle: `${categoryStreams.length} live streams`,
-          icon: category.icon,
-          streams: categoryStreams,
+          title: `${selectedCategoryData.name} Streams`,
+          subtitle: `${categoryStreams.length} live streams in ${selectedCategoryData.name.toLowerCase()}`,
+          icon: selectedCategoryData.icon,
+          streams: categoryStreams.slice(0, 24), // Increased from 12 to 24 streams for selected category
         });
       }
-    });
+    } else if (selectedCategory === 'all') {
+      // Show category sections for 'all' view
+      GAME_CATEGORIES.slice(1).forEach(category => {
+        const catStreams = streams
+          .filter(stream => category.gameIds?.includes(stream.game_id))
+          .slice(0, 12); // Increased from 6 to 12 streams per category
+        
+        if (catStreams.length > 0) {
+          sections.push({
+            title: category.name,
+            subtitle: `${catStreams.length} live streams`,
+            icon: category.icon,
+            streams: catStreams,
+          });
+        }
+      });
+    }
 
     return sections;
-  }, [featuredStreams, filteredStreams, streams]);
+  }, [featuredStreams, filteredStreams, streams, selectedCategory, categoryStreams]);
   
   // Handle refresh
   const handleRefresh = useCallback(async () => {
@@ -335,12 +364,55 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
     filtersHeight.value = withTiming(showFilters ? 0 : 180, { duration: 300 });
   }, [showFilters]);
 
+  // Load category-specific streams
+  const loadCategoryStreams = useCallback(async (categoryId: string) => {
+    if (categoryId === 'all') {
+      setCategoryStreams([]);
+      return;
+    }
+
+    const category = GAME_CATEGORIES.find(cat => cat.id === categoryId);
+    if (!category?.gameIds?.length) {
+      setCategoryStreams([]);
+      return;
+    }
+
+    setLoadingCategory(true);
+    try {
+      const allCategoryStreams: TwitchStream[] = [];
+      
+      // Fetch streams for each game ID in the category
+      for (const gameId of category.gameIds) {
+        try {
+          const gameStreams = await twitchApi.getStreamsByGame(gameId, 50); // Increased from 20 to 50
+          allCategoryStreams.push(...gameStreams);
+        } catch (error) {
+          console.warn(`Failed to fetch streams for game ${gameId}:`, error);
+        }
+      }
+      
+      // Remove duplicates and sort by viewer count
+      const uniqueStreams = allCategoryStreams.filter((stream, index, self) => 
+        index === self.findIndex(s => s.id === stream.id)
+      );
+      
+      uniqueStreams.sort((a, b) => b.viewer_count - a.viewer_count);
+      setCategoryStreams(uniqueStreams.slice(0, 200)); // Increased from 50 to 200 streams
+    } catch (error) {
+      console.error('Error loading category streams:', error);
+      setCategoryStreams([]);
+    } finally {
+      setLoadingCategory(false);
+    }
+  }, []);
+
   // Handle category selection
-  const handleCategorySelect = useCallback((categoryId: string) => {
+  const handleCategorySelect = useCallback(async (categoryId: string) => {
     // HapticFeedback.light();
     setSelectedCategory(categoryId);
     setSearchFilters(prev => ({ ...prev, category: categoryId as CategoryFilter }));
-  }, []);
+    await loadCategoryStreams(categoryId);
+  }, [loadCategoryStreams]);
 
   // Handle view mode change
   const handleViewModeChange = useCallback((mode: ViewMode) => {
@@ -605,6 +677,15 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.categoriesList}
           />
+          {loadingCategory && (
+            <View style={styles.categoryLoadingContainer}>
+              <ActivityIndicator 
+                size="small" 
+                color={ModernTheme.colors.primary[400]} 
+              />
+              <Text style={styles.categoryLoadingText}>Loading streams...</Text>
+            </View>
+          )}
         </View>
 
         {/* Trending Games */}
@@ -805,6 +886,18 @@ const styles = StyleSheet.create({
   },
   categoryTextActive: {
     color: ModernTheme.colors.text.primary,
+  },
+  categoryLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: ModernTheme.spacing.sm,
+    gap: ModernTheme.spacing.xs,
+  },
+  categoryLoadingText: {
+    color: ModernTheme.colors.text.secondary,
+    fontSize: ModernTheme.typography.sizes.sm,
+    fontWeight: ModernTheme.typography.weights.medium,
   },
   section: {
     paddingVertical: ModernTheme.spacing.md,
