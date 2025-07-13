@@ -12,6 +12,7 @@ import {
   Dimensions,
   FlatList,
   RefreshControl,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -41,11 +42,9 @@ import { useStreamManager } from '@/hooks/useStreamManager';
 import { ModernTheme } from '@/theme/modernTheme';
 import Animated, {
   useSharedValue,
-  useAnimatedStyle,
   withSpring,
   withTiming,
   interpolate,
-  interpolateColor,
 } from 'react-native-reanimated';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -193,15 +192,6 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
     const isGrid = viewMode === 'grid';
     const cardWidth = isGrid ? (screenWidth - 48) / 2 : screenWidth - 32;
     const isSelected = selectedStreams.includes(stream.id);
-    
-    const cardAnimatedStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: cardScale.value }],
-      borderColor: interpolateColor(
-        cardScale.value,
-        [1, 1.02],
-        ['rgba(255, 255, 255, 0.1)', 'rgba(139, 92, 246, 0.5)']
-      ),
-    }));
 
     return (
       <MotiView
@@ -221,7 +211,7 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
           isSelected && styles.selectedCard,
         ]}
       >
-        <Animated.View style={[cardAnimatedStyle, styles.cardWrapper]}>
+        <View style={styles.cardWrapper}>
           <LinearGradient
             colors={isSelected 
               ? ['rgba(139, 92, 246, 0.2)', 'rgba(124, 58, 237, 0.15)', 'rgba(42, 42, 42, 0.95)']
@@ -396,7 +386,7 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
             </Pressable>
           </View>
         </LinearGradient>
-        </Animated.View>
+        </View>
       </MotiView>
     );
   };
@@ -1043,3 +1033,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+export default EnhancedFavoritesScreen;

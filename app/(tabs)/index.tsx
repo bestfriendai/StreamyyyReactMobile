@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Alert, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { EnhancedDiscoverScreenV3 } from '@/components/EnhancedDiscoverScreenV3';
+import { EnhancedDiscoverScreenV4 } from '@/components/EnhancedDiscoverScreenV4';
 import { NavigationHeader } from '@/components/NavigationHeader';
-import { TwitchStream, TwitchGame, fetchTopStreams, fetchTopGames } from '@/services/twitchApi';
+import { TwitchStream, TwitchGame, fetchTopStreams, fetchEnhancedStreams, fetchTopGames } from '@/services/twitchApi';
 import { useStreamManager } from '@/hooks/useStreamManager';
 import { RefreshCw, Filter } from 'lucide-react-native';
 
@@ -21,13 +21,13 @@ export default function DiscoverScreen() {
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      const [topStreams, topGames] = await Promise.all([
-        fetchTopStreams(20),
-        fetchTopGames(10)
+      const [enhancedStreams, topGames] = await Promise.all([
+        fetchEnhancedStreams(100), // Get more streams with enhanced metadata
+        fetchTopGames(12) // Get more games for better categorization
       ]);
-      setStreams(topStreams);
+      setStreams(enhancedStreams);
       setGames(topGames);
-      setHasMore(topStreams.length === 20);
+      setHasMore(enhancedStreams.length === 100);
     } catch (error) {
       console.error('Error loading initial data:', error);
       Alert.alert('Error', 'Failed to load streams. Please try again.');
@@ -44,10 +44,10 @@ export default function DiscoverScreen() {
     if (loading || !hasMore) return;
 
     try {
-      const moreStreams = await fetchTopStreams(20);
+      const moreStreams = await fetchEnhancedStreams(50);
       if (moreStreams.length > 0) {
         setStreams(prev => [...prev, ...moreStreams]);
-        setHasMore(moreStreams.length === 20);
+        setHasMore(moreStreams.length === 50);
       } else {
         setHasMore(false);
       }
@@ -101,7 +101,7 @@ export default function DiscoverScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <EnhancedDiscoverScreenV3
+        <EnhancedDiscoverScreenV4
           streams={streams}
           games={games}
           onStreamSelect={handleStreamSelect}

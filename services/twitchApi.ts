@@ -386,6 +386,103 @@ class TwitchAPI {
     }
   }
 
+  async getEnhancedStreams(first: number = 20, language?: string): Promise<{ data: TwitchStream[]; pagination: { cursor?: string } }> {
+    console.log(`🚀 Fetching enhanced streams with metadata (${first} streams)`);
+    
+    const params: Record<string, string> = {
+      first: first.toString(),
+    };
+    
+    if (language) {
+      params.language = language;
+    }
+
+    try {
+      const result = await this.makeRequest<{ data: TwitchStream[]; pagination: { cursor?: string } }>('/streams', params);
+      
+      // Enhance streams with additional metadata
+      const enhancedStreams = result.data.map((stream, index) => {
+        // Calculate stream age for trending algorithm
+        const streamAge = Date.now() - new Date(stream.started_at).getTime();
+        const hoursLive = streamAge / (1000 * 60 * 60);
+        const minutesLive = streamAge / (1000 * 60);
+        
+        // Enhanced trending algorithm
+        // Factors: viewer count, stream recency, viewer growth rate estimation
+        let trendingScore = 0;
+        
+        if (hoursLive < 0.5) {
+          // Very new streams get bonus points
+          trendingScore = stream.viewer_count * 3;
+        } else if (hoursLive < 2) {
+          // Recent streams get good score
+          trendingScore = stream.viewer_count * 2;
+        } else if (hoursLive < 6) {
+          // Established streams
+          trendingScore = stream.viewer_count * 1.5;
+        } else {
+          // Older streams need higher viewer count
+          trendingScore = stream.viewer_count / Math.max(1, Math.log(hoursLive));
+        }
+        
+        // Bonus for streams in top positions (likely growing)
+        if (index < 10) {
+          trendingScore *= 1.2;
+        }
+        
+        // Determine stream status
+        const isNewStream = hoursLive < 2;
+        const isVeryNew = minutesLive < 30;
+        const isTrending = trendingScore > 2000 || (stream.viewer_count > 1000 && hoursLive < 1);
+        const isHot = stream.viewer_count > 10000;
+        const isRising = trendingScore > 1500 && hoursLive < 4;
+        
+        // Calculate engagement score (viewers per hour)
+        const engagementScore = stream.viewer_count / Math.max(0.1, hoursLive);
+        
+        return {
+          ...stream,
+          // Add metadata for UI
+          streamAge: Math.floor(hoursLive),
+          minutesLive: Math.floor(minutesLive),
+          trendingScore: Math.floor(trendingScore),
+          engagementScore: Math.floor(engagementScore),
+          isNewStream,
+          isVeryNew,
+          isTrending,
+          isHot,
+          isRising,
+          // Enhance thumbnail URL for better quality
+          thumbnail_url: stream.thumbnail_url
+            .replace('{width}', '440')
+            .replace('{height}', '248'),
+        };
+      });
+      
+      // Filter out invalid streams
+      const validStreams = enhancedStreams.filter(stream => {
+        const isValid = stream.user_login && 
+          stream.user_name && 
+          stream.type === 'live' &&
+          stream.user_login.length > 0 &&
+          stream.user_name.length > 0 &&
+          !stream.user_login.includes(' ') &&
+          /^[a-zA-Z0-9_]+$/.test(stream.user_login);
+        
+        return isValid;
+      });
+      
+      console.log(`✅ Enhanced ${validStreams.length} streams with metadata`);
+      return {
+        data: validStreams,
+        pagination: result.pagination
+      };
+    } catch (error) {
+      console.error('❌ Failed to fetch enhanced streams:', error);
+      throw error;
+    }
+  }
+
   async getStreamsByGame(gameId: string, first: number = 20): Promise<{ data: TwitchStream[] }> {
     console.log(`Fetching streams for game ID: ${gameId}`);
     return this.makeRequest('/streams', {
@@ -582,6 +679,11 @@ export const twitchApi = new TwitchAPI();
 // Wrapper functions for easier importing
 export const fetchTopStreams = async (first: number = 20, after?: string) => {
   const result = await twitchApi.getTopStreams(first, after);
+  return result.data;
+};
+
+export const fetchEnhancedStreams = async (first: number = 20, language?: string) => {
+  const result = await twitchApi.getEnhancedStreams(first, language);
   return result.data;
 };
 
