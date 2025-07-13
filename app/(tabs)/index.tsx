@@ -96,25 +96,6 @@ export default function DiscoverScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <NavigationHeader
-          title="Discover"
-          subtitle="Find trending streams & games"
-          rightElement={
-            <TouchableOpacity
-              onPress={handleRefresh}
-              style={{ padding: 4 }}
-              disabled={loading}
-            >
-              <RefreshCw 
-                size={20} 
-                color={loading ? '#6B7280' : '#8B5CF6'} 
-                style={{ 
-                  transform: [{ rotate: loading ? '180deg' : '0deg' }] 
-                }}
-              />
-            </TouchableOpacity>
-          }
-        />
         <CleanDiscoverScreen
           streams={streams}
           games={games}

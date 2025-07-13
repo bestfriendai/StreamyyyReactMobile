@@ -1,0 +1,58 @@
+import { Stream } from '@/store/StreamStore';
+
+export const sampleStreams: Stream[] = [
+  {
+    id: '1',
+    user_name: 'Ninja',
+    game_name: 'Fortnite',
+    viewer_count: 45000,
+    thumbnail_url: 'https://via.placeholder.com/320x180',
+    title: 'Epic Victory Royales! New Season Grind',
+    is_live: true,
+  },
+  {
+    id: '2',
+    user_name: 'Pokimane',
+    game_name: 'Just Chatting',
+    viewer_count: 32000,
+    thumbnail_url: 'https://via.placeholder.com/320x180',
+    title: 'Morning Chat & Coffee ☕ Cozy Vibes',
+    is_live: true,
+  },
+  {
+    id: '3',
+    user_name: 'Shroud',
+    game_name: 'VALORANT',
+    viewer_count: 28000,
+    thumbnail_url: 'https://via.placeholder.com/320x180',
+    title: 'Ranked Grind - Road to Radiant',
+    is_live: true,
+  },
+  {
+    id: '4',
+    user_name: 'xQc',
+    game_name: 'Grand Theft Auto V',
+    viewer_count: 62000,
+    thumbnail_url: 'https://via.placeholder.com/320x180',
+    title: 'NoPixel RP - Bank Heist Plans',
+    is_live: true,
+  },
+  {
+    id: '5',
+    user_name: 'Myth',
+    game_name: 'League of Legends',
+    viewer_count: 18000,
+    thumbnail_url: 'https://via.placeholder.com/320x180',
+    title: 'Climbing Solo Queue | ADC Main',
+    is_live: true,
+  },
+  {
+    id: '6',
+    user_name: 'Valkyrae',
+    game_name: 'Among Us',
+    viewer_count: 24000,
+    thumbnail_url: 'https://via.placeholder.com/320x180',
+    title: 'Among Us with Friends | Who\'s Sus?',
+    is_live: true,
+  },
+];
