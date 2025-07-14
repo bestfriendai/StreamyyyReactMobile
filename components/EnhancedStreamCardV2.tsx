@@ -423,12 +423,7 @@ export const EnhancedStreamCardV2: React.FC<EnhancedStreamCardV2Props> = ({
 
       {/* Active Border */}
       {isActive && (
-        <View style={styles.activeBorder}>
-          <LinearGradient
-            colors={['#22c55e', '#16a34a']}
-            style={styles.activeBorderGradient}
-          />
-        </View>
+        <View style={styles.activeBorder} />
       )}
     </AnimatedTouchableOpacity>
   );
@@ -721,12 +716,14 @@ const styles = StyleSheet.create({
   },
   activeBorder: {
     position: 'absolute',
-    top: -2,
-    left: -2,
-    right: -2,
-    bottom: -2,
-    borderRadius: ModernTheme.borderRadius.lg + 2,
-    padding: 2,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: ModernTheme.borderRadius.lg,
+    borderWidth: 2,
+    borderColor: '#22c55e',
+    pointerEvents: 'none',
   },
   activeBorderGradient: {
     flex: 1,

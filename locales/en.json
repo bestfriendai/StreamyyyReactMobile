@@ -1,0 +1,144 @@
+{
+  "app": {
+    "name": "Multi-Stream Viewer",
+    "tagline": "Watch Multiple Streams Simultaneously"
+  },
+  "navigation": {
+    "home": "Home",
+    "discover": "Discover",
+    "favorites": "Favorites",
+    "settings": "Settings",
+  },
+  "streaming": {
+    "live": "LIVE",
+    "offline": "OFFLINE",
+    "viewers": "{{count}} viewers",
+    "viewer": "{{count}} viewer",
+    "watching": "Watching",
+    "category": "Category: {{category}}",
+    "duration": "{{hours}}:{{minutes}}:{{seconds}}"
+  },
+  "controls": {
+    "play": "Play",
+    "pause": "Pause",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit Fullscreen",
+    "volume": "Volume",
+    "quality": "Quality"
+  },
+  "favorites": {
+    "add": "Add to Favorites",
+    "remove": "Remove from Favorites",
+    "empty": "No favorite streams yet",
+    "emptyDescription": "Add streams to your favorites to see them here"
+  },
+  "search": {
+    "placeholder": "Search streams, streamers, or categories",
+    "noResults": "No results found",
+    "searchFor": "Search for \"{{query}}\"",
+    "clear": "Clear search"
+  },
+  "errors": {
+    "generic": "Something went wrong",
+    "network": "Network connection error",
+    "streamNotFound": "Stream not found",
+    "loadingFailed": "Failed to load content",
+    "retry": "Retry",
+    "reportIssue": "Report Issue"
+  },
+  "loading": {
+    "streams": "Loading streams...",
+    "content": "Loading content...",
+    "please_wait": "Please wait..."
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "language": "Language",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "about": "About",
+    "version": "Version {{version}}",
+    "buildNumber": "Build {{build}}"
+  },
+  "themes": {
+    "light": "Light",
+    "dark": "Dark",
+    "auto": "System Default"
+  },
+  "privacy": {
+    "dataCollection": "Data Collection",
+    "analytics": "Analytics",
+    "crashReporting": "Crash Reporting",
+    "personalization": "Personalization",
+    "viewPrivacyPolicy": "View Privacy Policy",
+    "deleteAccount": "Delete Account"
+  },
+  "accessibility": {
+    "streamCard": "Stream card for {{streamer}}",
+    "playButton": "Play {{streamer}}'s stream",
+    "muteButton": "Mute {{streamer}}'s stream",
+    "favoriteButton": "Add {{streamer}} to favorites",
+    "unfavoriteButton": "Remove {{streamer}} from favorites",
+    "grid": "Stream grid with {{count}} streams",
+    "loading": "Loading content, please wait"
+  },
+  "categories": {
+    "gaming": "Gaming",
+    "music": "Music",
+    "entertainment": "Entertainment",
+    "sports": "Sports",
+    "news": "News",
+    "education": "Education",
+    "technology": "Technology",
+    "art": "Art & Creative"
+  },
+  "platforms": {
+    "twitch": "Twitch",
+    "youtube": "YouTube",
+    "kick": "Kick",
+    "all": "All Platforms"
+  },
+  "grid": {
+    "layout": "Grid Layout",
+    "singleView": "Single View",
+    "dualView": "Dual View",
+    "quadView": "Quad View",
+    "customLayout": "Custom Layout"
+  },
+  "notifications": {
+    "streamLive": "{{streamer}} is now live!",
+    "favoriteOnline": "Your favorite streamer {{streamer}} is online",
+    "categoryUpdate": "New streams in {{category}}",
+    "enable": "Enable Notifications",
+    "disable": "Disable Notifications"
+  },
+  "onboarding": {
+    "welcome": "Welcome to Multi-Stream Viewer",
+    "description": "Watch multiple live streams simultaneously with our intuitive interface",
+    "feature1": "Multi-stream grid layout",
+    "feature2": "Cross-platform support",
+    "feature3": "Favorite streamers",
+    "getStarted": "Get Started",
+    "skip": "Skip Tutorial"
+  },
+  "legal": {
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "acceptTerms": "I accept the Terms of Service and Privacy Policy",
+    "dataUsage": "Learn how we use your data",
+    "contact": "Contact Us",
+    "lastUpdated": "Last updated",
+    "backToSettings": "Back to Settings",
+    "howWeProtectData": "How we protect your data",
+    "ourTermsAndConditions": "Our terms and conditions"
+  },
+  "sharing": {
+    "shareStream": "Share Stream",
+    "copyLink": "Copy Link",
+    "shareApp": "Share App",
+    "tellFriends": "Tell Friends About Multi-Stream Viewer"
+  }
+}

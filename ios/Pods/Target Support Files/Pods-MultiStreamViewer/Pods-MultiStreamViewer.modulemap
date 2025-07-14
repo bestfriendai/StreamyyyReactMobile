@@ -1,0 +1,6 @@
+module Pods_MultiStreamViewer {
+  umbrella header "Pods-MultiStreamViewer-umbrella.h"
+
+  export *
+  module * { export * }
+}

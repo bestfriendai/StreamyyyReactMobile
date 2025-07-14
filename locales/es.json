@@ -1,0 +1,140 @@
+{
+  "app": {
+    "name": "Visor Multi-Stream",
+    "tagline": "Ver Múltiples Transmisiones Simultáneamente"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "discover": "Descubrir",
+    "favorites": "Favoritos",
+    "settings": "Configuración",
+  },
+  "streaming": {
+    "live": "EN VIVO",
+    "offline": "DESCONECTADO",
+    "viewers": "{{count}} espectadores",
+    "viewer": "{{count}} espectador",
+    "watching": "Viendo",
+    "category": "Categoría: {{category}}",
+    "duration": "{{hours}}:{{minutes}}:{{seconds}}"
+  },
+  "controls": {
+    "play": "Reproducir",
+    "pause": "Pausar",
+    "mute": "Silenciar",
+    "unmute": "Activar sonido",
+    "fullscreen": "Pantalla completa",
+    "exitFullscreen": "Salir de pantalla completa",
+    "volume": "Volumen",
+    "quality": "Calidad"
+  },
+  "favorites": {
+    "add": "Añadir a favoritos",
+    "remove": "Quitar de favoritos",
+    "empty": "Aún no hay transmisiones favoritas",
+    "emptyDescription": "Añade transmisiones a tus favoritos para verlas aquí"
+  },
+  "search": {
+    "placeholder": "Buscar transmisiones, streamers o categorías",
+    "noResults": "No se encontraron resultados",
+    "searchFor": "Buscar \"{{query}}\"",
+    "clear": "Limpiar búsqueda"
+  },
+  "errors": {
+    "generic": "Algo salió mal",
+    "network": "Error de conexión de red",
+    "streamNotFound": "Transmisión no encontrada",
+    "loadingFailed": "Error al cargar contenido",
+    "retry": "Reintentar",
+    "reportIssue": "Reportar problema"
+  },
+  "loading": {
+    "streams": "Cargando transmisiones...",
+    "content": "Cargando contenido...",
+    "please_wait": "Por favor espera..."
+  },
+  "settings": {
+    "title": "Configuración",
+    "theme": "Tema",
+    "language": "Idioma",
+    "notifications": "Notificaciones",
+    "privacy": "Privacidad",
+    "about": "Acerca de",
+    "version": "Versión {{version}}",
+    "buildNumber": "Build {{build}}"
+  },
+  "themes": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "auto": "Sistema por defecto"
+  },
+  "privacy": {
+    "dataCollection": "Recolección de datos",
+    "analytics": "Analíticas",
+    "crashReporting": "Reporte de errores",
+    "personalization": "Personalización",
+    "viewPrivacyPolicy": "Ver política de privacidad",
+    "deleteAccount": "Eliminar cuenta"
+  },
+  "accessibility": {
+    "streamCard": "Tarjeta de transmisión de {{streamer}}",
+    "playButton": "Reproducir transmisión de {{streamer}}",
+    "muteButton": "Silenciar transmisión de {{streamer}}",
+    "favoriteButton": "Añadir {{streamer}} a favoritos",
+    "unfavoriteButton": "Quitar {{streamer}} de favoritos",
+    "grid": "Cuadrícula de transmisiones con {{count}} transmisiones",
+    "loading": "Cargando contenido, por favor espera"
+  },
+  "categories": {
+    "gaming": "Videojuegos",
+    "music": "Música",
+    "entertainment": "Entretenimiento",
+    "sports": "Deportes",
+    "news": "Noticias",
+    "education": "Educación",
+    "technology": "Tecnología",
+    "art": "Arte y creatividad"
+  },
+  "platforms": {
+    "twitch": "Twitch",
+    "youtube": "YouTube",
+    "kick": "Kick",
+    "all": "Todas las plataformas"
+  },
+  "grid": {
+    "layout": "Diseño de cuadrícula",
+    "singleView": "Vista única",
+    "dualView": "Vista dual",
+    "quadView": "Vista cuádruple",
+    "customLayout": "Diseño personalizado"
+  },
+  "notifications": {
+    "streamLive": "¡{{streamer}} está ahora en vivo!",
+    "favoriteOnline": "Tu streamer favorito {{streamer}} está en línea",
+    "categoryUpdate": "Nuevas transmisiones en {{category}}",
+    "enable": "Activar notificaciones",
+    "disable": "Desactivar notificaciones"
+  },
+  "onboarding": {
+    "welcome": "Bienvenido a Visor Multi-Stream",
+    "description": "Ve múltiples transmisiones en vivo simultáneamente con nuestra interfaz intuitiva",
+    "feature1": "Diseño de cuadrícula multi-stream",
+    "feature2": "Soporte multiplataforma",
+    "feature3": "Streamers favoritos",
+    "getStarted": "Comenzar",
+    "skip": "Saltar tutorial"
+  },
+  "legal": {
+    "privacyPolicy": "Política de privacidad",
+    "termsOfService": "Términos de servicio",
+    "acceptTerms": "Acepto los Términos de Servicio y la Política de Privacidad",
+    "dataUsage": "Aprende cómo usamos tus datos",
+    "contact": "Contáctanos"
+  },
+  "sharing": {
+    "shareStream": "Compartir transmisión",
+    "copyLink": "Copiar enlace",
+    "shareApp": "Compartir app",
+    "tellFriends": "Cuéntales a tus amigos sobre Visor Multi-Stream"
+  }
+}
