@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+
 import { EnhancedDiscoverScreenV4 } from '@/components/EnhancedDiscoverScreenV4';
 import { NavigationHeader } from '@/components/NavigationHeader';
 import { TwitchStream, TwitchGame, fetchTopStreams, fetchEnhancedStreams, fetchTopGames } from '@/services/twitchApi';
@@ -64,8 +66,8 @@ export default function DiscoverScreen() {
         result.message,
         [
           { text: 'OK' },
-          { text: 'Go to Multi-View', onPress: () => {
-            // TODO: Navigate to grid tab
+          { text: 'View Grid', onPress: () => {
+            router.push('/(tabs)/grid');
           }}
         ]
       );
@@ -94,9 +96,9 @@ export default function DiscoverScreen() {
     return false;
   };
 
-  const isStreamActive = (streamId: string) => {
+  const isStreamActive = useCallback((streamId: string) => {
     return activeStreams.some(stream => stream.id === streamId);
-  };
+  }, [activeStreams]);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>

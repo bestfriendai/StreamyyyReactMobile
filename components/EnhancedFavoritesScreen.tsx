@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import {
   Heart,
   Search,
@@ -176,7 +177,16 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
       game: stream.game,
       viewers: stream.viewers,
     });
-    Alert.alert('Added to Multi-View', `${stream.username} has been added to your multi-view grid.`);
+    Alert.alert(
+      'Added to Multi-View',
+      `${stream.username} has been added to your multi-view grid.`,
+      [
+        { text: 'OK' },
+        { text: 'View Grid', onPress: () => {
+          router.push('/(tabs)/grid');
+        }}
+      ]
+    );
   };
 
   const formatViewers = (viewers: number) => {

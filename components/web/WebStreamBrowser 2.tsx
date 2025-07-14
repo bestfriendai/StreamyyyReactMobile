@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { UnifiedStream, platformService } from '@/services/platformService';
 import { useCrossPlatformStore } from '@/store/useCrossPlatformStore';
 import { platformDetection } from '@/utils/crossPlatformStorage';
@@ -188,9 +188,9 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
     onStreamAdd?.(stream);
   };
 
-  const isStreamActive = (stream: UnifiedStream) => {
+  const isStreamActive = useCallback((stream: UnifiedStream) => {
     return activeStreams.some(s => s.id === stream.id);
-  };
+  }, [activeStreams]);
 
   // Get unique categories for filter
   const categories = [...new Set(streams.map(s => s.category))].filter(Boolean);
