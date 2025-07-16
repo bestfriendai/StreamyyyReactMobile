@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streamyyy - Collected Streams</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="popup-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <img src="../icons/icon32.png" alt="Streamyyy" class="logo-icon">
+                <h1>Streamyyy</h1>
+            </div>
+            <div class="actions">
+                <button id="refreshBtn" class="btn btn-icon" title="Refresh">
+                    <span class="icon">🔄</span>
+                </button>
+                <button id="settingsBtn" class="btn btn-icon" title="Settings">
+                    <span class="icon">⚙️</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-value" id="streamCount">0</span>
+                <span class="stat-label">Streams</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="platformCount">0</span>
+                <span class="stat-label">Platforms</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="totalViewers">0</span>
+                <span class="stat-label">Total Viewers</span>
+            </div>
+        </div>
+
+        <!-- Current tab detection -->
+        <div class="current-tab" id="currentTab" style="display: none;">
+            <div class="tab-info">
+                <span class="tab-platform" id="tabPlatform">Platform</span>
+                <span class="tab-title" id="tabTitle">Stream Title</span>
+            </div>
+            <button id="addCurrentBtn" class="btn btn-primary btn-small">Add Stream</button>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="quick-actions">
+            <button id="viewAllBtn" class="btn btn-secondary">
+                <span class="icon">👁️</span>
+                View All Streams
+            </button>
+            <button id="openAppBtn" class="btn btn-primary">
+                <span class="icon">🚀</span>
+                Open App
+            </button>
+        </div>
+
+        <!-- Streams list -->
+        <div class="streams-container">
+            <div class="streams-header">
+                <h3>Collected Streams</h3>
+                <button id="clearAllBtn" class="btn btn-danger btn-small">Clear All</button>
+            </div>
+            
+            <div class="streams-list" id="streamsList">
+                <!-- Streams will be populated here -->
+            </div>
+            
+            <div class="empty-state" id="emptyState">
+                <div class="empty-icon">📺</div>
+                <h3>No streams collected yet</h3>
+                <p>Visit Twitch, YouTube, or Kick and click the extension icon to add streams.</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="sync-status">
+                <span id="syncStatus">Not synced</span>
+                <button id="syncBtn" class="btn btn-link">Sync Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stream item template -->
+    <template id="streamTemplate">
+        <div class="stream-item">
+            <div class="stream-platform">
+                <span class="platform-badge"></span>
+            </div>
+            <div class="stream-info">
+                <div class="stream-title"></div>
+                <div class="stream-channel"></div>
+                <div class="stream-viewers"></div>
+            </div>
+            <div class="stream-actions">
+                <button class="btn btn-icon view-btn" title="View Stream">
+                    <span class="icon">👁️</span>
+                </button>
+                <button class="btn btn-icon remove-btn" title="Remove Stream">
+                    <span class="icon">🗑️</span>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <script src="popup.js"></script>
+</body>
+</html>
