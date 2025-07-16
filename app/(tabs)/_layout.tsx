@@ -22,6 +22,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '@/contexts/ThemeContext';
 import { HapticFeedback } from '@/utils/haptics';
+import { useInterstitialAd } from '@/hooks/useInterstitialAd';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -81,9 +82,15 @@ function TabIcon({ icon: Icon, size, color, focused, label }: TabIconProps) {
 
 export default function TabLayout() {
   const { theme, isDark } = useTheme();
+  const { showAd, canShow } = useInterstitialAd();
 
   const handleTabPress = (tabName: string) => {
     HapticFeedback.light();
+    
+    // Show interstitial ad on certain tab transitions (not too frequently)
+    if (canShow && Math.random() < 0.3) { // 30% chance
+      showAd(`tab_${tabName}`);
+    }
   };
 
   return (

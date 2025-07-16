@@ -1,20 +1,52 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { EnhancedDiscoverScreenV4 } from '@/components/EnhancedDiscoverScreenV4';
 import { NavigationHeader } from '@/components/NavigationHeader';
 import { TwitchStream, TwitchGame, fetchTopStreams, fetchEnhancedStreams, fetchTopGames } from '@/services/twitchApi';
 import { useStreamManager } from '@/hooks/useStreamManager';
 import { RefreshCw, Filter } from 'lucide-react-native';
+import { BannerAdComponent } from '@/components/ads/BannerAd';
+import { useInterstitialAd } from '@/hooks/useInterstitialAd';
 
 export default function DiscoverScreen() {
   const [streams, setStreams] = useState<TwitchStream[]>([]);
   const [games, setGames] = useState<TwitchGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
-  const { addStream, activeStreams } = useStreamManager();
+  const { addStream, activeStreams, loading: streamManagerLoading, forceReload } = useStreamManager();
+  const { showAd, canShow } = useInterstitialAd();
+
+  // Debug log active streams when they change
+  useEffect(() => {
+    console.log('🔍 DiscoverScreen - activeStreams updated:', activeStreams.length, activeStreams.map(s => s.user_name));
+  }, [activeStreams]);
+
+  // Debug function to check AsyncStorage directly
+  const debugAsyncStorage = async () => {
+    try {
+      const storedStreams = await AsyncStorage.getItem('streamyyy_active_streams');
+      console.log('🗂️ Direct AsyncStorage check:', storedStreams ? JSON.parse(storedStreams).length : 0, 'streams');
+    } catch (error) {
+      console.error('❌ Error checking AsyncStorage:', error);
+    }
+  };
+
+  useEffect(() => {
+    debugAsyncStorage();
+  }, []);
+
+  // Refresh active streams state when the screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      console.log('🎯 DiscoverScreen focused - refreshing state...');
+      debugAsyncStorage();
+      forceReload();
+    }, [forceReload])
+  );
 
   useEffect(() => {
     loadInitialData();
@@ -59,30 +91,43 @@ export default function DiscoverScreen() {
   };
 
   const handleStreamSelect = async (stream: TwitchStream) => {
-    const result = await addStream(stream);
-    if (result.success) {
-      Alert.alert(
-        'Stream Added',
-        result.message,
-        [
-          { text: 'OK' },
-          { text: 'View Grid', onPress: () => {
-            router.push('/(tabs)/grid');
-          }}
-        ]
-      );
-    } else {
-      Alert.alert('Error', result.message);
-    }
+    console.log('handleStreamSelect called - delegating to handleAddStream');
+    return await handleAddStream(stream);
   };
 
   const handleAddStream = async (stream: TwitchStream) => {
     try {
+      console.log('handleAddStream called with:', stream.user_name, stream.id);
       const result = await addStream(stream);
+      console.log('addStream result:', result);
+      
+      if (result.success) {
+        // Show interstitial ad occasionally after successful stream add
+        if (canShow && activeStreams.length >= 2 && Math.random() < 0.5) { // 50% chance after 2+ streams
+          showAd('stream_added');
+        }
+        
+        Alert.alert(
+          'Stream Added!',
+          `${stream.user_name} has been added to your multi-view`,
+          [
+            { text: 'OK' },
+            { 
+              text: 'View Grid', 
+              onPress: () => router.push('/(tabs)/grid')
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', result.message);
+      }
+      
       return result;
     } catch (error) {
       console.error('Error in handleAddStream:', error);
-      return { success: false, message: 'Failed to add stream' };
+      const errorResult = { success: false, message: 'Failed to add stream' };
+      Alert.alert('Error', errorResult.message);
+      return errorResult;
     }
   };
 
@@ -115,6 +160,10 @@ export default function DiscoverScreen() {
           onToggleFavorite={handleToggleFavorite}
           isFavorite={isFavorite}
           isStreamActive={isStreamActive}
+        />
+        <BannerAdComponent 
+          size="ADAPTIVE_BANNER"
+          position="bottom"
         />
       </SafeAreaView>
     </View>

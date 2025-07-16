@@ -34,8 +34,43 @@ export function useStreamManager() {
 
   // Load data from storage and database
   useEffect(() => {
+    console.log('🔄 useStreamManager useEffect triggered, loading data...');
     loadData();
   }, [user]);
+
+  // Also load data on component mount (independent of user)
+  useEffect(() => {
+    console.log('🚀 useStreamManager mounted, loading initial data...');
+    loadInitialData();
+  }, []);
+
+  // Load initial data (activeStreams and settings) independent of user
+  const loadInitialData = async () => {
+    try {
+      console.log('📂 Loading initial data (activeStreams and settings)...');
+      
+      // Load active streams from local storage (these are temporary)
+      const activeStreamsData = await AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_STREAMS);
+      if (activeStreamsData) {
+        const parsedStreams = JSON.parse(activeStreamsData);
+        setActiveStreams(parsedStreams);
+        console.log('✅ Loaded active streams from storage:', parsedStreams.length);
+      } else {
+        console.log('ℹ️ No active streams in storage');
+      }
+      
+      // Load settings from local storage
+      const settingsData = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS);
+      if (settingsData) {
+        setSettings(JSON.parse(settingsData));
+        console.log('✅ Loaded settings from storage');
+      } else {
+        console.log('ℹ️ Using default settings');
+      }
+    } catch (error) {
+      console.error('❌ Error loading initial data:', error);
+    }
+  };
 
   const loadData = async () => {
     await withErrorHandling(async () => {
@@ -45,8 +80,10 @@ export function useStreamManager() {
       // Load active streams from local storage (these are temporary)
       const activeStreamsData = await AsyncStorage.getItem(STORAGE_KEYS.ACTIVE_STREAMS);
       if (activeStreamsData) {
-        setActiveStreams(JSON.parse(activeStreamsData));
-        logDebug('Loaded active streams', { count: JSON.parse(activeStreamsData).length });
+        const parsedStreams = JSON.parse(activeStreamsData);
+        setActiveStreams(parsedStreams);
+        console.log('✅ Reloaded active streams:', parsedStreams.length);
+        logDebug('Loaded active streams', { count: parsedStreams.length });
       }
       
       // Load settings from local storage
@@ -110,24 +147,36 @@ export function useStreamManager() {
   // Add stream to active streams with simple validation
   const addStream = useCallback(async (stream: TwitchStream) => {
     try {
+      console.log('🎬 useStreamManager.addStream called:', {
+        streamId: stream.id,
+        streamName: stream.user_name,
+        currentActiveCount: activeStreams.length
+      });
+      
       logDebug('Adding stream to active streams', { streamId: stream.id, streamName: stream.user_name });
       
       // Basic validation
       if (!stream.user_login || !stream.user_name || !stream.id) {
+        console.log('❌ Validation failed: Missing required fields');
         return { success: false, message: 'Invalid stream data' };
       }
       
       // Check if stream is already active
-      if (activeStreams.some(s => s.id === stream.id || s.user_login === stream.user_login)) {
+      const isDuplicate = activeStreams.some(s => s.id === stream.id || s.user_login === stream.user_login);
+      if (isDuplicate) {
+        console.log('❌ Stream already active');
         return { success: false, message: 'Stream already in multi-view' };
       }
       
       // Simple stream limit
       if (activeStreams.length >= 6) {
+        console.log('❌ Stream limit reached:', activeStreams.length);
         return { success: false, message: 'Maximum 6 streams allowed' };
       }
       
       const newActiveStreams = [...activeStreams, stream];
+      console.log('✅ Adding stream, new total will be:', newActiveStreams.length);
+      
       setActiveStreams(newActiveStreams);
       await saveActiveStreams(newActiveStreams);
       
@@ -136,12 +185,14 @@ export function useStreamManager() {
         totalStreams: newActiveStreams.length
       });
       
+      console.log('✅ Stream added successfully:', stream.user_name);
+      
       return { 
         success: true, 
         message: `${stream.user_name} added to multi-view`
       };
     } catch (error) {
-      console.error('Error adding stream:', error);
+      console.error('❌ Error adding stream:', error);
       return { success: false, message: 'Failed to add stream' };
     }
   }, [activeStreams, saveActiveStreams]);
@@ -225,6 +276,12 @@ export function useStreamManager() {
     await saveSettings(updatedSettings);
   }, [settings, saveSettings]);
 
+  // Force reload function for debugging
+  const forceReload = useCallback(async () => {
+    console.log('🔄 Force reloading stream manager data...');
+    await loadInitialData();
+  }, []);
+
   return {
     activeStreams,
     favorites,
@@ -237,5 +294,6 @@ export function useStreamManager() {
     isFavorite,
     isStreamActive,
     updateSettings,
+    forceReload,
   };
 }

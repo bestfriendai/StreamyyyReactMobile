@@ -1,0 +1,11 @@
+<svg width="256" height="268" viewBox="0 0 256 268" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="twitchGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9146FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#772CE8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <path d="M17.458 0L0 46.556v186.201h63.983v34.934h34.931l34.898-34.934h52.36L256 162.954V0H17.458zm23.259 23.263H232.73v128.029l-40.739 40.741H128L93.113 226.92v-34.887H40.717V23.263zm81.975 116.259h23.27V69.844h-23.27v69.678zm63.997 0h23.27V69.844h-23.27v69.678z" fill="url(#twitchGradient)"/>
+  </g>
+</svg>

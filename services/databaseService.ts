@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { TwitchStream } from '@/services/twitchApi';
-import { User } from '@/services/authService';
+import type { User } from '@/services/authService';
 
 export interface FavoriteStream {
   id: string;
