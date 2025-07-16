@@ -38,3 +38,4 @@ yarn-error.*
 
 # Coders in Flow shadow git storage
 .codersinflow/
+.expo/
