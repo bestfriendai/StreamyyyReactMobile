@@ -7,10 +7,13 @@
     "icon": "./assets/images/icon.png",
     "scheme": "streamyyy",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.streamyyy.app"
+      "bundleIdentifier": "com.streamyyy.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.streamyyy.app",
@@ -37,8 +40,8 @@
       [
         "react-native-google-mobile-ads",
         {
-          "androidAppId": "ca-app-pub-4679934692726562~6257879408",
-          "iosAppId": "ca-app-pub-4679934692726562~6257879408",
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511",
           "delay_app_measurement_init": true,
           "userTrackingUsageDescription": "This app uses the IDFA to deliver personalized ads."
         }

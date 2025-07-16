@@ -1,4 +1,4 @@
-module ExpoHaptics {
+framework module ExpoHaptics {
   umbrella header "ExpoHaptics-umbrella.h"
 
   export *

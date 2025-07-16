@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "2D997F73475829216BC17CBAA4E6F601"
-               BuildableName = "libExpoSymbols.a"
+               BuildableName = "ExpoSymbols.framework"
                BlueprintName = "ExpoSymbols"
                ReferencedContainer = "container:Pods.xcodeproj">
             </BuildableReference>

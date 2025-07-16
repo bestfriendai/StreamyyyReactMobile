@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "6EDBCD95D1624C1F631DF5983AADB3B3"
-               BuildableName = "libExpoCamera.a"
+               BuildableName = "ExpoCamera.framework"
                BlueprintName = "ExpoCamera"
                ReferencedContainer = "container:Pods.xcodeproj">
             </BuildableReference>

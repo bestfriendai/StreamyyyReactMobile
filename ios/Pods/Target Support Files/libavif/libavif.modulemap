@@ -1,4 +1,4 @@
-module libavif {
+framework module libavif {
   umbrella header "libavif-umbrella.h"
 
   export *

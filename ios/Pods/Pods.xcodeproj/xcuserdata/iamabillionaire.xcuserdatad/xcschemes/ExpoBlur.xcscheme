@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "77F09FE68C12B2BA43F71DE5E93446B2"
-               BuildableName = "libExpoBlur.a"
+               BuildableName = "ExpoBlur.framework"
                BlueprintName = "ExpoBlur"
                ReferencedContainer = "container:Pods.xcodeproj">
             </BuildableReference>

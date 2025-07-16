@@ -10,9 +10,6 @@
 #endif
 #endif
 
-#import "LottieAnimationViewComponentView.h"
-#import "LottieContainerView.h"
-#import "RNLottieFabricConversions.h"
 #import "Bridging.h"
 #import "RCTConvert+Lottie.h"
 

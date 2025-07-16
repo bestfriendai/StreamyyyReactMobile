@@ -196,7 +196,7 @@ export default function SignInSignUpPage() {
               <TouchableOpacity style={styles.oauthIconButton} onPress={handleTwitchAuth}>
                 <View style={styles.twitchButton}>
                   <Image 
-                    source={require('../../assets/images/twitch-icon.png')}
+                    source={require('../../assets/images/twitch-icon.svg')}
                     style={styles.twitchLogo}
                     resizeMode="contain"
                   />

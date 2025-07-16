@@ -1,4 +1,4 @@
-module ExpoSymbols {
+framework module ExpoSymbols {
   umbrella header "ExpoSymbols-umbrella.h"
 
   export *

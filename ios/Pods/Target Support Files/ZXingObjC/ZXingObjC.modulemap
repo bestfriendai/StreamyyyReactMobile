@@ -1,4 +1,4 @@
-module ZXingObjC {
+framework module ZXingObjC {
   umbrella header "ZXingObjC-umbrella.h"
 
   export *

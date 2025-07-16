@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "5F1FD3D2DF83E809324F2F644EBBF0E7"
-               BuildableName = "libRNGoogleMobileAds.a"
+               BuildableName = "RNGoogleMobileAds.framework"
                BlueprintName = "RNGoogleMobileAds"
                ReferencedContainer = "container:Pods.xcodeproj">
             </BuildableReference>

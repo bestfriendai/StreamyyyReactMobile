@@ -1,4 +1,4 @@
-module react_native_skia {
+framework module react_native_skia {
   umbrella header "react-native-skia-umbrella.h"
 
   export *

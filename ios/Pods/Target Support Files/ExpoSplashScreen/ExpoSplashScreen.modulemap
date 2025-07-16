@@ -1,4 +1,4 @@
-module ExpoSplashScreen {
+framework module ExpoSplashScreen {
   umbrella header "ExpoSplashScreen-umbrella.h"
 
   export *

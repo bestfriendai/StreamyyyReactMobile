@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "30950EABCD5EFA0462FC017837EB16BE"
-               BuildableName = "libZXingObjC.a"
+               BuildableName = "ZXingObjC.framework"
                BlueprintName = "ZXingObjC"
                ReferencedContainer = "container:Pods.xcodeproj">
             </BuildableReference>

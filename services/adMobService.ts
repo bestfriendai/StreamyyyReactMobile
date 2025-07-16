@@ -11,7 +11,6 @@ let AdsConsent: any = null;
 let AdsConsentStatus: any = null;
 let AdsConsentDebugGeography: any = null;
 let RequestConfiguration: any = null;
-let UMP: any = null;
 
 try {
   const adMobModule = require('react-native-google-mobile-ads');
@@ -20,9 +19,6 @@ try {
   AdsConsentStatus = adMobModule.AdsConsentStatus;
   AdsConsentDebugGeography = adMobModule.AdsConsentDebugGeography;
   RequestConfiguration = adMobModule.RequestConfiguration;
-  
-  const umpModule = require('react-native-ad-consent');
-  UMP = umpModule.UMP;
 } catch (error) {
   // Silently handle missing AdMob modules in development
   console.log('AdMob modules not available in development environment');
@@ -128,22 +124,22 @@ class AdMobService {
     try {
       logDebug('Handling user consent...');
 
-      const {
-        consentStatus,
-        isConsentFormAvailable,
-        isRequestLocationInEeaOrUnknown,
-      } = await UMP.requestConsentInfoUpdate();
+      if (!AdsConsent) {
+        logDebug('AdsConsent not available - allowing ads');
+        this.config.canRequestAds = true;
+        return;
+      }
 
-      this.config.consentStatus = consentStatus;
+      const consentInfo = await AdsConsent.requestInfoUpdate();
+      this.config.consentStatus = consentInfo.status;
 
       // If user is in EEA and consent is required
       if (
-        isRequestLocationInEeaOrUnknown &&
-        isConsentFormAvailable &&
-        consentStatus === UMP.CONSENT_STATUS.REQUIRED
+        consentInfo.isConsentFormAvailable &&
+        consentInfo.status === AdsConsentStatus.REQUIRED
       ) {
-        const { canRequestAds } = await UMP.showConsentForm();
-        this.config.canRequestAds = canRequestAds;
+        const formResult = await AdsConsent.showForm();
+        this.config.canRequestAds = formResult.status === AdsConsentStatus.OBTAINED;
       } else {
         // User not in EEA or consent already given
         this.config.canRequestAds = true;
@@ -187,7 +183,9 @@ class AdMobService {
    */
   async resetConsent(): Promise<void> {
     try {
-      await UMP.reset();
+      if (AdsConsent) {
+        await AdsConsent.reset();
+      }
       
       this.config.consentStatus = null;
       this.config.canRequestAds = false;
@@ -203,7 +201,9 @@ class AdMobService {
    */
   async showPrivacyOptionsForm(): Promise<void> {
     try {
-      await UMP.showPrivacyOptionsForm();
+      if (AdsConsent) {
+        await AdsConsent.showPrivacyOptionsForm();
+      }
       
       logDebug('Privacy options form shown');
     } catch (error) {
@@ -215,10 +215,10 @@ class AdMobService {
    * Set test geography for development
    */
   async setTestGeography(geography: 'EEA' | 'NOT_EEA'): Promise<void> {
-    if (!__DEV__) return;
+    if (!__DEV__ || !AdsConsent) return;
 
     try {
-      await UMP.requestConsentInfoUpdate({
+      await AdsConsent.requestInfoUpdate({
         debugGeography: geography === 'EEA' 
           ? AdsConsentDebugGeography.EEA 
           : AdsConsentDebugGeography.NOT_EEA,

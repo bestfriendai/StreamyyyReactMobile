@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "0757A1D86E890D4448E9E477CB5D6F6B"
-               BuildableName = "libreact-native-skia.a"
+               BuildableName = "react_native_skia.framework"
                BlueprintName = "react-native-skia"
                ReferencedContainer = "container:Pods.xcodeproj">
             </BuildableReference>

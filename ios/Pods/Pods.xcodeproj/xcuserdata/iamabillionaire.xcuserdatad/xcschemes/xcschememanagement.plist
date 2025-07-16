@@ -34,6 +34,21 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>EXJSONUtils.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>EXManifests.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>EXUpdatesInterface.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>Expo.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -109,11 +124,6 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
-		<key>ExpoSecureStore.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
 		<key>ExpoSplashScreen.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -164,7 +174,7 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
-		<key>Pods-MultiStreamViewer.xcscheme</key>
+		<key>Pods-Streamyyy.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
@@ -564,86 +574,6 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
-		<key>Stripe-StripeBundle.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>Stripe.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>StripeApplePay.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>StripeCore-StripeCoreBundle.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>StripeCore.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>StripeFinancialConnections-StripeFinancialConnectionsBundle.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>StripeFinancialConnections.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>StripePaymentSheet-StripePaymentSheetBundle.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>StripePaymentSheet.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>StripePayments-Stripe3DS2.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>StripePayments-StripePaymentsBundle.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>StripePayments.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>StripePaymentsUI-StripePaymentsUIBundle.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>StripePaymentsUI.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>StripeUICore-StripeUICoreBundle.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>StripeUICore.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
 		<key>Yoga.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -660,6 +590,36 @@
 			<false/>
 		</dict>
 		<key>boost.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>expo-dev-client.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>expo-dev-launcher-EXDevLauncher.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>expo-dev-launcher.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>expo-dev-menu-EXDevMenu.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>expo-dev-menu-interface.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>expo-dev-menu.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
@@ -745,11 +705,6 @@
 			<false/>
 		</dict>
 		<key>react-native-webview.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>stripe-react-native.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>

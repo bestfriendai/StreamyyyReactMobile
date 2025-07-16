@@ -24,13 +24,6 @@
 			@"VibrancyView": NSClassFromString(@"VibrancyView"), // @react-native-community/blur
 			@"RNCSlider": NSClassFromString(@"RNCSliderComponentView"), // @react-native-community/slider
 			@"SkiaPictureView": NSClassFromString(@"SkiaPictureView"), // @shopify/react-native-skia
-			@"ApplePayButton": NSClassFromString(@"ApplePayButtonComponentView"), // @stripe/stripe-react-native
-			@"AddToWalletButton": NSClassFromString(@"AddToWalletButtonComponentView"), // @stripe/stripe-react-native
-			@"AddressSheetView": NSClassFromString(@"AddressSheetViewComponentView"), // @stripe/stripe-react-native
-			@"AuBECSDebitForm": NSClassFromString(@"AuBECSDebitFormComponentView"), // @stripe/stripe-react-native
-			@"CardField": NSClassFromString(@"CardFieldComponentView"), // @stripe/stripe-react-native
-			@"CardForm": NSClassFromString(@"CardFormComponentView"), // @stripe/stripe-react-native
-			@"StripeContainer": NSClassFromString(@"StripeContainerComponentView"), // @stripe/stripe-react-native
 			@"LottieAnimationView": NSClassFromString(@"LottieAnimationViewComponentView"), // lottie-react-native
 			@"RNGestureHandlerButton": NSClassFromString(@"RNGestureHandlerButtonComponentView"), // react-native-gesture-handler
 			@"RNGoogleMobileAdsBannerView": NSClassFromString(@"RNGoogleMobileAdsBannerView"), // react-native-google-mobile-ads
