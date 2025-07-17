@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -43,6 +42,7 @@ import {
   Maximize2,
   Minimize2,
 } from 'lucide-react-native';
+import React, { useState, useEffect, useRef } from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -52,18 +52,27 @@ import Animated, {
   useAnimatedGestureHandler,
 } from 'react-native-reanimated';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
-import { analyticsService, getStreamAnalytics, getViewerAnalytics, getTrendingMetrics } from '@/services/analyticsService';
 import { socialService, getUserProfile } from '@/services/socialService';
 import { schedulingService, getUpcomingStreams } from '@/services/schedulingService';
 import { platformService, fetchPlatformStats } from '@/services/platformService';
 import { useAuth } from '@/contexts/AuthContext';
+import { analyticsService, getStreamAnalytics, getViewerAnalytics, getTrendingMetrics } from '@/services/analyticsService';
 import { useAppStore } from '@/store/useAppStore';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export interface DashboardWidget {
   id: string;
-  type: 'analytics' | 'trending' | 'schedule' | 'social' | 'quick_stats' | 'platform_comparison' | 'recent_activity' | 'recommendations' | 'custom';
+  type:
+    | 'analytics'
+    | 'trending'
+    | 'schedule'
+    | 'social'
+    | 'quick_stats'
+    | 'platform_comparison'
+    | 'recent_activity'
+    | 'recommendations'
+    | 'custom';
   title: string;
   subtitle?: string;
   size: 'small' | 'medium' | 'large' | 'full';
@@ -171,7 +180,7 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
 }) => {
   const { user } = useAuth();
   const { settings } = useAppStore();
-  
+
   const [widgets, setWidgets] = useState<DashboardWidget[]>(defaultWidgets);
   const [editMode, setEditMode] = useState(initialEditMode);
   const [selectedWidget, setSelectedWidget] = useState<string | null>(null);
@@ -179,7 +188,7 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [layoutName, setLayoutName] = useState('Default Layout');
-  
+
   const gridSize = 10;
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -193,28 +202,29 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
   useEffect(() => {
     if (!editMode) {
       refreshAllWidgets();
-      
+
       // Set up auto-refresh
       const interval = setInterval(() => {
         refreshAllWidgets();
       }, 60000); // Refresh every minute
-      
+
       return () => clearInterval(interval);
     }
   }, [editMode]);
 
   const refreshAllWidgets = async () => {
-    if (!user?.id) return;
-    
+    if (!user?.id) {return;}
+
     try {
       setRefreshing(true);
-      
+
       const updatedWidgets = await Promise.all(
-        widgets.map(async (widget) => {
-          const shouldRefresh = widget.refreshInterval && 
-            (!widget.lastUpdated || 
-             Date.now() - new Date(widget.lastUpdated).getTime() > widget.refreshInterval * 1000);
-          
+        widgets.map(async widget => {
+          const shouldRefresh =
+            widget.refreshInterval &&
+            (!widget.lastUpdated ||
+              Date.now() - new Date(widget.lastUpdated).getTime() > widget.refreshInterval * 1000);
+
           if (shouldRefresh) {
             const data = await fetchWidgetData(widget, user.id);
             return {
@@ -223,11 +233,11 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
               lastUpdated: new Date().toISOString(),
             };
           }
-          
+
           return widget;
         })
       );
-      
+
       setWidgets(updatedWidgets);
       setLastRefresh(new Date());
     } catch (error) {
@@ -242,16 +252,16 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
       switch (widget.type) {
         case 'analytics':
           return await getViewerAnalytics(userId);
-        
+
         case 'trending':
           return await getTrendingMetrics('stream', '24h');
-        
+
         case 'schedule':
           return await getUpcomingStreams(widget.settings.limit || 5);
-        
+
         case 'platform_comparison':
           return await fetchPlatformStats();
-        
+
         case 'social':
           const profile = await getUserProfile(userId);
           return {
@@ -260,7 +270,7 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
             posts: 0, // Would come from social service
             likes: 0, // Would come from social service
           };
-        
+
         case 'quick_stats':
           const analytics = await getViewerAnalytics(userId);
           return {
@@ -268,7 +278,7 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
             streamsWatched: analytics?.streamsWatched || 0,
             favoriteStreamers: analytics?.favoriteStreamers.length || 0,
           };
-        
+
         default:
           return null;
       }
@@ -279,9 +289,9 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
   };
 
   const moveWidget = (widgetId: string, newPosition: { x: number; y: number }) => {
-    setWidgets(prev => 
-      prev.map(widget => 
-        widget.id === widgetId 
+    setWidgets(prev =>
+      prev.map(widget =>
+        widget.id === widgetId
           ? { ...widget, position: newPosition }
           : widget
       )
@@ -289,9 +299,9 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
   };
 
   const resizeWidget = (widgetId: string, newSize: DashboardWidget['size']) => {
-    setWidgets(prev => 
-      prev.map(widget => 
-        widget.id === widgetId 
+    setWidgets(prev =>
+      prev.map(widget =>
+        widget.id === widgetId
           ? { ...widget, size: newSize }
           : widget
       )
@@ -299,9 +309,9 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
   };
 
   const toggleWidget = (widgetId: string) => {
-    setWidgets(prev => 
-      prev.map(widget => 
-        widget.id === widgetId 
+    setWidgets(prev =>
+      prev.map(widget =>
+        widget.id === widgetId
           ? { ...widget, isVisible: !widget.isVisible }
           : widget
       )
@@ -309,20 +319,16 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
   };
 
   const removeWidget = (widgetId: string) => {
-    Alert.alert(
-      'Remove Widget',
-      'Are you sure you want to remove this widget?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => {
-            setWidgets(prev => prev.filter(w => w.id !== widgetId));
-          },
+    Alert.alert('Remove Widget', 'Are you sure you want to remove this widget?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => {
+          setWidgets(prev => prev.filter(w => w.id !== widgetId));
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const addWidget = (widgetType: DashboardWidget['type']) => {
@@ -335,7 +341,7 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
       isVisible: true,
       settings: {},
     };
-    
+
     setWidgets(prev => [...prev, newWidget]);
     setShowWidgetPicker(false);
   };
@@ -352,16 +358,16 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    
+
     onLayoutChange?.(layout);
     setEditMode(false);
   };
 
   const renderWidget = (widget: DashboardWidget) => {
-    if (!widget.isVisible) return null;
-    
+    if (!widget.isVisible) {return null;}
+
     const size = widgetSizes[widget.size];
-    
+
     return (
       <DraggableWidget
         key={widget.id}
@@ -380,35 +386,30 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
   };
 
   const renderEditToolbar = () => {
-    if (!editMode) return null;
-    
+    if (!editMode) {return null;}
+
     return (
       <BlurView style={styles.editToolbar} blurType="dark" blurAmount={20}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolbarContent}>
-          <TouchableOpacity
-            style={styles.toolbarButton}
-            onPress={() => setShowWidgetPicker(true)}
-          >
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.toolbarContent}
+        >
+          <TouchableOpacity style={styles.toolbarButton} onPress={() => setShowWidgetPicker(true)}>
             <Plus size={20} color="#8B5CF6" />
             <Text style={styles.toolbarButtonText}>Add Widget</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.toolbarButton}
-            onPress={() => setEditMode(false)}
-          >
+
+          <TouchableOpacity style={styles.toolbarButton} onPress={() => setEditMode(false)}>
             <Eye size={20} color="#22C55E" />
             <Text style={styles.toolbarButtonText}>Preview</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.toolbarButton}
-            onPress={saveLayout}
-          >
+
+          <TouchableOpacity style={styles.toolbarButton} onPress={saveLayout}>
             <Download size={20} color="#3B82F6" />
             <Text style={styles.toolbarButtonText}>Save</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={styles.toolbarButton}
             onPress={() => {
@@ -436,14 +437,33 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
 
   const renderWidgetPicker = () => {
     const widgetTypes = [
-      { type: 'analytics', title: 'Analytics', icon: BarChart3, description: 'View detailed analytics' },
-      { type: 'trending', title: 'Trending', icon: TrendingUp, description: 'See trending content' },
+      {
+        type: 'analytics',
+        title: 'Analytics',
+        icon: BarChart3,
+        description: 'View detailed analytics',
+      },
+      {
+        type: 'trending',
+        title: 'Trending',
+        icon: TrendingUp,
+        description: 'See trending content',
+      },
       { type: 'schedule', title: 'Schedule', icon: Calendar, description: 'Upcoming streams' },
       { type: 'social', title: 'Social', icon: Users, description: 'Social activity' },
-      { type: 'quick_stats', title: 'Quick Stats', icon: Zap, description: 'Key metrics at a glance' },
-      { type: 'platform_comparison', title: 'Platforms', icon: Monitor, description: 'Compare platforms' },
-    ];
-    
+      {
+        type: 'quick_stats',
+        title: 'Quick Stats',
+        icon: Zap,
+        description: 'Key metrics at a glance',
+      },
+      {
+        type: 'platform_comparison',
+        title: 'Platforms',
+        icon: Monitor,
+        description: 'Compare platforms',
+      },
+
     return (
       <Modal
         visible={showWidgetPicker}
@@ -459,9 +479,9 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
                 <Trash2 size={24} color="#666" />
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView style={styles.widgetTypesList}>
-              {widgetTypes.map((type) => (
+              {widgetTypes.map(type => (
                 <TouchableOpacity
                   key={type.type}
                   style={styles.widgetTypeItem}
@@ -484,7 +504,7 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
   return (
     <View style={styles.container}>
       <LinearGradient colors={['#0a0a0a', '#1a1a1a', '#0f0f0f']} style={styles.background} />
-      
+
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
@@ -494,7 +514,7 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
               Last updated: {lastRefresh.toLocaleTimeString()}
             </Text>
           </View>
-          
+
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={styles.headerButton}
@@ -507,7 +527,7 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
                 style={refreshing ? { transform: [{ rotate: '180deg' }] } : {}}
               />
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[styles.headerButton, editMode && styles.headerButtonActive]}
               onPress={() => setEditMode(!editMode)}
@@ -524,9 +544,7 @@ export const CustomizableDashboard: React.FC<CustomizableDashboardProps> = ({
           contentContainerStyle={styles.dashboardContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.widgetsGrid}>
-            {widgets.map(renderWidget)}
-          </View>
+          <View style={styles.widgetsGrid}>{widgets.map(renderWidget)}</View>
         </ScrollView>
 
         {/* Edit Toolbar */}
@@ -625,7 +643,7 @@ const DraggableWidget: React.FC<DraggableWidgetProps> = ({
               </TouchableOpacity>
             </View>
           )}
-          
+
           {children}
         </BlurView>
       </Animated.View>
@@ -651,7 +669,9 @@ const WidgetContent: React.FC<WidgetContentProps> = ({ widget }) => {
             <View style={styles.analyticsContent}>
               <View style={styles.statItem}>
                 <Text style={styles.statValue}>
-                  {widget.data?.totalWatchTime ? `${Math.round(widget.data.totalWatchTime / 60)}h` : '0h'}
+                  {widget.data?.totalWatchTime
+                    ? `${Math.round(widget.data.totalWatchTime / 60)}h`
+                    : '0h'}
                 </Text>
                 <Text style={styles.statLabel}>Watch Time</Text>
               </View>
@@ -729,9 +749,7 @@ const WidgetContent: React.FC<WidgetContentProps> = ({ widget }) => {
               <Text style={styles.widgetTitle}>{widget.title}</Text>
             </View>
             <View style={styles.quickStats}>
-              <Text style={styles.quickStatValue}>
-                {widget.data?.favoriteStreamers || 0}
-              </Text>
+              <Text style={styles.quickStatValue}>{widget.data?.favoriteStreamers || 0}</Text>
               <Text style={styles.quickStatLabel}>Favorites</Text>
             </View>
           </View>

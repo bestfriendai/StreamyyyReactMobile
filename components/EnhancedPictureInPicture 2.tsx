@@ -1,3 +1,4 @@
+import { MotiView } from 'moti';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
@@ -9,7 +10,6 @@ import {
   Animated,
   Platform,
 } from 'react-native';
-import { MotiView } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Maximize2,
@@ -93,15 +93,15 @@ export const EnhancedPictureInPicture: React.FC<EnhancedPictureInPictureProps> =
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  
+
   const animatedPosition = useRef(new Animated.ValueXY(position)).current;
   const animatedSize = useRef(new Animated.ValueXY(size)).current;
   const controlsOpacity = useRef(new Animated.Value(0)).current;
   const scaleValue = useRef(new Animated.Value(1)).current;
-  
+
   // Auto-hide controls
   const controlsTimer = useRef<NodeJS.Timeout>();
-  
+
   const showControlsWithTimeout = useCallback(() => {
     setShowControls(true);
     Animated.timing(controlsOpacity, {
@@ -109,12 +109,12 @@ export const EnhancedPictureInPicture: React.FC<EnhancedPictureInPictureProps> =
       duration: 200,
       useNativeDriver: true,
     }).start();
-    
+
     // Clear existing timer
     if (controlsTimer.current) {
       clearTimeout(controlsTimer.current);
     }
-    
+
     // Hide controls after 3 seconds
     controlsTimer.current = setTimeout(() => {
       setShowControls(false);
@@ -127,28 +127,32 @@ export const EnhancedPictureInPicture: React.FC<EnhancedPictureInPictureProps> =
   }, [controlsOpacity]);
 
   // Snap to edges
-  const snapToEdges = useCallback((newPosition: PiPPosition) => {
-    const { x, y } = newPosition;
-    const { width, height } = size;
-    
+  const snapToEdges = useCallback(
+    (newPosition: PiPPosition) => {
+      const { x, y } = newPosition;
+      const { width, height } = size;
+
     let snappedX = x;
-    let snappedY = y;
-    
+      let snappedY = y;
+
+
     // Snap to edges
-    if (x < EDGE_SNAP_THRESHOLD) {
-      snappedX = 0;
-    } else if (x + width > SCREEN_WIDTH - EDGE_SNAP_THRESHOLD) {
-      snappedX = SCREEN_WIDTH - width;
-    }
-    
-    if (y < EDGE_SNAP_THRESHOLD) {
-      snappedY = 0;
-    } else if (y + height > SCREEN_HEIGHT - EDGE_SNAP_THRESHOLD) {
-      snappedY = SCREEN_HEIGHT - height;
-    }
-    
+      if (x < EDGE_SNAP_THRESHOLD) {
+        snappedX = 0;
+      } else if (x + width > SCREEN_WIDTH - EDGE_SNAP_THRESHOLD) {
+        snappedX = SCREEN_WIDTH - width;
+      }
+
+      if (y < EDGE_SNAP_THRESHOLD) {
+        snappedY = 0;
+      } else if (y + height > SCREEN_HEIGHT - EDGE_SNAP_THRESHOLD) {
+        snappedY = SCREEN_HEIGHT - height;
+      }
+
     return { x: snappedX, y: snappedY };
-  }, [size]);
+    },
+    [size]
+  );
 
   // Pan responder for dragging
   const panResponder = PanResponder.create({
@@ -161,10 +165,10 @@ export const EnhancedPictureInPicture: React.FC<EnhancedPictureInPictureProps> =
         x: gestureState.x0 - position.x,
         y: gestureState.y0 - position.y,
       });
-      
+
       // Show controls when dragging starts
       showControlsWithTimeout();
-      
+
       // Scale down slightly when dragging
       Animated.spring(scaleValue, {
         toValue: 0.95,
@@ -176,66 +180,74 @@ export const EnhancedPictureInPicture: React.FC<EnhancedPictureInPictureProps> =
         x: Math.max(0, Math.min(SCREEN_WIDTH - size.width, gestureState.moveX - dragOffset.x)),
         y: Math.max(0, Math.min(SCREEN_HEIGHT - size.height, gestureState.moveY - dragOffset.y)),
       };
-      
+
       animatedPosition.setValue(newPosition);
     },
     onPanResponderRelease: (evt, gestureState) => {
       setIsDragging(false);
-      
+
       const newPosition = {
         x: Math.max(0, Math.min(SCREEN_WIDTH - size.width, gestureState.moveX - dragOffset.x)),
         y: Math.max(0, Math.min(SCREEN_HEIGHT - size.height, gestureState.moveY - dragOffset.y)),
       };
-      
+
       const snappedPosition = snapToEdges(newPosition);
-      
+
       // Animate to final position
       Animated.spring(animatedPosition, {
         toValue: snappedPosition,
         useNativeDriver: false,
       }).start();
-      
+
       // Scale back to normal
       Animated.spring(scaleValue, {
         toValue: 1,
         useNativeDriver: true,
       }).start();
-      
+
       onPositionChange(snappedPosition);
     },
   });
 
   // Resize handler
-  const handleResize = useCallback((direction: 'grow' | 'shrink') => {
-    const currentSize = size;
-    const factor = direction === 'grow' ? 1.2 : 0.8;
-    
+  const handleResize = useCallback(
+    (direction: 'grow' | 'shrink') => {
+      const currentSize = size;
+      const factor = direction === 'grow' ? 1.2 : 0.8;
+
     const newWidth = Math.max(MIN_PIP_SIZE.width, Math.min(MAX_PIP_SIZE.width, currentSize.width * factor));
-    const newHeight = Math.max(MIN_PIP_SIZE.height, Math.min(MAX_PIP_SIZE.height, currentSize.height * factor));
-    
-    const newSize = { width: newWidth, height: newHeight };
-    
+      const newHeight = Math.max(
+        MIN_PIP_SIZE.height,
+        Math.min(MAX_PIP_SIZE.height, currentSize.height * factor)
+
+
+      const newSize = { width: newWidth, height: newHeight };
+
+
     // Adjust position if needed to keep PiP in bounds
-    const adjustedPosition = {
-      x: Math.max(0, Math.min(SCREEN_WIDTH - newSize.width, position.x)),
-      y: Math.max(0, Math.min(SCREEN_HEIGHT - newSize.height, position.y)),
-    };
-    
+      const adjustedPosition = {
+        x: Math.max(0, Math.min(SCREEN_WIDTH - newSize.width, position.x)),
+        y: Math.max(0, Math.min(SCREEN_HEIGHT - newSize.height, position.y)),
+      };
+
     Animated.spring(animatedSize, {
-      toValue: newSize,
-      useNativeDriver: false,
-    }).start();
-    
-    if (adjustedPosition.x !== position.x || adjustedPosition.y !== position.y) {
-      Animated.spring(animatedPosition, {
-        toValue: adjustedPosition,
+        toValue: newSize,
         useNativeDriver: false,
       }).start();
-      onPositionChange(adjustedPosition);
-    }
-    
+
+    if (adjustedPosition.x !== position.x || adjustedPosition.y !== position.y) {
+        Animated.spring(animatedPosition, {
+          toValue: adjustedPosition,
+          useNativeDriver: false,
+        }).start();
+        onPositionChange(adjustedPosition);
+      }
+
+
     onSizeChange(newSize);
-  }, [size, position, onSizeChange, onPositionChange]);
+    },
+    [size, position, onSizeChange, onPositionChange]
+  );
 
   // Update animated values when props change
   useEffect(() => {
@@ -255,7 +267,7 @@ export const EnhancedPictureInPicture: React.FC<EnhancedPictureInPictureProps> =
     };
   }, []);
 
-  if (!isVisible) return null;
+  if (!isVisible) {return null;}
 
   return (
     <Animated.View
@@ -291,13 +303,13 @@ export const EnhancedPictureInPicture: React.FC<EnhancedPictureInPictureProps> =
               stream={stream}
               width={size.width}
               height={size.height}
-              isActive={true}
+              isActive
               isMuted={isMuted}
               onPress={showControlsWithTimeout}
               showControls={false}
             />
           )}
-          
+
           {isMinimized && (
             <View style={styles.minimizedContent}>
               <LinearGradient
@@ -320,12 +332,7 @@ export const EnhancedPictureInPicture: React.FC<EnhancedPictureInPictureProps> =
 
         {/* Controls Overlay */}
         {showControls && (
-          <Animated.View
-            style={[
-              styles.controlsOverlay,
-              { opacity: controlsOpacity },
-            ]}
-          >
+          <Animated.View style={[styles.controlsOverlay, { opacity: controlsOpacity }]}>
             <LinearGradient
               colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0.6)']}
               style={styles.controlsGradient}
@@ -340,11 +347,8 @@ export const EnhancedPictureInPicture: React.FC<EnhancedPictureInPictureProps> =
                     {stream.game_name}
                   </Text>
                 </View>
-                
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={onClose}
-                >
+
+                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                   <X size={16} color={ModernTheme.colors.text.primary} />
                 </TouchableOpacity>
               </View>
@@ -352,21 +356,15 @@ export const EnhancedPictureInPicture: React.FC<EnhancedPictureInPictureProps> =
               {/* Bottom Controls */}
               <View style={styles.bottomControls}>
                 <View style={styles.leftControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={onToggleMute}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={onToggleMute}>
                     {isMuted ? (
                       <VolumeX size={16} color={ModernTheme.colors.text.primary} />
                     ) : (
                       <Volume2 size={16} color={ModernTheme.colors.text.primary} />
                     )}
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={onOpenExternal}
-                  >
+
+                  <TouchableOpacity style={styles.controlButton} onPress={onOpenExternal}>
                     <ExternalLink size={16} color={ModernTheme.colors.text.primary} />
                   </TouchableOpacity>
                 </View>
@@ -378,18 +376,15 @@ export const EnhancedPictureInPicture: React.FC<EnhancedPictureInPictureProps> =
                   >
                     <Minimize2 size={16} color={ModernTheme.colors.text.primary} />
                   </TouchableOpacity>
-                  
+
                   <TouchableOpacity
                     style={styles.controlButton}
                     onPress={() => handleResize('grow')}
                   >
                     <Maximize2 size={16} color={ModernTheme.colors.text.primary} />
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={onToggleMinimize}
-                  >
+
+                  <TouchableOpacity style={styles.controlButton} onPress={onToggleMinimize}>
                     {isMinimized ? (
                       <Maximize2 size={16} color={ModernTheme.colors.text.primary} />
                     ) : (

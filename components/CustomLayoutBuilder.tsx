@@ -1,15 +1,3 @@
-import React, { useState, useCallback, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
-  Alert,
-  Dimensions,
-  Platform,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Plus,
@@ -30,6 +18,18 @@ import {
   Layers,
   Settings,
 } from 'lucide-react-native';
+import React, { useState, useCallback, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
+  Alert,
+  Dimensions,
+  Platform,
+} from 'react-native';
 import {
   PanGestureHandler,
   PinchGestureHandler,
@@ -163,74 +163,98 @@ export function CustomLayoutBuilder({
     setStreamSlots(prev => [...prev, newSlot]);
   }, [streamSlots.length]);
 
-  const removeSlot = useCallback((slotId: string) => {
-    setStreamSlots(prev => prev.filter(slot => slot.id !== slotId));
-    if (selectedSlotId === slotId) {
-      setSelectedSlotId(null);
-    }
-  }, [selectedSlotId]);
+  const removeSlot = useCallback(
+    (slotId: string) => {
+      setStreamSlots(prev => prev.filter(slot => slot.id !== slotId));
+      if (selectedSlotId === slotId) {
+        setSelectedSlotId(null);
+      }
+    },
+    [selectedSlotId]
+  );
 
-  const snapToGridValue = useCallback((value: number) => {
-    if (!snapToGrid) return value;
-    return Math.round(value / gridSize) * gridSize;
-  }, [snapToGrid, gridSize]);
+  const snapToGridValue = useCallback(
+    (value: number) => {
+      if (!snapToGrid) {
+        return value;
+      }
+      return Math.round(value / gridSize) * gridSize;
+    },
+    [snapToGrid, gridSize]
+  );
 
-  const updateSlotPosition = useCallback((slotId: string, x: number, y: number) => {
-    const snappedX = snapToGridValue(Math.max(0, Math.min(canvasWidth - 60, x)));
-    const snappedY = snapToGridValue(Math.max(0, Math.min(canvasHeight - 40, y)));
+  const updateSlotPosition = useCallback(
+    (slotId: string, x: number, y: number) => {
+      const snappedX = snapToGridValue(Math.max(0, Math.min(canvasWidth - 60, x)));
+      const snappedY = snapToGridValue(Math.max(0, Math.min(canvasHeight - 40, y)));
 
-    setStreamSlots(prev => prev.map(slot =>
-      slot.id === slotId
-        ? { ...slot, x: snappedX, y: snappedY }
-        : slot
-    ));
-  }, [snapToGridValue, canvasWidth, canvasHeight]);
+      setStreamSlots(prev =>
+        prev.map(slot => (slot.id === slotId ? { ...slot, x: snappedX, y: snappedY } : slot))
+      );
+    },
+    [snapToGridValue, canvasWidth, canvasHeight]
+  );
 
-  const updateSlotSize = useCallback((slotId: string, width: number, height: number) => {
-    const snappedWidth = snapToGridValue(Math.max(60, Math.min(canvasWidth - 20, width)));
-    const snappedHeight = snapToGridValue(Math.max(40, Math.min(canvasHeight - 20, height)));
+  const updateSlotSize = useCallback(
+    (slotId: string, width: number, height: number) => {
+      const snappedWidth = snapToGridValue(Math.max(60, Math.min(canvasWidth - 20, width)));
+      const snappedHeight = snapToGridValue(Math.max(40, Math.min(canvasHeight - 20, height)));
 
-    setStreamSlots(prev => prev.map(slot =>
-      slot.id === slotId
-        ? { ...slot, width: snappedWidth, height: snappedHeight }
-        : slot
-    ));
-  }, [snapToGridValue, canvasWidth, canvasHeight]);
+      setStreamSlots(prev =>
+        prev.map(slot =>
+          slot.id === slotId ? { ...slot, width: snappedWidth, height: snappedHeight } : slot
+        )
+      );
+    },
+    [snapToGridValue, canvasWidth, canvasHeight]
+  );
 
   const selectSlot = useCallback((slotId: string) => {
-    setStreamSlots(prev => prev.map(slot => ({
-      ...slot,
-      isSelected: slot.id === slotId,
-    })));
+    setStreamSlots(prev =>
+      prev.map(slot => ({
+        ...slot,
+        isSelected: slot.id === slotId,
+      }))
+    );
     setSelectedSlotId(slotId);
   }, []);
 
-  const duplicateSlot = useCallback((slotId: string) => {
-    const slotToDuplicate = streamSlots.find(slot => slot.id === slotId);
-    if (!slotToDuplicate) return;
+  const duplicateSlot = useCallback(
+    (slotId: string) => {
+      const slotToDuplicate = streamSlots.find(slot => slot.id === slotId);
+      if (!slotToDuplicate) {
+        return;
+      }
 
-    const newSlot: DraggableStreamSlot = {
-      ...slotToDuplicate,
-      id: generateSlotId(),
-      x: slotToDuplicate.x + 20,
-      y: slotToDuplicate.y + 20,
-      isSelected: false,
-      label: `${slotToDuplicate.label} Copy`,
-    };
+      const newSlot: DraggableStreamSlot = {
+        ...slotToDuplicate,
+        id: generateSlotId(),
+        x: slotToDuplicate.x + 20,
+        y: slotToDuplicate.y + 20,
+        isSelected: false,
+        label: `${slotToDuplicate.label} Copy`,
+      };
 
-    setStreamSlots(prev => [...prev, newSlot]);
-  }, [streamSlots]);
+      setStreamSlots(prev => [...prev, newSlot]);
+    },
+    [streamSlots]
+  );
 
-  const assignStreamToSlot = useCallback((slotId: string, streamId: string) => {
-    const stream = streams.find(s => s.id === streamId);
-    if (!stream) return;
+  const assignStreamToSlot = useCallback(
+    (slotId: string, streamId: string) => {
+      const stream = streams.find(s => s.id === streamId);
+      if (!stream) {
+        return;
+      }
 
-    setStreamSlots(prev => prev.map(slot =>
-      slot.id === slotId
-        ? { ...slot, streamId, label: stream.user_name }
-        : slot
-    ));
-  }, [streams]);
+      setStreamSlots(prev =>
+        prev.map(slot =>
+          slot.id === slotId ? { ...slot, streamId, label: stream.user_name } : slot
+        )
+      );
+    },
+    [streams]
+  );
 
   const saveLayout = useCallback(() => {
     if (!layoutName.trim()) {
@@ -264,48 +288,47 @@ export function CustomLayoutBuilder({
     };
 
     onSaveLayout(layout);
-    
-    Alert.alert(
-      'Layout Saved',
-      `Custom layout "${layoutName}" has been saved successfully`,
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            setLayoutName('');
-            setLayoutDescription('');
-            setEditingLayoutId(null);
-            setMode('manage');
-          },
+
+    Alert.alert('Layout Saved', `Custom layout "${layoutName}" has been saved successfully`, [
+      {
+        text: 'OK',
+        onPress: () => {
+          setLayoutName('');
+          setLayoutDescription('');
+          setEditingLayoutId(null);
+          setMode('manage');
         },
-      ]
-    );
+      },
+    ]);
   }, [layoutName, layoutDescription, streamSlots, editingLayoutId, onSaveLayout]);
 
-  const loadLayout = useCallback((layout: LayoutConfiguration) => {
-    const slots: DraggableStreamSlot[] = layout.positions.map((position, index) => {
-      const stream = streams.find(s => s.id === position.streamId);
-      return {
-        id: generateSlotId(),
-        x: position.x,
-        y: position.y,
-        width: position.width,
-        height: position.height,
-        zIndex: position.zIndex,
-        scale: position.scale,
-        opacity: position.opacity,
-        isSelected: false,
-        streamId: position.streamId,
-        label: stream?.user_name || `Slot ${index + 1}`,
-      };
-    });
+  const loadLayout = useCallback(
+    (layout: LayoutConfiguration) => {
+      const slots: DraggableStreamSlot[] = layout.positions.map((position, index) => {
+        const stream = streams.find(s => s.id === position.streamId);
+        return {
+          id: generateSlotId(),
+          x: position.x,
+          y: position.y,
+          width: position.width,
+          height: position.height,
+          zIndex: position.zIndex,
+          scale: position.scale,
+          opacity: position.opacity,
+          isSelected: false,
+          streamId: position.streamId,
+          label: stream?.user_name || `Slot ${index + 1}`,
+        };
+      });
 
-    setStreamSlots(slots);
-    setLayoutName(layout.name);
-    setLayoutDescription(layout.description || '');
-    setEditingLayoutId(layout.id);
-    setMode('design');
-  }, [streams]);
+      setStreamSlots(slots);
+      setLayoutName(layout.name);
+      setLayoutDescription(layout.description || '');
+      setEditingLayoutId(layout.id);
+      setMode('design');
+    },
+    [streams]
+  );
 
   const resetLayout = useCallback(() => {
     Alert.alert(
@@ -327,10 +350,12 @@ export function CustomLayoutBuilder({
   }, []);
 
   const renderGridLines = () => {
-    if (!showGrid) return null;
+    if (!showGrid) {
+      return null;
+    }
 
     const lines = [];
-    
+
     // Vertical lines
     for (let x = 0; x <= canvasWidth; x += gridSize) {
       lines.push(
@@ -463,7 +488,7 @@ export function CustomLayoutBuilder({
       <ScrollView style={styles.layoutsList}>
         {existingLayouts
           .filter(layout => layout.isCustom)
-          .map((layout) => (
+          .map(layout => (
             <View key={layout.id} style={styles.layoutItem}>
               <LinearGradient
                 colors={['rgba(42, 42, 42, 0.8)', 'rgba(58, 58, 58, 0.8)']}
@@ -475,9 +500,7 @@ export function CustomLayoutBuilder({
                     <Text style={styles.layoutItemDescription}>
                       {layout.description || 'No description'}
                     </Text>
-                    <Text style={styles.layoutItemMeta}>
-                      {layout.positions.length} streams
-                    </Text>
+                    <Text style={styles.layoutItemMeta}>{layout.positions.length} streams</Text>
                   </View>
                   <View style={styles.layoutItemActions}>
                     <TouchableOpacity
@@ -504,7 +527,7 @@ export function CustomLayoutBuilder({
   const renderPreviewMode = () => (
     <View style={styles.previewContainer}>
       <View style={[styles.canvas, { width: canvasWidth, height: canvasHeight }]}>
-        {streamSlots.map((slot) => (
+        {streamSlots.map(slot => (
           <View
             key={slot.id}
             style={[
@@ -520,10 +543,7 @@ export function CustomLayoutBuilder({
               },
             ]}
           >
-            <LinearGradient
-              colors={['#8B5CF6', '#7C3AED']}
-              style={styles.previewSlotGradient}
-            >
+            <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.previewSlotGradient}>
               <Text style={styles.previewSlotText} numberOfLines={1}>
                 {slot.label}
               </Text>
@@ -539,7 +559,9 @@ export function CustomLayoutBuilder({
     transform: [{ scale: containerScale.value }],
   }));
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return null;
+  }
 
   return (
     <GestureHandlerRootView style={styles.overlay}>
@@ -562,18 +584,13 @@ export function CustomLayoutBuilder({
 
           {/* Mode tabs */}
           <View style={styles.modeTabs}>
-            {(['design', 'preview', 'manage'] as const).map((tabMode) => (
+            {(['design', 'preview', 'manage'] as const).map(tabMode => (
               <TouchableOpacity
                 key={tabMode}
                 style={[styles.modeTab, mode === tabMode && styles.activeModeTab]}
                 onPress={() => setMode(tabMode)}
               >
-                <Text
-                  style={[
-                    styles.modeTabText,
-                    mode === tabMode && styles.activeModeTabText,
-                  ]}
-                >
+                <Text style={[styles.modeTabText, mode === tabMode && styles.activeModeTabText]}>
                   {tabMode.charAt(0).toUpperCase() + tabMode.slice(1)}
                 </Text>
               </TouchableOpacity>
@@ -642,9 +659,15 @@ function DraggableStreamSlot({
       scale.value = withSpring(1.05);
       runOnJS(onSelect)();
     },
-    onActive: (event) => {
-      translateX.value = Math.max(0, Math.min(canvasWidth - slot.width, slot.x + event.translationX));
-      translateY.value = Math.max(0, Math.min(canvasHeight - slot.height, slot.y + event.translationY));
+    onActive: event => {
+      translateX.value = Math.max(
+        0,
+        Math.min(canvasWidth - slot.width, slot.x + event.translationX)
+      );
+      translateY.value = Math.max(
+        0,
+        Math.min(canvasHeight - slot.height, slot.y + event.translationY)
+      );
     },
     onEnd: () => {
       scale.value = withSpring(1);
@@ -677,7 +700,9 @@ function DraggableStreamSlot({
         ]}
       >
         <LinearGradient
-          colors={isSelected ? ['#8B5CF6', '#7C3AED'] : ['rgba(42, 42, 42, 0.8)', 'rgba(58, 58, 58, 0.8)']}
+          colors={
+            isSelected ? ['#8B5CF6', '#7C3AED'] : ['rgba(42, 42, 42, 0.8)', 'rgba(58, 58, 58, 0.8)']
+          }
           style={styles.slotGradient}
         >
           <Text style={styles.slotLabel} numberOfLines={1}>

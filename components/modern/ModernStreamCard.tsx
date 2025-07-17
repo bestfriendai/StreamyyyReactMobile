@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState, useRef } from 'react';
 import {
   View,
@@ -11,7 +12,6 @@ import {
   PanResponder,
   StatusBar,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import {
   Play,
@@ -34,8 +34,6 @@ import {
   Clock,
   TrendingUp,
 } from 'lucide-react-native';
-import { TwitchStream } from '@/services/twitchApi';
-import { ModernTheme } from '@/theme/modernTheme';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -53,11 +51,9 @@ import Animated, {
   withRepeat,
   withSequence,
 } from 'react-native-reanimated';
-import {
-  PanGestureHandler,
-  PinchGestureHandler,
-  State,
-} from 'react-native-gesture-handler';
+import { TwitchStream } from '@/services/twitchApi';
+import { ModernTheme } from '@/theme/modernTheme';
+import { PanGestureHandler, PinchGestureHandler, State } from 'react-native-gesture-handler';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -120,7 +116,7 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
-  
+
   // Animation values
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -133,23 +129,20 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
   const heartScale = useSharedValue(1);
   const controlsOpacity = useSharedValue(showControls ? 1 : 0);
   const glowIntensity = useSharedValue(0);
-  
+
   // Pulse animation for live indicator
   React.useEffect(() => {
     livePulse.value = withRepeat(
-      withSequence(
-        withTiming(1.2, { duration: 1000 }),
-        withTiming(1, { duration: 1000 })
-      ),
+      withSequence(withTiming(1.2, { duration: 1000 }), withTiming(1, { duration: 1000 })),
       -1
     );
   }, []);
-  
+
   // Glow effect for selected state
   React.useEffect(() => {
     glowIntensity.value = withTiming(isSelected ? 1 : 0, { duration: 300 });
   }, [isSelected]);
-  
+
   // Auto-hide controls
   React.useEffect(() => {
     if (showControls && layoutMode !== 'pip') {
@@ -160,19 +153,19 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
       return () => clearTimeout(timer);
     }
   }, [showControls, layoutMode]);
-  
+
   // Get thumbnail URL with proper resolution
   const getThumbnailUrl = () => {
-    if (!stream.thumbnail_url) return null;
-    
+    if (!stream.thumbnail_url) {return null;}
+
     const thumbnailWidth = Math.floor(cardWidth.value * 2);
     const thumbnailHeight = Math.floor(cardHeight.value * 1.5);
-    
+
     return stream.thumbnail_url
       .replace('{width}', thumbnailWidth.toString())
       .replace('{height}', thumbnailHeight.toString());
   };
-  
+
   // Pan gesture handler for dragging
   const panGestureHandler = useAnimatedGestureHandler({
     onStart: (_, context) => {
@@ -188,7 +181,7 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
     onEnd: () => {
       scale.value = withSpring(1);
       runOnJS(setIsDragging)(false);
-      
+
       // Snap to edges if close
       const snapThreshold = 20;
       if (translateX.value < snapThreshold) {
@@ -196,28 +189,28 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
       } else if (translateX.value > SCREEN_WIDTH - cardWidth.value - snapThreshold) {
         translateX.value = withSpring(SCREEN_WIDTH - cardWidth.value);
       }
-      
+
       if (translateY.value < snapThreshold) {
         translateY.value = withSpring(0);
       } else if (translateY.value > SCREEN_HEIGHT - cardHeight.value - snapThreshold) {
         translateY.value = withSpring(SCREEN_HEIGHT - cardHeight.value);
       }
-      
+
       runOnJS(onMove)?.(translateX.value, translateY.value);
     },
   });
-  
+
   // Pinch gesture handler for resizing
   const pinchGestureHandler = useAnimatedGestureHandler({
     onStart: () => {
       runOnJS(setIsResizing)(true);
     },
-    onActive: (event) => {
+    onActive: event => {
       const newScale = event.scale;
       const minScale = 0.3;
       const maxScale = 2.0;
       const clampedScale = Math.max(minScale, Math.min(maxScale, newScale));
-      
+
       cardWidth.value = width * clampedScale;
       cardHeight.value = height * clampedScale;
     },
@@ -226,7 +219,7 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
       runOnJS(onResize)?.(cardWidth.value, cardHeight.value);
     },
   });
-  
+
   // Animated styles
   const containerStyle = useAnimatedStyle(() => ({
     transform: [
@@ -239,33 +232,23 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
     height: cardHeight.value,
     opacity: opacity.value,
     zIndex: isDragging || isResizing ? 1000 : zIndex,
-    shadowOpacity: interpolate(
-      glowIntensity.value,
-      [0, 1],
-      [0.1, 0.4],
-      Extrapolate.CLAMP
-    ),
+    shadowOpacity: interpolate(glowIntensity.value, [0, 1], [0.1, 0.4], Extrapolate.CLAMP),
     shadowColor: ModernTheme.colors.accent[500],
-    shadowRadius: interpolate(
-      glowIntensity.value,
-      [0, 1],
-      [4, 12],
-      Extrapolate.CLAMP
-    ),
+    shadowRadius: interpolate(glowIntensity.value, [0, 1], [4, 12], Extrapolate.CLAMP),
   }));
-  
+
   const livePulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: livePulse.value }],
   }));
-  
+
   const heartStyle = useAnimatedStyle(() => ({
     transform: [{ scale: heartScale.value }],
   }));
-  
+
   const controlsStyle = useAnimatedStyle(() => ({
     opacity: controlsOpacity.value,
   }));
-  
+
   // Handle various actions
   const handlePress = () => {
     scale.value = withSpring(0.95, { damping: 15 }, () => {
@@ -273,21 +256,21 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
     });
     onPress?.();
   };
-  
+
   const handleRemove = () => {
     opacity.value = withTiming(0, { duration: 300 });
     scale.value = withTiming(0.8, { duration: 300 }, () => {
       runOnJS(onRemove)?.();
     });
   };
-  
+
   const handleTogglePlay = () => {
     scale.value = withSpring(0.95, { damping: 15 }, () => {
       scale.value = withSpring(1);
     });
     onTogglePlay?.();
   };
-  
+
   const handleToggleFavorite = () => {
     heartScale.value = withSpring(0.8, { damping: 15 }, () => {
       heartScale.value = withSpring(1.3, { damping: 15 }, () => {
@@ -296,7 +279,7 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
     });
     onToggleFavorite?.();
   };
-  
+
   const handleLayoutChange = (mode: StreamLayoutMode) => {
     rotation.value = withSpring(360, { damping: 15 }, () => {
       rotation.value = 0;
@@ -304,18 +287,18 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
     onLayoutChange?.(mode);
     setShowMoreMenu(false);
   };
-  
+
   const qualityOptions: StreamQuality[] = ['auto', '1080p', '720p', '480p', '360p'];
   const thumbnailUrl = getThumbnailUrl();
-  
+
   const renderQualityMenu = () => (
-    <Animated.View 
+    <Animated.View
       entering={SlideInDown.delay(100)}
       exiting={FadeOut}
       style={styles.qualityMenu}
     >
       <BlurView intensity={95} style={styles.menuBlur}>
-        {qualityOptions.map((option) => (
+        {qualityOptions.map(option => (
           <TouchableOpacity
             key={option}
             style={[styles.menuItem, quality === option && styles.menuItemActive]}
@@ -327,59 +310,45 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
             <Text style={[styles.menuText, quality === option && styles.menuTextActive]}>
               {option.toUpperCase()}
             </Text>
-            {quality === option && (
-              <View style={styles.activeIndicator} />
-            )}
+            {quality === option && <View style={styles.activeIndicator} />}
           </TouchableOpacity>
         ))}
       </BlurView>
     </Animated.View>
   );
-  
+
   const renderMoreMenu = () => (
-    <Animated.View 
+    <Animated.View
       entering={SlideInDown.delay(100)}
       exiting={FadeOut}
       style={styles.moreMenu}
     >
       <BlurView intensity={95} style={styles.menuBlur}>
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => handleLayoutChange('fullscreen')}
-        >
+        <TouchableOpacity style={styles.menuItem} onPress={() => handleLayoutChange('fullscreen')}>
           <Fullscreen size={16} color={ModernTheme.colors.text.primary} />
           <Text style={styles.menuText}>Fullscreen</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => handleLayoutChange('pip')}
-        >
+
+        <TouchableOpacity style={styles.menuItem} onPress={() => handleLayoutChange('pip')}>
           <PictureInPicture2 size={16} color={ModernTheme.colors.text.primary} />
           <Text style={styles.menuText}>Picture in Picture</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => setShowMoreMenu(false)}
-        >
+
+        <TouchableOpacity style={styles.menuItem} onPress={() => setShowMoreMenu(false)}>
           <Share size={16} color={ModernTheme.colors.text.primary} />
           <Text style={styles.menuText}>Share Stream</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => setShowMoreMenu(false)}
-        >
+
+        <TouchableOpacity style={styles.menuItem} onPress={() => setShowMoreMenu(false)}>
           <Settings size={16} color={ModernTheme.colors.text.primary} />
           <Text style={styles.menuText}>Stream Settings</Text>
         </TouchableOpacity>
       </BlurView>
     </Animated.View>
   );
-  
+
   return (
-    <PanGestureHandler 
+    <PanGestureHandler
       onGestureEvent={isDraggable ? panGestureHandler : undefined}
       enabled={isDraggable}
     >
@@ -389,17 +358,13 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
           enabled={isResizable}
         >
           <Animated.View style={[styles.container, containerStyle]}>
-            <TouchableOpacity
-              style={styles.touchArea}
-              onPress={handlePress}
-              activeOpacity={0.95}
-            >
+            <TouchableOpacity style={styles.touchArea} onPress={handlePress} activeOpacity={0.95}>
               {/* Background Gradient */}
               <LinearGradient
                 colors={
-                  layoutMode === 'pip' 
+                  layoutMode === 'pip'
                     ? ['rgba(0,0,0,0.95)', 'rgba(0,0,0,0.8)']
-                    : isSelected 
+                    : isSelected
                       ? ModernTheme.colors.gradients.accent
                       : ModernTheme.colors.gradients.card
                 }
@@ -418,16 +383,18 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
                       />
                     ) : (
                       <View style={styles.placeholderThumbnail}>
-                        <Play size={layoutMode === 'pip' ? 24 : 48} color={ModernTheme.colors.text.secondary} />
+                        <Play
+                          size={layoutMode === 'pip' ? 24 : 48}
+                          color={ModernTheme.colors.text.secondary}
+                        />
                       </View>
-                    )}
-                    
+
                     {/* Streaming Overlay */}
                     <LinearGradient
                       colors={['transparent', 'rgba(0,0,0,0.7)']}
                       style={styles.streamOverlay}
                     />
-                    
+
                     {/* Status Indicators */}
                     <View style={styles.statusContainer}>
                       {/* Live Indicator */}
@@ -435,7 +402,7 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
                         <Animated.View style={styles.liveDot} />
                         <Text style={styles.liveText}>LIVE</Text>
                       </Animated.View>
-                      
+
                       {/* Viewer Count */}
                       <View style={styles.viewerBadge}>
                         <Eye size={12} color={ModernTheme.colors.text.primary} />
@@ -443,7 +410,7 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
                           {stream.viewer_count?.toLocaleString() || '0'}
                         </Text>
                       </View>
-                      
+
                       {/* Quality Indicator */}
                       <TouchableOpacity
                         style={styles.qualityBadge}
@@ -452,7 +419,7 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
                         <Text style={styles.qualityText}>{quality.toUpperCase()}</Text>
                       </TouchableOpacity>
                     </View>
-                    
+
                     {/* Controls Overlay */}
                     <Animated.View style={[styles.controlsOverlay, controlsStyle]}>
                       {/* Top Controls */}
@@ -463,21 +430,25 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
                               <Move size={16} color={ModernTheme.colors.text.primary} />
                             </TouchableOpacity>
                           )}
-                          
+
                           <Animated.View style={heartStyle}>
                             <TouchableOpacity
                               style={[styles.controlButton, isFavorite && styles.favoriteActive]}
                               onPress={handleToggleFavorite}
                             >
-                              <Heart 
-                                size={16} 
-                                color={isFavorite ? ModernTheme.colors.status.live : ModernTheme.colors.text.primary}
+                              <Heart
+                                size={16}
+                                color={
+                                  isFavorite
+                                    ? ModernTheme.colors.status.live
+                                    : ModernTheme.colors.text.primary
+                                }
                                 fill={isFavorite ? ModernTheme.colors.status.live : 'transparent'}
                               />
                             </TouchableOpacity>
                           </Animated.View>
                         </View>
-                        
+
                         <View style={styles.rightControls}>
                           <TouchableOpacity
                             style={styles.controlButton}
@@ -485,22 +456,16 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
                           >
                             <MoreVertical size={16} color={ModernTheme.colors.text.primary} />
                           </TouchableOpacity>
-                          
-                          <TouchableOpacity
-                            style={styles.controlButton}
-                            onPress={handleRemove}
-                          >
+
+                          <TouchableOpacity style={styles.controlButton} onPress={handleRemove}>
                             <X size={16} color={ModernTheme.colors.text.primary} />
                           </TouchableOpacity>
                         </View>
                       </View>
-                      
+
                       {/* Center Play/Pause Button */}
                       <View style={styles.centerControls}>
-                        <TouchableOpacity
-                          style={styles.playButton}
-                          onPress={handleTogglePlay}
-                        >
+                        <TouchableOpacity style={styles.playButton} onPress={handleTogglePlay}>
                           <LinearGradient
                             colors={ModernTheme.colors.gradients.accent}
                             style={styles.playButtonGradient}
@@ -513,7 +478,7 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
                           </LinearGradient>
                         </TouchableOpacity>
                       </View>
-                      
+
                       {/* Bottom Controls */}
                       <View style={styles.bottomControls}>
                         <TouchableOpacity
@@ -526,14 +491,16 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
                             <Volume2 size={16} color={ModernTheme.colors.text.primary} />
                           )}
                         </TouchableOpacity>
-                        
+
                         <View style={styles.progressBar}>
                           <View style={styles.progressFill} />
                         </View>
-                        
+
                         <TouchableOpacity
                           style={styles.controlButton}
-                          onPress={() => handleLayoutChange(layoutMode === 'grid' ? 'fullscreen' : 'grid')}
+                          onPress={() =>
+                            handleLayoutChange(layoutMode === 'grid' ? 'fullscreen' : 'grid')
+                          }
                         >
                           {layoutMode === 'fullscreen' ? (
                             <Minimize2 size={16} color={ModernTheme.colors.text.primary} />
@@ -543,7 +510,7 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
                         </TouchableOpacity>
                       </View>
                     </Animated.View>
-                    
+
                     {/* Resize Handle */}
                     {isResizable && (
                       <View style={styles.resizeHandle}>
@@ -551,7 +518,7 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
                       </View>
                     )}
                   </View>
-                  
+
                   {/* Stream Info (only for grid mode) */}
                   {layoutMode === 'grid' && (
                     <Animated.View entering={FadeIn.delay(200)} style={styles.streamInfo}>
@@ -561,7 +528,7 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
                       <Text style={styles.streamGame} numberOfLines={1}>
                         {stream.game_name}
                       </Text>
-                      
+
                       {/* Additional Stats */}
                       <View style={styles.streamStats}>
                         <View style={styles.statItem}>
@@ -570,15 +537,17 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
                             {stream.viewer_count?.toLocaleString() || '0'}
                           </Text>
                         </View>
-                        
+
                         <View style={styles.statItem}>
                           <Clock size={12} color={ModernTheme.colors.text.tertiary} />
                           <Text style={styles.statText}>2h 14m</Text>
                         </View>
-                        
+
                         <View style={styles.statItem}>
                           <TrendingUp size={12} color={ModernTheme.colors.success[500]} />
-                          <Text style={[styles.statText, { color: ModernTheme.colors.success[500] }]}>
+                          <Text
+                            style={[styles.statText, { color: ModernTheme.colors.success[500] }]}
+                          >
                             +12%
                           </Text>
                         </View>
@@ -588,10 +557,10 @@ export const ModernStreamCard: React.FC<ModernStreamCardProps> = ({
                 </View>
               </LinearGradient>
             </TouchableOpacity>
-            
+
             {/* Quality Menu */}
             {showQualityMenu && renderQualityMenu()}
-            
+
             {/* More Menu */}
             {showMoreMenu && renderMoreMenu()}
           </Animated.View>

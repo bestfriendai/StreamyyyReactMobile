@@ -1,12 +1,12 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { router, useSegments } from 'expo-router';
+import { Lock, Crown, AlertTriangle, Wifi, WifiOff } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { router, useSegments } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGlobalStore } from '@/services/SimpleStateManager';
 import { navigationService } from '@/services/NavigationService';
+import { useGlobalStore } from '@/services/SimpleStateManager';
 import { logDebug, logError } from '@/utils/errorHandler';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Lock, Crown, AlertTriangle, Wifi, WifiOff } from 'lucide-react-native';
 
 export interface RouteConfig {
   path: string;
@@ -70,16 +70,18 @@ const routeConfigs: RouteConfig[] = [
   },
 ];
 
-const LoadingScreen: React.FC<{ message?: string; icon?: React.ReactNode }> = ({ 
-  message = 'Loading...', 
-  icon 
+const LoadingScreen: React.FC<{ message?: string; icon?: React.ReactNode }> = ({
+  message = 'Loading...',
+  icon,
 }) => (
-  <View style={{ 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    backgroundColor: '#0f0f0f' 
-  }}>
+  <View
+    style={{
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: '#0f0f0f',
+    }}
+  >
     <LinearGradient
       colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']}
       style={{
@@ -90,16 +92,18 @@ const LoadingScreen: React.FC<{ message?: string; icon?: React.ReactNode }> = ({
         bottom: 0,
       }}
     />
-    
+
     <View style={{ alignItems: 'center', paddingHorizontal: 24 }}>
       {icon || <ActivityIndicator size="large" color="#8B5CF6" />}
-      <Text style={{
-        color: '#fff',
-        fontSize: 18,
-        fontFamily: 'Inter-Medium',
-        marginTop: 16,
-        textAlign: 'center',
-      }}>
+      <Text
+        style={{
+          color: '#fff',
+          fontSize: 18,
+          fontFamily: 'Inter-Medium',
+          marginTop: 16,
+          textAlign: 'center',
+        }}
+      >
         {message}
       </Text>
     </View>
@@ -112,13 +116,15 @@ const AccessDeniedScreen: React.FC<{
   action?: () => void;
   actionText?: string;
 }> = ({ reason, icon, action, actionText }) => (
-  <View style={{ 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    backgroundColor: '#0f0f0f',
-    paddingHorizontal: 24,
-  }}>
+  <View
+    style={{
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: '#0f0f0f',
+      paddingHorizontal: 24,
+    }}
+  >
     <LinearGradient
       colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']}
       style={{
@@ -129,30 +135,34 @@ const AccessDeniedScreen: React.FC<{
         bottom: 0,
       }}
     />
-    
+
     <View style={{ alignItems: 'center' }}>
       {icon}
-      <Text style={{
-        color: '#fff',
-        fontSize: 24,
-        fontFamily: 'Inter-Bold',
-        marginTop: 24,
-        marginBottom: 12,
-        textAlign: 'center',
-      }}>
+      <Text
+        style={{
+          color: '#fff',
+          fontSize: 24,
+          fontFamily: 'Inter-Bold',
+          marginTop: 24,
+          marginBottom: 12,
+          textAlign: 'center',
+        }}
+      >
         Access Restricted
       </Text>
-      <Text style={{
-        color: '#999',
-        fontSize: 16,
-        fontFamily: 'Inter-Regular',
-        textAlign: 'center',
-        lineHeight: 24,
-        marginBottom: 32,
-      }}>
+      <Text
+        style={{
+          color: '#999',
+          fontSize: 16,
+          fontFamily: 'Inter-Regular',
+          textAlign: 'center',
+          lineHeight: 24,
+          marginBottom: 32,
+        }}
+      >
         {reason}
       </Text>
-      
+
       {action && actionText && (
         <TouchableOpacity
           onPress={action}
@@ -163,11 +173,13 @@ const AccessDeniedScreen: React.FC<{
             borderRadius: 8,
           }}
         >
-          <Text style={{
-            color: '#fff',
-            fontSize: 16,
-            fontFamily: 'Inter-SemiBold',
-          }}>
+          <Text
+            style={{
+              color: '#fff',
+              fontSize: 16,
+              fontFamily: 'Inter-SemiBold',
+            }}
+          >
             {actionText}
           </Text>
         </TouchableOpacity>
@@ -181,7 +193,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({ children, config }) => {
   const { user, isLoading: authLoading, isSignedIn, isGuestMode } = useAuth();
   const globalState = useGlobalStore();
   const { temp } = globalState;
-  
+
   const [isValidating, setIsValidating] = useState(true);
   const [accessDenied, setAccessDenied] = useState<{
     reason: string;
@@ -208,11 +220,11 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({ children, config }) => {
         return;
       }
 
-      logDebug('Validating route access', { 
-        path: currentPath, 
-        isSignedIn, 
+      logDebug('Validating route access', {
+        path: currentPath,
+        isSignedIn,
         isGuestMode,
-        config: routeConfig 
+        config: routeConfig,
       });
 
       // No route config means public access
@@ -224,7 +236,8 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({ children, config }) => {
       // Check network connectivity for online-only features
       if (!temp.isConnected && routeConfig.requiresAuth) {
         setAccessDenied({
-          reason: 'This feature requires an internet connection. Please check your network and try again.',
+          reason:
+            'This feature requires an internet connection. Please check your network and try again.',
           icon: <WifiOff size={64} color="#EF4444" />,
           action: () => {
             // Retry validation
@@ -252,9 +265,9 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({ children, config }) => {
       if (routeConfig.requiresSubscription && user) {
         const userTier = user.subscription?.tier || 'free';
         const requiredTier = routeConfig.requiresSubscription;
-        
+
         const tierHierarchy = { free: 0, pro: 1, premium: 2 };
-        
+
         if (tierHierarchy[userTier] < tierHierarchy[requiredTier]) {
           setAccessDenied({
             reason: `This feature requires a ${requiredTier} subscription. Upgrade to access premium features.`,
@@ -272,13 +285,14 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({ children, config }) => {
       // Check permissions
       if (routeConfig.permissions && routeConfig.permissions.length > 0) {
         const userPermissions = user?.permissions || [];
-        const hasPermission = routeConfig.permissions.some(permission => 
+        const hasPermission = routeConfig.permissions.some(permission =>
           userPermissions.includes(permission)
         );
-        
+
         if (!hasPermission) {
           setAccessDenied({
-            reason: 'You don\'t have permission to access this area. Contact support if you believe this is an error.',
+            reason:
+              "You don't have permission to access this area. Contact support if you believe this is an error.",
             icon: <Lock size={64} color="#EF4444" />,
           });
           setIsValidating(false);
@@ -313,7 +327,6 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({ children, config }) => {
 
       // All checks passed
       setIsValidating(false);
-      
     } catch (error) {
       logError('Route validation error', error);
       setAccessDenied({
@@ -372,16 +385,14 @@ export const useRoutePermissions = () => {
       const userTier = user.subscription?.tier || 'free';
       const requiredTier = config.requiresSubscription;
       const tierHierarchy = { free: 0, pro: 1, premium: 2 };
-      
+
       return tierHierarchy[userTier] >= tierHierarchy[requiredTier];
     }
 
     // Check permissions
     if (config.permissions && config.permissions.length > 0) {
       const userPermissions = user?.permissions || [];
-      return config.permissions.some(permission => 
-        userPermissions.includes(permission)
-      );
+      return config.permissions.some(permission => userPermissions.includes(permission));
     }
 
     return true;

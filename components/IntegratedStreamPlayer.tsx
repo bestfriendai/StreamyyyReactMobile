@@ -1,19 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  Dimensions,
-  StatusBar,
-  Platform,
-} from 'react-native';
+import { View, StyleSheet, Dimensions, StatusBar, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { TwitchStream, twitchApi } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
 
 // Import our enhanced components
+import { ModernPlayerInterface } from './ModernPlayerInterface';
 import { ModernStreamPlayer } from './ModernStreamPlayer';
 import { StreamStateManager, StreamState, StreamError, ConnectionQuality } from './StreamStateManager';
-import { ModernPlayerInterface } from './ModernPlayerInterface';
 import { GestureEnhancedPlayer, GestureConfig } from './GestureEnhancedPlayer';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -99,13 +93,14 @@ export const IntegratedStreamPlayer: React.FC<IntegratedStreamPlayerProps> = ({
   };
 
   // Generate embed URL
-  const embedUrl = twitchApi.generateEmbedUrl(stream.user_login) + 
+  const embedUrl =
+    twitchApi.generateEmbedUrl(stream.user_login) +
     (playerState.isMuted ? '&muted=true' : '&muted=false');
 
   // Initialize component
   useEffect(() => {
     setStreamState('loading');
-    
+
     // Simulate connection quality monitoring
     const qualityInterval = setInterval(() => {
       const qualities: ConnectionQuality[] = ['excellent', 'good', 'poor'];
@@ -133,7 +128,7 @@ export const IntegratedStreamPlayer: React.FC<IntegratedStreamPlayerProps> = ({
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
       }
-      
+
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
       }, customControlsTimeout);
@@ -173,7 +168,7 @@ export const IntegratedStreamPlayer: React.FC<IntegratedStreamPlayerProps> = ({
   // Player control handlers
   const handlePlayPause = useCallback(() => {
     setPlayerState(prev => ({ ...prev, isPlaying: !prev.isPlaying }));
-    
+
     if (playerState.isPlaying) {
       setStreamState('paused');
     } else {
@@ -204,10 +199,13 @@ export const IntegratedStreamPlayer: React.FC<IntegratedStreamPlayerProps> = ({
     }));
   }, []);
 
-  const handleDoubleTapSeek = useCallback((direction: 'forward' | 'backward') => {
-    const seekAmount = direction === 'forward' ? 10 : -10;
-    handleSeek(seekAmount);
-  }, [handleSeek]);
+  const handleDoubleTapSeek = useCallback(
+    (direction: 'forward' | 'backward') => {
+      const seekAmount = direction === 'forward' ? 10 : -10;
+      handleSeek(seekAmount);
+    },
+    [handleSeek]
+  );
 
   const handleFullscreenToggle = useCallback(() => {
     setPlayerState(prev => ({ ...prev, isFullscreen: !prev.isFullscreen }));
@@ -229,7 +227,7 @@ export const IntegratedStreamPlayer: React.FC<IntegratedStreamPlayerProps> = ({
   const handleQualityChange = useCallback((quality: string) => {
     setPlayerState(prev => ({ ...prev, quality }));
     setStreamState('buffering');
-    
+
     // Simulate quality change loading
     setTimeout(() => {
       setStreamState('playing');
@@ -384,25 +382,28 @@ export const IntegratedStreamPlayer: React.FC<IntegratedStreamPlayerProps> = ({
 </html>`;
   }, [embedUrl, stream.user_name]);
 
-  const handleWebViewMessage = useCallback((event: any) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      
+  const handleWebViewMessage = useCallback(
+    (event: any) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+
       switch (data.type) {
-        case 'loaded':
-          handleWebViewLoad();
-          break;
-        case 'error':
-          handleWebViewError({ nativeEvent: { message: data.message } });
-          break;
-        case 'playstate':
-          setPlayerState(prev => ({ ...prev, isPlaying: data.playing }));
-          break;
+          case 'loaded':
+            handleWebViewLoad();
+            break;
+          case 'error':
+            handleWebViewError({ nativeEvent: { message: data.message } });
+            break;
+          case 'playstate':
+            setPlayerState(prev => ({ ...prev, isPlaying: data.playing }));
+            break;
+        }
+      } catch (error) {
+        console.log('WebView message parse error:', error);
       }
-    } catch (error) {
-      console.log('WebView message parse error:', error);
-    }
-  }, [handleWebViewLoad, handleWebViewError]);
+    },
+    [handleWebViewLoad, handleWebViewError]
+  );
 
   return (
     <View style={[styles.container, { width: viewerWidth, height: viewerHeight }]}>
@@ -430,12 +431,12 @@ export const IntegratedStreamPlayer: React.FC<IntegratedStreamPlayerProps> = ({
           onLoad={handleWebViewLoad}
           onError={handleWebViewError}
           onMessage={handleWebViewMessage}
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
           scrollEnabled={false}
           bounces={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
           mixedContentMode="compatibility"
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
@@ -453,7 +454,7 @@ export const IntegratedStreamPlayer: React.FC<IntegratedStreamPlayerProps> = ({
           onRetry={handleRetry}
           onDismiss={handleStateManagerDismiss}
           onOpenSettings={handleOpenSettings}
-          showDetails={true}
+          showDetails
           loadingProgress={0}
         />
 
@@ -493,16 +494,19 @@ export const IntegratedStreamPlayer: React.FC<IntegratedStreamPlayerProps> = ({
 
         {/* Connection quality indicator */}
         <View style={styles.connectionIndicator}>
-          <View style={[
-            styles.connectionDot,
-            {
-              backgroundColor: 
-                connectionQuality === 'excellent' ? ModernTheme.colors.success[500] :
-                connectionQuality === 'good' ? ModernTheme.colors.success[400] :
-                connectionQuality === 'poor' ? ModernTheme.colors.warning :
-                ModernTheme.colors.error[500]
-            }
-          ]} />
+          <View
+            style={[
+              styles.connectionDot,
+              {
+                backgroundColor:
+                  connectionQuality === 'excellent'
+                    ? ModernTheme.colors.success[500]
+                  connectionQuality === 'good' ? ModernTheme.colors.success[400] :
+                    connectionQuality === 'poor' ? ModernTheme.colors.warning :
+                      ModernTheme.colors.error[500]
+              },
+            ]}
+          />
         </View>
       </GestureEnhancedPlayer>
     </View>

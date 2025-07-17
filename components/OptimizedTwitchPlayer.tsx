@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Volume2, VolumeX, X, Eye, ExternalLink, Wifi } from 'lucide-react-native';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
@@ -11,15 +13,6 @@ import {
   Platform,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Volume2,
-  VolumeX,
-  X,
-  Eye,
-  ExternalLink,
-  Wifi,
-} from 'lucide-react-native';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
 
@@ -67,13 +60,7 @@ export const OptimizedTwitchPlayer: React.FC<OptimizedTwitchPlayerProps> = ({
     });
 
     // Essential parent domains for React Native
-    const parents = [
-      'localhost',
-      '127.0.0.1',
-      'expo.dev', 
-      'exp.host',
-      'snack.expo.dev',
-    ];
+    const parents = ['localhost', '127.0.0.1', 'expo.dev', 'exp.host', 'snack.expo.dev'];
 
     parents.forEach(parent => params.append('parent', parent));
 
@@ -91,28 +78,31 @@ export const OptimizedTwitchPlayer: React.FC<OptimizedTwitchPlayerProps> = ({
     setRetryAttempt(0);
   }, [stream.user_login]);
 
-  const handleWebViewError = useCallback((syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.error('❌ Optimized Twitch player error:', stream.user_login, nativeEvent);
-    
-    setIsPlaying(false);
-    
-    if (retryAttempt < maxRetries) {
-      console.log(`🔄 Auto-retry ${retryAttempt + 1}/${maxRetries} for ${stream.user_login}`);
-      setRetryAttempt(prev => prev + 1);
-      
-      // Progressive delay for retries
-      const delay = (retryAttempt + 1) * 2000;
-      setTimeout(() => {
-        webViewRef.current?.reload();
-      }, delay);
-      
-      setError(`Retrying... (${retryAttempt + 1}/${maxRetries})`);
-    } else {
-      setError('Stream not available');
-      setIsLoading(false);
-    }
-  }, [stream.user_login, retryAttempt, maxRetries]);
+  const handleWebViewError = useCallback(
+    (syntheticEvent: any) => {
+      const { nativeEvent } = syntheticEvent;
+      console.error('❌ Optimized Twitch player error:', stream.user_login, nativeEvent);
+
+      setIsPlaying(false);
+
+      if (retryAttempt < maxRetries) {
+        console.log(`🔄 Auto-retry ${retryAttempt + 1}/${maxRetries} for ${stream.user_login}`);
+        setRetryAttempt(prev => prev + 1);
+
+        // Progressive delay for retries
+        const delay = (retryAttempt + 1) * 2000;
+        setTimeout(() => {
+          webViewRef.current?.reload();
+        }, delay);
+
+        setError(`Retrying... (${retryAttempt + 1}/${maxRetries})`);
+      } else {
+        setError('Stream not available');
+        setIsLoading(false);
+      }
+    },
+    [stream.user_login, retryAttempt, maxRetries]
+  );
 
   const handleWebViewLoadStart = useCallback(() => {
     console.log('🔄 Optimized Twitch player loading:', stream.user_login);
@@ -124,7 +114,7 @@ export const OptimizedTwitchPlayer: React.FC<OptimizedTwitchPlayerProps> = ({
   // Handle navigation state changes
   const handleNavigationStateChange = useCallback((navState: any) => {
     console.log('📍 Navigation state:', navState.url);
-    
+
     // Check if we're still on Twitch domain
     if (navState.url && !navState.url.includes('twitch.tv')) {
       console.log('⚠️ Navigated away from Twitch, reloading...');
@@ -185,29 +175,31 @@ export const OptimizedTwitchPlayer: React.FC<OptimizedTwitchPlayerProps> = ({
           onLoadStart={handleWebViewLoadStart}
           onNavigationStateChange={handleNavigationStateChange}
           // Optimized settings for mobile streaming
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
-          scalesPageToFit={true}
+          scalesPageToFit
           bounces={false}
           scrollEnabled={false}
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['*']}
-          mixedContentMode={'compatibility'}
-          allowsFullscreenVideo={true}
-          allowsProtectedMedia={true}
-          thirdPartyCookiesEnabled={true}
-          sharedCookiesEnabled={true}
+          mixedContentMode="compatibility"
+          allowsFullscreenVideo
+          allowsProtectedMedia
+          thirdPartyCookiesEnabled
+          sharedCookiesEnabled
           cacheEnabled={false} // Disable caching for live streams
           incognito={false}
           // Mobile-optimized user agent
           userAgent={Platform.select({
-            ios: "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
-            android: "Mozilla/5.0 (Linux; Android 12; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36",
-            default: "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
+            ios: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+            android:
+              'Mozilla/5.0 (Linux; Android 12; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36',
+            default:
+              'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
           })}
         />
 
@@ -217,7 +209,9 @@ export const OptimizedTwitchPlayer: React.FC<OptimizedTwitchPlayerProps> = ({
             <ActivityIndicator size="large" color={ModernTheme.colors.primary[500]} />
             <Text style={styles.loadingText}>Loading {stream.user_name}</Text>
             {retryAttempt > 0 && (
-              <Text style={styles.retryText}>Attempt {retryAttempt}/{maxRetries}</Text>
+              <Text style={styles.retryText}>
+                Attempt {retryAttempt}/{maxRetries}
+              </Text>
             )}
           </View>
         )}
@@ -244,10 +238,7 @@ export const OptimizedTwitchPlayer: React.FC<OptimizedTwitchPlayerProps> = ({
         {/* Stream Info Overlay */}
         {!error && (
           <View style={styles.infoOverlay}>
-            <LinearGradient
-              colors={['rgba(0,0,0,0.8)', 'transparent']}
-              style={styles.infoGradient}
-            >
+            <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.infoGradient}>
               <View style={styles.streamInfo}>
                 <View style={styles.platformBadge}>
                   <Text style={styles.platformText}>LIVE</Text>
@@ -259,10 +250,12 @@ export const OptimizedTwitchPlayer: React.FC<OptimizedTwitchPlayerProps> = ({
                   </Text>
                 </View>
                 {/* Status indicator */}
-                <View style={[
-                  styles.statusIndicator,
-                  { backgroundColor: isPlaying ? '#00ff00' : isLoading ? '#ffff00' : '#ff0000' }
-                ]} />
+                <View
+                  style={[
+                    styles.statusIndicator,
+                    { backgroundColor: isPlaying ? '#00ff00' : isLoading ? '#ffff00' : '#ff0000' },
+                  ]}
+                />
               </View>
               <Text style={styles.streamTitle} numberOfLines={1}>
                 {stream.user_name}
@@ -283,21 +276,15 @@ export const OptimizedTwitchPlayer: React.FC<OptimizedTwitchPlayerProps> = ({
             >
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={onMuteToggle}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={onMuteToggle}>
                     {isMuted ? (
                       <VolumeX size={16} color="#fff" />
                     ) : (
                       <Volume2 size={16} color="#fff" />
                     )}
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handleOpenExternal}
-                  >
+
+                  <TouchableOpacity style={styles.controlButton} onPress={handleOpenExternal}>
                     <ExternalLink size={16} color="#fff" />
                   </TouchableOpacity>
                 </View>

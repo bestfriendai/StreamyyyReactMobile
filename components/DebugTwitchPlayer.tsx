@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Volume2, VolumeX, X, Eye, ExternalLink, Play, Info } from 'lucide-react-native';
 import React, { useState, useCallback } from 'react';
 import {
   View,
@@ -9,16 +11,6 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Volume2,
-  VolumeX,
-  X,
-  Eye,
-  ExternalLink,
-  Play,
-  Info,
-} from 'lucide-react-native';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
 
@@ -56,7 +48,7 @@ export const DebugTwitchPlayer: React.FC<DebugTwitchPlayerProps> = ({
       controls: 'false',
       parent: 'localhost',
     });
-    
+
     return `https://player.twitch.tv/?${params.toString()}`;
   }, [stream.user_login, isMuted]);
 
@@ -97,18 +89,10 @@ export const DebugTwitchPlayer: React.FC<DebugTwitchPlayerProps> = ({
 
   return (
     <View style={[styles.container, { width, height }]}>
-      <TouchableOpacity
-        style={styles.touchArea}
-        onPress={onPress}
-        activeOpacity={1}
-      >
+      <TouchableOpacity style={styles.touchArea} onPress={onPress} activeOpacity={1}>
         {/* Mock Stream Background */}
         <LinearGradient
-          colors={[
-            'rgba(145, 70, 255, 0.3)',
-            'rgba(0, 0, 0, 0.8)',
-            'rgba(145, 70, 255, 0.2)',
-          ]}
+          colors={['rgba(145, 70, 255, 0.3)', 'rgba(0, 0, 0, 0.8)', 'rgba(145, 70, 255, 0.2)']}
           style={styles.mockBackground}
         >
           {/* Play Button */}
@@ -122,10 +106,7 @@ export const DebugTwitchPlayer: React.FC<DebugTwitchPlayerProps> = ({
 
         {/* Stream Info Overlay */}
         <View style={styles.infoOverlay}>
-          <LinearGradient
-            colors={['rgba(0,0,0,0.8)', 'transparent']}
-            style={styles.infoGradient}
-          >
+          <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.infoGradient}>
             <View style={styles.streamInfo}>
               <View style={styles.platformBadge}>
                 <Text style={styles.platformText}>LIVE</Text>
@@ -155,28 +136,19 @@ export const DebugTwitchPlayer: React.FC<DebugTwitchPlayerProps> = ({
             >
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={onMuteToggle}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={onMuteToggle}>
                     {isMuted ? (
                       <VolumeX size={16} color="#fff" />
                     ) : (
                       <Volume2 size={16} color="#fff" />
                     )}
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handleShowDebugInfo}
-                  >
+
+                  <TouchableOpacity style={styles.controlButton} onPress={handleShowDebugInfo}>
                     <Info size={16} color="#fff" />
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handleOpenExternal}
-                  >
+
+                  <TouchableOpacity style={styles.controlButton} onPress={handleOpenExternal}>
                     <ExternalLink size={16} color="#fff" />
                   </TouchableOpacity>
                 </View>

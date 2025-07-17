@@ -4,24 +4,14 @@
  */
 
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-  ScrollView,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
 
 interface SimpleDebugDashboardProps {
   visible: boolean;
   onClose: () => void;
 }
 
-export const SimpleDebugDashboard: React.FC<SimpleDebugDashboardProps> = ({
-  visible,
-  onClose,
-}) => {
+export const SimpleDebugDashboard: React.FC<SimpleDebugDashboardProps> = ({ visible, onClose }) => {
   const [activeTab, setActiveTab] = useState('system');
 
   const systemInfo = {
@@ -41,7 +31,7 @@ export const SimpleDebugDashboard: React.FC<SimpleDebugDashboardProps> = ({
         </View>
 
         <View style={styles.tabContainer}>
-          {['system', 'performance', 'logs'].map((tab) => (
+          {['system', 'performance', 'logs'].map(tab => (
             <TouchableOpacity
               key={tab}
               style={[styles.tab, activeTab === tab && styles.activeTab]}
@@ -63,7 +53,7 @@ export const SimpleDebugDashboard: React.FC<SimpleDebugDashboardProps> = ({
               <Text style={styles.info}>Timestamp: {systemInfo.timestamp}</Text>
             </View>
           )}
-          
+
           {activeTab === 'performance' && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Performance Metrics</Text>
@@ -72,7 +62,7 @@ export const SimpleDebugDashboard: React.FC<SimpleDebugDashboardProps> = ({
               <Text style={styles.info}>Status: Good</Text>
             </View>
           )}
-          
+
           {activeTab === 'logs' && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Console Logs</Text>

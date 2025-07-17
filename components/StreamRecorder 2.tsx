@@ -1,3 +1,4 @@
+import { MotiView, MotiText } from 'moti';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
@@ -9,7 +10,6 @@ import {
   PermissionsAndroid,
   Share,
 } from 'react-native';
-import { MotiView, MotiText } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Camera,
@@ -74,7 +74,7 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
   const [screenshots, setScreenshots] = useState<ScreenshotSession[]>([]);
   const [storagePermission, setStoragePermission] = useState<boolean | null>(null);
   const [availableSpace, setAvailableSpace] = useState<number>(0);
-  
+
   const recordingInterval = useRef<NodeJS.Timeout>();
   const recordingStartTime = useRef<Date>();
 
@@ -88,16 +88,18 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
     try {
       const { status } = await MediaLibrary.requestPermissionsAsync();
       setStoragePermission(status === 'granted');
-      
+
       if (Platform.OS === 'android') {
         const granted = await PermissionsAndroid.requestMultiple([
           PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
           PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
         ]);
-        
-        const writeGranted = granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] === 'granted';
-        const readGranted = granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === 'granted';
-        
+
+        const writeGranted =
+          granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] === 'granted';
+        const readGranted =
+          granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] === 'granted';
+
         setStoragePermission(writeGranted && readGranted);
       }
     } catch (error) {
@@ -117,11 +119,11 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
   };
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) {return '0 Bytes';}
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
   };
 
   const formatDuration = (seconds: number): string => {
@@ -138,11 +140,9 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
 
   const takeScreenshot = useCallback(async () => {
     if (!streamRef.current || !storagePermission) {
-      Alert.alert(
-        'Permission Required',
-        'Storage permission is required to save screenshots.',
-        [{ text: 'OK', onPress: checkPermissions }]
-      );
+      Alert.alert('Permission Required', 'Storage permission is required to save screenshots.', [
+        { text: 'OK', onPress: checkPermissions },
+      ]);
       return;
     }
 
@@ -167,7 +167,7 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
 
       const fileName = generateFileName('screenshot');
       const fileUri = FileSystem.documentDirectory + fileName;
-      
+
       // Move the temporary file to a permanent location
       await FileSystem.moveAsync({
         from: result,
@@ -182,46 +182,37 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
       await MediaLibrary.saveToLibraryAsync(fileUri);
 
       // Update screenshot status
-      setScreenshots(prev => prev.map(s => 
-        s.id === screenshotId 
-          ? { ...s, fileUri, fileSize, status: 'completed' }
-          : s
-      ));
+      setScreenshots(prev =>
+        prev.map(s =>
+          s.id === screenshotId ? { ...s, fileUri, fileSize, status: 'completed' } : s
+        )
+      );
 
       onScreenshot?.(fileUri);
-      
+
       Alert.alert(
         'Screenshot Saved',
         `Screenshot saved successfully!\nSize: ${formatFileSize(fileSize)}`,
-        [
-          { text: 'OK' },
-          { text: 'Share', onPress: () => shareFile(fileUri) },
-        ]
+        [{ text: 'OK' }, { text: 'Share', onPress: () => shareFile(fileUri) }]
       );
     } catch (error) {
       console.error('Error taking screenshot:', error);
-      
-      setScreenshots(prev => prev.map(s => 
-        s.id === screenshotId 
-          ? { ...s, status: 'failed' }
-          : s
-      ));
-      
-      Alert.alert(
-        'Screenshot Failed',
-        'Failed to save screenshot. Please try again.',
-        [{ text: 'OK' }]
+
+      setScreenshots(prev =>
+        prev.map(s => (s.id === screenshotId ? { ...s, status: 'failed' } : s))
       );
+
+      Alert.alert('Screenshot Failed', 'Failed to save screenshot. Please try again.', [
+        { text: 'OK' },
+      ]);
     }
   }, [streamRef, stream, storagePermission, onScreenshot]);
 
   const startRecording = useCallback(async () => {
     if (!storagePermission) {
-      Alert.alert(
-        'Permission Required',
-        'Storage permission is required to record streams.',
-        [{ text: 'OK', onPress: checkPermissions }]
-      );
+      Alert.alert('Permission Required', 'Storage permission is required to record streams.', [
+        { text: 'OK', onPress: checkPermissions },
+      ]);
       return;
     }
 
@@ -256,15 +247,15 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
     }, 1000);
 
     onRecordingStart?.();
-    
+
     console.log('Recording started for stream:', stream.user_name);
   }, [stream, storagePermission, availableSpace, onRecordingStart]);
 
   const stopRecording = useCallback(async () => {
-    if (!currentSession || !isRecording) return;
+    if (!currentSession || !isRecording) {return;}
 
     setIsRecording(false);
-    
+
     if (recordingInterval.current) {
       clearInterval(recordingInterval.current);
     }
@@ -273,12 +264,16 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
     const duration = Math.floor((endTime.getTime() - currentSession.startTime.getTime()) / 1000);
 
     // Update session status
-    setCurrentSession(prev => prev ? {
-      ...prev,
-      endTime,
-      duration,
-      status: 'processing',
-    } : null);
+    setCurrentSession(prev =>
+      prev
+        ? {
+            ...prev,
+            endTime,
+            duration,
+            status: 'processing',
+          }
+        : null
+    );
 
     onRecordingStop?.();
 
@@ -288,42 +283,44 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
       // 2. Process the video file
       // 3. Save to media library
       // 4. Update session with file info
-      
+
       // For now, we'll simulate the process
       setTimeout(() => {
         const fileName = generateFileName('recording');
         const fileUri = FileSystem.documentDirectory + fileName;
         const estimatedSize = duration * 1024 * 100; // Rough estimate
-        
-        setCurrentSession(prev => prev ? {
-          ...prev,
-          fileUri,
-          fileSize: estimatedSize,
-          status: 'completed',
-        } : null);
+
+        setCurrentSession(prev =>
+          prev
+            ? {
+                ...prev,
+                fileUri,
+                fileSize: estimatedSize,
+                status: 'completed',
+              }
+            : null
+        );
 
         Alert.alert(
           'Recording Saved',
           `Recording saved successfully!\nDuration: ${formatDuration(duration)}\nSize: ${formatFileSize(estimatedSize)}`,
-          [
-            { text: 'OK' },
-            { text: 'Share', onPress: () => shareFile(fileUri) },
-          ]
+          [{ text: 'OK' }, { text: 'Share', onPress: () => shareFile(fileUri) }]
         );
       }, 2000);
     } catch (error) {
       console.error('Error stopping recording:', error);
-      
-      setCurrentSession(prev => prev ? {
-        ...prev,
-        status: 'failed',
-      } : null);
-      
-      Alert.alert(
-        'Recording Failed',
-        'Failed to save recording. Please try again.',
-        [{ text: 'OK' }]
-      );
+
+      setCurrentSession(prev =>
+        prev
+          ? {
+              ...prev,
+              status: 'failed',
+            }
+          : null
+
+      Alert.alert('Recording Failed', 'Failed to save recording. Please try again.', [
+        { text: 'OK' },
+      ]);
     }
   }, [currentSession, isRecording, onRecordingStop]);
 
@@ -379,9 +376,7 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
             <Text style={styles.headerTitle}>Stream Recorder</Text>
           </View>
           <View style={styles.headerRight}>
-            <Text style={styles.storageInfo}>
-              {formatFileSize(availableSpace)} free
-            </Text>
+            <Text style={styles.storageInfo}>{formatFileSize(availableSpace)} free</Text>
           </View>
         </View>
 
@@ -407,16 +402,16 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
                     {currentSession.status === 'recording' ? 'Recording' : 'Last Recording'}
                   </Text>
                 </View>
-                
+
                 <Text style={styles.sessionDuration}>
-                  {isRecording ? formatDuration(recordingDuration) : formatDuration(currentSession.duration)}
+                  {isRecording
+                    ? formatDuration(recordingDuration)
+                    : formatDuration(currentSession.duration)}
                 </Text>
               </View>
-              
+
               {currentSession.fileSize && (
-                <Text style={styles.sessionSize}>
-                  {formatFileSize(currentSession.fileSize)}
-                </Text>
+                <Text style={styles.sessionSize}>{formatFileSize(currentSession.fileSize)}</Text>
               )}
             </LinearGradient>
           </MotiView>
@@ -474,10 +469,7 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
             <Text style={styles.permissionText}>
               Storage permission required for recording and screenshots
             </Text>
-            <TouchableOpacity
-              style={styles.permissionButton}
-              onPress={checkPermissions}
-            >
+            <TouchableOpacity style={styles.permissionButton} onPress={checkPermissions}>
               <Text style={styles.permissionButtonText}>Grant Permission</Text>
             </TouchableOpacity>
           </MotiView>
@@ -487,7 +479,7 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
         {screenshots.length > 0 && (
           <View style={styles.recentFiles}>
             <Text style={styles.recentTitle}>Recent Screenshots</Text>
-            {screenshots.slice(-3).map((screenshot) => (
+            {screenshots.slice(-3).map(screenshot => (
               <MotiView
                 key={screenshot.id}
                 from={{ opacity: 0, translateX: -20 }}
@@ -495,7 +487,10 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
                 style={styles.fileItem}
               >
                 <LinearGradient
-                  colors={[ModernTheme.colors.background.secondary, ModernTheme.colors.background.primary]}
+                  colors={[
+                    ModernTheme.colors.background.secondary,
+                    ModernTheme.colors.background.primary,
+                  ]}
                   style={styles.fileGradient}
                 >
                   <View style={styles.fileInfo}>
@@ -509,7 +504,7 @@ export const StreamRecorder: React.FC<StreamRecorderProps> = ({
                       {screenshot.timestamp.toLocaleTimeString()}
                     </Text>
                   </View>
-                  
+
                   <View style={styles.fileActions}>
                     {screenshot.status === 'completed' && (
                       <>

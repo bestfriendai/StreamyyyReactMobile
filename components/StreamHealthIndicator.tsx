@@ -3,29 +3,7 @@
  * Real-time visualization of stream health, performance metrics, and connection status
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  Modal,
-  Pressable,
-} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  withRepeat,
-  withSequence,
-  interpolate,
-  interpolateColor,
-  FadeIn,
-  FadeOut,
-  SlideInRight,
-  BounceIn,
-} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   Wifi,
   WifiOff,
@@ -41,15 +19,22 @@ import {
   TrendingDown,
   Minus,
 } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurViewFallback as BlurView } from './BlurViewFallback';
-import { ModernTheme } from '@/theme/modernTheme';
-import { HapticFeedback } from '@/utils/haptics';
-import {
-  streamQualityManager,
-  StreamQualityState,
-  QualityLevel,
-} from '@/services/streamQualityManager';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, StyleSheet, Text, TouchableOpacity, Modal, Pressable } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  withRepeat,
+  withSequence,
+  interpolate,
+  interpolateColor,
+  FadeIn,
+  FadeOut,
+  SlideInRight,
+  BounceIn,
+} from 'react-native-reanimated';
 import {
   bandwidthMonitor,
   BandwidthMetrics,
@@ -60,6 +45,14 @@ import {
   StreamHealthMetrics,
   getStreamHealthStatus,
 } from '@/services/streamHealthMonitor';
+import {
+  streamQualityManager,
+  StreamQualityState,
+  QualityLevel,
+} from '@/services/streamQualityManager';
+import { ModernTheme } from '@/theme/modernTheme';
+import { HapticFeedback } from '@/utils/haptics';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
 
 interface StreamHealthIndicatorProps {
   streamId: string;
@@ -148,44 +141,29 @@ export const StreamHealthIndicator: React.FC<StreamHealthIndicatorProps> = ({
         case 'excellent':
         case 'good':
           pulseAnimation.value = withRepeat(
-            withSequence(
-              withTiming(1.2, { duration: 1500 }),
-              withTiming(1, { duration: 1500 })
-            ),
+            withSequence(withTiming(1.2, { duration: 1500 }), withTiming(1, { duration: 1500 })),
             -1
           );
           warningFlash.value = 0;
           break;
         case 'fair':
           pulseAnimation.value = withRepeat(
-            withSequence(
-              withTiming(1.3, { duration: 1000 }),
-              withTiming(1, { duration: 1000 })
-            ),
+            withSequence(withTiming(1.3, { duration: 1000 }), withTiming(1, { duration: 1000 })),
             -1
           );
           warningFlash.value = withRepeat(
-            withSequence(
-              withTiming(0.5, { duration: 1000 }),
-              withTiming(0, { duration: 1000 })
-            ),
+            withSequence(withTiming(0.5, { duration: 1000 }), withTiming(0, { duration: 1000 })),
             -1
           );
           break;
         case 'poor':
         case 'critical':
           pulseAnimation.value = withRepeat(
-            withSequence(
-              withTiming(1.4, { duration: 600 }),
-              withTiming(1, { duration: 600 })
-            ),
+            withSequence(withTiming(1.4, { duration: 600 }), withTiming(1, { duration: 600 })),
             -1
           );
           warningFlash.value = withRepeat(
-            withSequence(
-              withTiming(1, { duration: 600 }),
-              withTiming(0, { duration: 600 })
-            ),
+            withSequence(withTiming(1, { duration: 600 }), withTiming(0, { duration: 600 })),
             -1
           );
           break;
@@ -200,13 +178,7 @@ export const StreamHealthIndicator: React.FC<StreamHealthIndicatorProps> = ({
     if (healthStatus.isStable) {
       connectionPulse.value = withSpring(1);
     } else {
-      connectionPulse.value = withRepeat(
-        withSequence(
-          withSpring(1.2),
-          withSpring(0.8)
-        ),
-        -1
-      );
+      connectionPulse.value = withRepeat(withSequence(withSpring(1.2), withSpring(0.8)), -1);
     }
   }, [healthStatus.isStable]);
 
@@ -221,24 +193,46 @@ export const StreamHealthIndicator: React.FC<StreamHealthIndicatorProps> = ({
     if (health) {
       score -= health.errorCount * 10;
       score -= health.consecutiveFailures * 15;
-      if (!health.isHealthy) score -= 20;
+      if (!health.isHealthy) {
+        score -= 20;
+      }
     }
 
     // Deduct for performance issues
-    if (quality.frameDrops > 5) score -= 20;
-    if (quality.latency > 300) score -= 15;
-    if (quality.bufferHealth < 50) score -= 15;
+    if (quality.frameDrops > 5) {
+      score -= 20;
+    }
+    if (quality.latency > 300) {
+      score -= 15;
+    }
+    if (quality.bufferHealth < 50) {
+      score -= 15;
+    }
 
     // Deduct for bandwidth issues
-    if (!bandwidth.isStable) score -= 10;
-    if (bandwidth.latency > 300) score -= 10;
-    if (bandwidth.jitter > 50) score -= 10;
+    if (!bandwidth.isStable) {
+      score -= 10;
+    }
+    if (bandwidth.latency > 300) {
+      score -= 10;
+    }
+    if (bandwidth.jitter > 50) {
+      score -= 10;
+    }
 
     // Convert score to rating
-    if (score >= 90) return 'excellent';
-    if (score >= 75) return 'good';
-    if (score >= 60) return 'fair';
-    if (score >= 40) return 'poor';
+    if (score >= 90) {
+      return 'excellent';
+    }
+    if (score >= 75) {
+      return 'good';
+    }
+    if (score >= 60) {
+      return 'fair';
+    }
+    if (score >= 40) {
+      return 'poor';
+    }
     return 'critical';
   };
 
@@ -292,18 +286,34 @@ export const StreamHealthIndicator: React.FC<StreamHealthIndicatorProps> = ({
   }, [onPress]);
 
   const getLatencyStatus = (latency: number) => {
-    if (latency < 100) return 'excellent';
-    if (latency < 200) return 'good';
-    if (latency < 300) return 'fair';
-    if (latency < 500) return 'poor';
+    if (latency < 100) {
+      return 'excellent';
+    }
+    if (latency < 200) {
+      return 'good';
+    }
+    if (latency < 300) {
+      return 'fair';
+    }
+    if (latency < 500) {
+      return 'poor';
+    }
     return 'critical';
   };
 
   const getBandwidthStatus = (bandwidth: number) => {
-    if (bandwidth >= 10) return 'excellent';
-    if (bandwidth >= 5) return 'good';
-    if (bandwidth >= 2) return 'fair';
-    if (bandwidth >= 1) return 'poor';
+    if (bandwidth >= 10) {
+      return 'excellent';
+    }
+    if (bandwidth >= 5) {
+      return 'good';
+    }
+    if (bandwidth >= 2) {
+      return 'fair';
+    }
+    if (bandwidth >= 1) {
+      return 'poor';
+    }
     return 'critical';
   };
 
@@ -402,8 +412,11 @@ export const StreamHealthIndicator: React.FC<StreamHealthIndicatorProps> = ({
                     <Text style={styles.sectionTitle}>Overall Status</Text>
                     <View style={styles.statusBadge}>
                       {getHealthIcon(healthStatus.overall, 16)}
-                      <Text style={[styles.statusText, { color: getHealthColor(healthStatus.overall) }]}>
-                        {healthStatus.overall.charAt(0).toUpperCase() + healthStatus.overall.slice(1)}
+                      <Text
+                        style={[styles.statusText, { color: getHealthColor(healthStatus.overall) }]}
+                      >
+                        {healthStatus.overall.charAt(0).toUpperCase() +
+                          healthStatus.overall.slice(1)}
                       </Text>
                     </View>
                   </View>
@@ -415,22 +428,40 @@ export const StreamHealthIndicator: React.FC<StreamHealthIndicatorProps> = ({
                   <View style={styles.metricsGrid}>
                     <View style={styles.metric}>
                       <View style={styles.metricHeader}>
-                        <Signal size={14} color={getHealthColor(getLatencyStatus(healthStatus.latency))} />
+                        <Signal
+                          size={14}
+                          color={getHealthColor(getLatencyStatus(healthStatus.latency))}
+                        />
                         <Text style={styles.metricLabel}>Latency</Text>
                       </View>
                       <Text style={styles.metricValue}>{healthStatus.latency}ms</Text>
-                      <Text style={[styles.metricStatus, { color: getHealthColor(getLatencyStatus(healthStatus.latency)) }]}>
+                      <Text
+                        style={[
+                          styles.metricStatus,
+                          { color: getHealthColor(getLatencyStatus(healthStatus.latency)) },
+                        ]}
+                      >
                         {getLatencyStatus(healthStatus.latency)}
                       </Text>
                     </View>
 
                     <View style={styles.metric}>
                       <View style={styles.metricHeader}>
-                        <Activity size={14} color={getHealthColor(getBandwidthStatus(healthStatus.bandwidth))} />
+                        <Activity
+                          size={14}
+                          color={getHealthColor(getBandwidthStatus(healthStatus.bandwidth))}
+                        />
                         <Text style={styles.metricLabel}>Bandwidth</Text>
                       </View>
-                      <Text style={styles.metricValue}>{healthStatus.bandwidth.toFixed(1)} Mbps</Text>
-                      <Text style={[styles.metricStatus, { color: getHealthColor(getBandwidthStatus(healthStatus.bandwidth)) }]}>
+                      <Text style={styles.metricValue}>
+                        {healthStatus.bandwidth.toFixed(1)} Mbps
+                      </Text>
+                      <Text
+                        style={[
+                          styles.metricStatus,
+                          { color: getHealthColor(getBandwidthStatus(healthStatus.bandwidth)) },
+                        ]}
+                      >
                         {getBandwidthStatus(healthStatus.bandwidth)}
                       </Text>
                     </View>
@@ -451,7 +482,14 @@ export const StreamHealthIndicator: React.FC<StreamHealthIndicatorProps> = ({
 
                     <View style={styles.metric}>
                       <View style={styles.metricHeader}>
-                        <AlertTriangle size={14} color={healthStatus.errors > 0 ? ModernTheme.colors.error[400] : ModernTheme.colors.success[400]} />
+                        <AlertTriangle
+                          size={14}
+                          color={
+                            healthStatus.errors > 0
+                              ? ModernTheme.colors.error[400]
+                              : ModernTheme.colors.success[400]
+                          }
+                        />
                         <Text style={styles.metricLabel}>Errors</Text>
                       </View>
                       <Text style={styles.metricValue}>{healthStatus.errors}</Text>
@@ -462,12 +500,19 @@ export const StreamHealthIndicator: React.FC<StreamHealthIndicatorProps> = ({
                 {/* Stability Indicator */}
                 <View style={styles.stabilitySection}>
                   <View style={styles.stabilityHeader}>
-                    <Zap size={16} color={healthStatus.isStable ? ModernTheme.colors.success[400] : ModernTheme.colors.warning[400]} />
+                    <Zap
+                      size={16}
+                      color={
+                        healthStatus.isStable
+                          ? ModernTheme.colors.success[400]
+                          : ModernTheme.colors.warning[400]
+                      }
+                    />
                     <Text style={styles.stabilityText}>
                       {healthStatus.isStable ? 'Connection Stable' : 'Connection Unstable'}
                     </Text>
                   </View>
-                  
+
                   <View style={styles.stabilityBar}>
                     <LinearGradient
                       colors={
@@ -479,7 +524,7 @@ export const StreamHealthIndicator: React.FC<StreamHealthIndicatorProps> = ({
                       end={{ x: 1, y: 0 }}
                       style={[
                         styles.stabilityFill,
-                        { width: healthStatus.isStable ? '100%' : '60%' }
+                        { width: healthStatus.isStable ? '100%' : '60%' },
                       ]}
                     />
                   </View>

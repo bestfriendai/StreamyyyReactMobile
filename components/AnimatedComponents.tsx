@@ -1,6 +1,6 @@
-import React from 'react';
 import { styled, Stack, Text, GetProps } from '@tamagui/core';
 import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -48,7 +48,7 @@ export const AnimatedPulse: React.FC<AnimatedPulseProps> = ({
       medium: [1, 1.05],
       high: [1, 1.1],
     };
-    
+
     const opacityValues = {
       low: [1, 0.9],
       medium: [1, 0.8],
@@ -156,19 +156,10 @@ export const Shimmer: React.FC<ShimmerProps> = ({
   }));
 
   return (
-    <ShimmerContainer
-      width={width}
-      height={height}
-      borderRadius={borderRadius}
-      {...props}
-    >
+    <ShimmerContainer width={width} height={height} borderRadius={borderRadius} {...props}>
       <Animated.View style={[{ flex: 1 }, animatedStyle]}>
         <LinearGradient
-          colors={[
-            'transparent',
-            'rgba(255, 255, 255, 0.1)',
-            'transparent',
-          ]}
+          colors={['transparent', 'rgba(255, 255, 255, 0.1)', 'transparent']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={{ flex: 1 }}
@@ -235,8 +226,12 @@ export const SlideIn: React.FC<SlideInProps> = ({
   delay = 0,
   ...props
 }) => {
-  const translateX = useSharedValue(direction === 'left' ? -distance : direction === 'right' ? distance : 0);
-  const translateY = useSharedValue(direction === 'up' ? -distance : direction === 'down' ? distance : 0);
+  const translateX = useSharedValue(
+    direction === 'left' ? -distance : direction === 'right' ? distance : 0
+  );
+  const translateY = useSharedValue(
+    direction === 'up' ? -distance : direction === 'down' ? distance : 0
+  );
   const opacity = useSharedValue(0);
 
   React.useEffect(() => {
@@ -248,10 +243,7 @@ export const SlideIn: React.FC<SlideInProps> = ({
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translateX.value },
-      { translateY: translateY.value },
-    ],
+    transform: [{ translateX: translateX.value }, { translateY: translateY.value }],
     opacity: opacity.value,
   }));
 
@@ -313,10 +305,7 @@ export const Bounce: React.FC<BounceProps> = ({
 
   React.useEffect(() => {
     scale.value = withRepeat(
-      withSequence(
-        withSpring(1 + intensity, { damping: 8 }),
-        withSpring(1, { damping: 8 })
-      ),
+      withSequence(withSpring(1 + intensity, { damping: 8 }), withSpring(1, { damping: 8 })),
       -1,
       false
     );
@@ -347,18 +336,14 @@ export const AnimatedGradientText: React.FC<AnimatedGradientTextProps> = ({
   const colorIndex = useSharedValue(0);
 
   React.useEffect(() => {
-    colorIndex.value = withRepeat(
-      withTiming(colors.length - 1, { duration: 2000 }),
-      -1,
-      true
-    );
+    colorIndex.value = withRepeat(withTiming(colors.length - 1, { duration: 2000 }), -1, true);
   }, [colors.length]);
 
   const animatedStyle = useAnimatedStyle(() => {
     const currentIndex = Math.floor(colorIndex.value);
     const nextIndex = (currentIndex + 1) % colors.length;
     const progress = colorIndex.value - currentIndex;
-    
+
     // Simple color interpolation (this would need proper color interpolation in a real app)
     return {
       color: colors[currentIndex],
@@ -430,11 +415,7 @@ export const MorphingShape: React.FC<MorphingShapeProps> = ({
     );
 
     // Rotate continuously
-    rotation.value = withRepeat(
-      withTiming(360, { duration: duration, easing: Easing.linear }),
-      -1,
-      false
-    );
+    rotation.value = withRepeat(withTiming(360, { duration, easing: Easing.linear }), -1, false);
 
     // Pulse scale
     scale.value = withRepeat(
@@ -452,10 +433,7 @@ export const MorphingShape: React.FC<MorphingShapeProps> = ({
     height: size,
     backgroundColor: color,
     borderRadius: borderRadius.value,
-    transform: [
-      { rotate: `${rotation.value}deg` },
-      { scale: scale.value },
-    ],
+    transform: [{ rotate: `${rotation.value}deg` }, { scale: scale.value }],
   }));
 
   return <AnimatedStack {...props} style={animatedStyle} />;
@@ -491,10 +469,7 @@ export const Typewriter: React.FC<TypewriterProps> = ({
   React.useEffect(() => {
     if (cursor) {
       cursorOpacity.value = withRepeat(
-        withSequence(
-          withTiming(0, { duration: 500 }),
-          withTiming(1, { duration: 500 })
-        ),
+        withSequence(withTiming(0, { duration: 500 }), withTiming(1, { duration: 500 })),
         -1,
         true
       );
@@ -537,11 +512,11 @@ export const Magnetic: React.FC<MagneticProps> = ({
     const { locationX, locationY } = event.nativeEvent;
     const centerX = distance;
     const centerY = distance;
-    
+
     const deltaX = locationX - centerX;
     const deltaY = locationY - centerY;
     const distanceFromCenter = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-    
+
     if (distanceFromCenter < distance) {
       const force = (distance - distanceFromCenter) / distance;
       translateX.value = withSpring(deltaX * force * (strength / 100));
@@ -555,10 +530,7 @@ export const Magnetic: React.FC<MagneticProps> = ({
   };
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translateX.value },
-      { translateY: translateY.value },
-    ],
+    transform: [{ translateX: translateX.value }, { translateY: translateY.value }],
   }));
 
   return (
@@ -592,13 +564,13 @@ export const Glitch: React.FC<GlitchProps> = ({
   const triggerGlitch = React.useCallback(() => {
     const randomOffset = (Math.random() - 0.5) * intensity * 2;
     const randomSkew = (Math.random() - 0.5) * intensity * 0.5;
-    
+
     translateX.value = withSequence(
       withTiming(randomOffset, { duration: duration / 3 }),
       withTiming(-randomOffset * 0.5, { duration: duration / 3 }),
       withTiming(0, { duration: duration / 3 })
     );
-    
+
     skewX.value = withSequence(
       withTiming(randomSkew, { duration: duration / 3 }),
       withTiming(-randomSkew * 0.5, { duration: duration / 3 }),
@@ -608,7 +580,8 @@ export const Glitch: React.FC<GlitchProps> = ({
 
   React.useEffect(() => {
     const interval = setInterval(() => {
-      if (Math.random() < 0.1) { // 10% chance each interval
+      if (Math.random() < 0.1) {
+        // 10% chance each interval
         triggerGlitch();
       }
     }, 1000);
@@ -617,10 +590,7 @@ export const Glitch: React.FC<GlitchProps> = ({
   }, [triggerGlitch]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translateX.value },
-      { skewX: `${skewX.value}deg` },
-    ],
+    transform: [{ translateX: translateX.value }, { skewX: `${skewX.value}deg` }],
   }));
 
   return (

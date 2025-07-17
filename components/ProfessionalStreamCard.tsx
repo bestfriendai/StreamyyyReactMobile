@@ -1,15 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  Image,
-  Dimensions,
-  Platform,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   Play,
   Users,
@@ -26,6 +16,16 @@ import {
   Fire,
   Sparkles,
 } from 'lucide-react-native';
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+  Platform,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -81,7 +81,7 @@ export const ProfessionalStreamCard: React.FC<ProfessionalStreamCardProps> = ({
   const [isAdding, setIsAdding] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
-  
+
   // Enhanced animation values
   const cardScale = useSharedValue(1);
   const cardElevation = useSharedValue(0);
@@ -98,8 +98,12 @@ export const ProfessionalStreamCard: React.FC<ProfessionalStreamCardProps> = ({
 
   // Enhanced utility functions
   const formatViewerCount = (count: number): string => {
-    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+    if (count >= 1000000) {
+      return `${(count / 1000000).toFixed(1)}M`;
+    }
+    if (count >= 1000) {
+      return `${(count / 1000).toFixed(1)}K`;
+    }
     return count.toString();
   };
 
@@ -109,46 +113,48 @@ export const ProfessionalStreamCard: React.FC<ProfessionalStreamCardProps> = ({
     const diffMs = now.getTime() - started.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (diffHours > 0) return `${diffHours}h ${diffMinutes}m`;
+
+    if (diffHours > 0) {
+      return `${diffHours}h ${diffMinutes}m`;
+    }
     return `${diffMinutes}m`;
   };
 
   const getThumbnailUrl = (): string => {
-    return stream.thumbnail_url
-      .replace('{width}', '480')
-      .replace('{height}', '270');
+    return stream.thumbnail_url.replace('{width}', '480').replace('{height}', '270');
   };
 
   // Enhanced interaction handlers
   const handlePress = useCallback(() => {
     HapticFeedback.light();
-    
+
     cardScale.value = withSpring(0.96, { damping: 20 }, () => {
       cardScale.value = withSpring(1.02, { damping: 15 }, () => {
         cardScale.value = withSpring(1, { damping: 12 });
       });
     });
-    
+
     cardElevation.value = withSpring(8, { damping: 15 }, () => {
       cardElevation.value = withSpring(2, { damping: 10 });
     });
-    
+
     onPress();
   }, [onPress]);
 
   const handleAddToMultiView = useCallback(async () => {
-    if (isAdding) return;
-    
+    if (isAdding) {
+      return;
+    }
+
     HapticFeedback.medium();
     setIsAdding(true);
-    
+
     addButtonScale.value = withSequence(
       withSpring(0.8, { damping: 20 }),
       withSpring(1.2, { damping: 15 }),
       withSpring(1, { damping: 12 })
     );
-    
+
     try {
       const result = await onAddToMultiView();
       if (result.success) {
@@ -168,13 +174,13 @@ export const ProfessionalStreamCard: React.FC<ProfessionalStreamCardProps> = ({
 
   const handleToggleFavorite = useCallback(() => {
     HapticFeedback.selection();
-    
+
     favoriteScale.value = withSequence(
       withSpring(0.7, { damping: 20 }),
       withSpring(1.4, { damping: 15 }),
       withSpring(1, { damping: 12 })
     );
-    
+
     onToggleFavorite();
   }, [onToggleFavorite]);
 
@@ -267,7 +273,6 @@ export const ProfessionalStreamCard: React.FC<ProfessionalStreamCardProps> = ({
       <View style={styles.card}>
         {/* Enhanced Thumbnail Section */}
         <View style={[styles.thumbnailContainer, { height: thumbnailHeight }]}>
-          
           {/* Loading State with Premium Shimmer */}
           {!imageLoaded && !imageError && (
             <View style={styles.thumbnailPlaceholder}>
@@ -297,10 +302,7 @@ export const ProfessionalStreamCard: React.FC<ProfessionalStreamCardProps> = ({
           {/* Error State */}
           {imageError && (
             <View style={styles.thumbnailError}>
-              <LinearGradient
-                colors={['#2c2c54', '#40407a']}
-                style={styles.errorGradient}
-              >
+              <LinearGradient colors={['#2c2c54', '#40407a']} style={styles.errorGradient}>
                 <Eye size={32} color="rgba(255,255,255,0.5)" />
                 <Text style={styles.errorText}>Content Unavailable</Text>
               </LinearGradient>
@@ -317,7 +319,7 @@ export const ProfessionalStreamCard: React.FC<ProfessionalStreamCardProps> = ({
               resizeMode="cover"
             />
           </Animated.View>
-          
+
           {/* Premium Overlay Effects */}
           {imageLoaded && (
             <>
@@ -325,7 +327,7 @@ export const ProfessionalStreamCard: React.FC<ProfessionalStreamCardProps> = ({
                 colors={['transparent', 'rgba(0,0,0,0.6)']}
                 style={styles.thumbnailOverlay}
               />
-              
+
               {/* Subtle Inner Shadow */}
               <View style={styles.innerShadow} />
             </>
@@ -365,15 +367,16 @@ export const ProfessionalStreamCard: React.FC<ProfessionalStreamCardProps> = ({
 
           {/* Priority Badge */}
           {priorityBadge && (
-            <View style={[
-              styles.priorityBadge,
-              priorityBadge.position === 'top-center' ? styles.badgeTopCenter : styles.badgeBottomRight
-            ]}>
+            <View
+              style={[
+                styles.priorityBadge,
+                priorityBadge.position === 'top-center'
+                  ? styles.badgeTopCenter
+                  : styles.badgeBottomRight,
+              ]}
+            >
               <BlurView intensity={80} style={styles.priorityBadgeBlur}>
-                <LinearGradient
-                  colors={priorityBadge.colors}
-                  style={styles.priorityBadgeGradient}
-                >
+                <LinearGradient colors={priorityBadge.colors} style={styles.priorityBadgeGradient}>
                   {priorityBadge.icon}
                   <Text style={styles.priorityBadgeText}>{priorityBadge.text}</Text>
                 </LinearGradient>
@@ -390,16 +393,17 @@ export const ProfessionalStreamCard: React.FC<ProfessionalStreamCardProps> = ({
             >
               <BlurView intensity={80} style={styles.actionBlur}>
                 <LinearGradient
-                  colors={isFavorite 
-                    ? ['rgba(255, 59, 48, 0.9)', 'rgba(255, 59, 48, 0.7)'] 
-                    : ['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)']
+                  colors={
+                    isFavorite
+                      ? ['rgba(255, 59, 48, 0.9)', 'rgba(255, 59, 48, 0.7)']
+                      : ['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)']
                   }
                   style={styles.actionGradient}
                 >
                   <Heart
                     size={16}
-                    color={isFavorite ? "#fff" : "rgba(255,255,255,0.8)"}
-                    fill={isFavorite ? "#fff" : "transparent"}
+                    color={isFavorite ? '#fff' : 'rgba(255,255,255,0.8)'}
+                    fill={isFavorite ? '#fff' : 'transparent'}
                   />
                 </LinearGradient>
               </BlurView>
@@ -413,11 +417,12 @@ export const ProfessionalStreamCard: React.FC<ProfessionalStreamCardProps> = ({
             >
               <BlurView intensity={80} style={styles.actionBlur}>
                 <LinearGradient
-                  colors={isActive
-                    ? ['rgba(52, 211, 153, 0.9)', 'rgba(34, 197, 94, 0.7)']
-                    : isAdding
-                    ? ['rgba(156, 163, 175, 0.8)', 'rgba(107, 114, 128, 0.6)']
-                    : ['rgba(102, 126, 234, 0.9)', 'rgba(118, 75, 162, 0.7)']
+                  colors={
+                    isActive
+                      ? ['rgba(52, 211, 153, 0.9)', 'rgba(34, 197, 94, 0.7)']
+                      : isAdding
+                        ? ['rgba(156, 163, 175, 0.8)', 'rgba(107, 114, 128, 0.6)']
+                        : ['rgba(102, 126, 234, 0.9)', 'rgba(118, 75, 162, 0.7)']
                   }
                   style={styles.actionGradient}
                 >
@@ -435,7 +440,9 @@ export const ProfessionalStreamCard: React.FC<ProfessionalStreamCardProps> = ({
         </View>
 
         {/* Enhanced Content Section */}
-        <Animated.View style={[styles.contentSection, { height: contentHeight }, contentAnimatedStyle]}>
+        <Animated.View
+          style={[styles.contentSection, { height: contentHeight }, contentAnimatedStyle]}
+        >
           <View style={styles.contentPadding}>
             {/* Game Category with Icon */}
             <View style={styles.gameCategory}>
@@ -457,9 +464,7 @@ export const ProfessionalStreamCard: React.FC<ProfessionalStreamCardProps> = ({
                   {stream.user_name}
                 </Text>
                 <View style={styles.languageBadge}>
-                  <Text style={styles.languageText}>
-                    {stream.language.toUpperCase()}
-                  </Text>
+                  <Text style={styles.languageText}>{stream.language.toUpperCase()}</Text>
                 </View>
               </View>
             </View>
@@ -470,20 +475,19 @@ export const ProfessionalStreamCard: React.FC<ProfessionalStreamCardProps> = ({
       {/* Active State Border */}
       {isActive && (
         <View style={styles.activeBorder}>
-          <LinearGradient
-            colors={['#34d399', '#22c55e']}
-            style={styles.activeBorderGradient}
-          />
+          <LinearGradient colors={['#34d399', '#22c55e']} style={styles.activeBorderGradient} />
         </View>
       )}
 
       {/* Professional Shadow Enhancement */}
-      <View style={[
-        styles.cardShadow,
-        {
-          shadowColor: isActive ? '#22c55e' : stream.isHot ? '#ff4b2b' : '#667eea',
-        }
-      ]} />
+      <View
+        style={[
+          styles.cardShadow,
+          {
+            shadowColor: isActive ? '#22c55e' : stream.isHot ? '#ff4b2b' : '#667eea',
+          },
+        ]}
+      />
     </AnimatedTouchableOpacity>
   );
 };

@@ -1,49 +1,39 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router, useFocusEffect, useNavigation } from 'expo-router';
+import { RefreshCw, Filter } from 'lucide-react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useFocusEffect } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { BannerAdComponent } from '@/components/ads/BannerAd';
 import { EnhancedDiscoverScreenV4 } from '@/components/EnhancedDiscoverScreenV4';
 import { NavigationHeader } from '@/components/NavigationHeader';
-import { TwitchStream, TwitchGame, fetchTopStreams, fetchEnhancedStreams, fetchTopGames } from '@/services/twitchApi';
-import { useStreamManager } from '@/hooks/useStreamManager';
-import { RefreshCw, Filter } from 'lucide-react-native';
-import { BannerAdComponent } from '@/components/ads/BannerAd';
 import { useInterstitialAd } from '@/hooks/useInterstitialAd';
+import { useStreamManager } from '@/hooks/useStreamManager';
+import {
+  TwitchStream,
+  TwitchGame,
+  fetchTopStreams,
+  fetchEnhancedStreams,
+  fetchTopGames,
+} from '@/services/twitchApi';
 
 export default function DiscoverScreen() {
   const [streams, setStreams] = useState<TwitchStream[]>([]);
   const [games, setGames] = useState<TwitchGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
-  const { addStream, activeStreams, loading: streamManagerLoading, forceReload } = useStreamManager();
+  const {
+    addStream,
+    activeStreams,
+    loading: streamManagerLoading,
+    forceReload,
+  } = useStreamManager();
   const { showAd, canShow } = useInterstitialAd();
 
-  // Debug log active streams when they change
-  useEffect(() => {
-    console.log('🔍 DiscoverScreen - activeStreams updated:', activeStreams.length, activeStreams.map(s => s.user_name));
-  }, [activeStreams]);
-
-  // Debug function to check AsyncStorage directly
-  const debugAsyncStorage = async () => {
-    try {
-      const storedStreams = await AsyncStorage.getItem('streamyyy_active_streams');
-      console.log('🗂️ Direct AsyncStorage check:', storedStreams ? JSON.parse(storedStreams).length : 0, 'streams');
-    } catch (error) {
-      console.error('❌ Error checking AsyncStorage:', error);
-    }
-  };
-
-  useEffect(() => {
-    debugAsyncStorage();
-  }, []);
-
-  // Refresh active streams state when the screen is focused
+  // Refresh active streams state when the screen is focused (optimized)
   useFocusEffect(
     useCallback(() => {
-      console.log('🎯 DiscoverScreen focused - refreshing state...');
-      debugAsyncStorage();
+      // Only reload if needed, don't force streams array recreation
       forceReload();
     }, [forceReload])
   );
@@ -56,12 +46,12 @@ export default function DiscoverScreen() {
     try {
       setLoading(true);
       const [enhancedStreams, topGames] = await Promise.all([
-        fetchEnhancedStreams(100), // Get more streams with enhanced metadata
-        fetchTopGames(12) // Get more games for better categorization
+        fetchEnhancedStreams(50), // Reduce initial load for better performance
+        fetchTopGames(8), // Reduce games for faster initial load
       ]);
       setStreams(enhancedStreams);
       setGames(topGames);
-      setHasMore(enhancedStreams.length === 100);
+      setHasMore(enhancedStreams.length === 50);
     } catch (error) {
       console.error('Error loading initial data:', error);
       Alert.alert('Error', 'Failed to load streams. Please try again.');
@@ -75,7 +65,9 @@ export default function DiscoverScreen() {
   };
 
   const handleLoadMore = async () => {
-    if (loading || !hasMore) return;
+    if (loading || !hasMore) {
+      return;
+    }
 
     try {
       const moreStreams = await fetchEnhancedStreams(50);
@@ -100,28 +92,25 @@ export default function DiscoverScreen() {
       console.log('handleAddStream called with:', stream.user_name, stream.id);
       const result = await addStream(stream);
       console.log('addStream result:', result);
-      
+
       if (result.success) {
         // Show interstitial ad occasionally after successful stream add
-        if (canShow && activeStreams.length >= 2 && Math.random() < 0.5) { // 50% chance after 2+ streams
+        if (canShow && activeStreams.length >= 2 && Math.random() < 0.5) {
+          // 50% chance after 2+ streams
           showAd('stream_added');
         }
-        
-        Alert.alert(
-          'Stream Added!',
-          `${stream.user_name} has been added to your multi-view`,
-          [
-            { text: 'OK' },
-            { 
-              text: 'View Grid', 
-              onPress: () => router.push('/(tabs)/grid')
-            }
-          ]
-        );
+
+        Alert.alert('Stream Added!', `${stream.user_name} has been added to your multi-view`, [
+          { text: 'OK' },
+          {
+            text: 'View Grid',
+            onPress: () => router.push('/(tabs)/grid'),
+          },
+        ]);
       } else {
         Alert.alert('Error', result.message);
       }
-      
+
       return result;
     } catch (error) {
       console.error('Error in handleAddStream:', error);
@@ -141,9 +130,12 @@ export default function DiscoverScreen() {
     return false;
   };
 
-  const isStreamActive = useCallback((streamId: string) => {
-    return activeStreams.some(stream => stream.id === streamId);
-  }, [activeStreams]);
+  const isStreamActive = useCallback(
+    (streamId: string) => {
+      return activeStreams.some(stream => stream.id === streamId);
+    },
+    [activeStreams]
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
@@ -161,10 +153,7 @@ export default function DiscoverScreen() {
           isFavorite={isFavorite}
           isStreamActive={isStreamActive}
         />
-        <BannerAdComponent 
-          size="ADAPTIVE_BANNER"
-          position="bottom"
-        />
+        <BannerAdComponent size="ADAPTIVE_BANNER" position="bottom" />
       </SafeAreaView>
     </View>
   );

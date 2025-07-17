@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Volume2, VolumeX, X, Eye, ExternalLink } from 'lucide-react-native';
 import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
@@ -10,14 +12,6 @@ import {
   Linking,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Volume2,
-  VolumeX,
-  X,
-  Eye,
-  ExternalLink,
-} from 'lucide-react-native';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
 
@@ -57,21 +51,21 @@ export const BasicTwitchPlayer: React.FC<BasicTwitchPlayerProps> = ({
       autoplay: 'true',
       controls: 'false',
     });
-    
+
     // Add multiple parent domains
     const parentDomains = [
       'localhost',
-      '127.0.0.1', 
+      '127.0.0.1',
       'expo.dev',
       'exp.host',
       'snack.expo.dev',
       'reactnative.dev',
     ];
-    
+
     parentDomains.forEach(domain => {
       params.append('parent', domain);
     });
-    
+
     return `https://player.twitch.tv/?${params.toString()}`;
   }, [stream.user_login, isMuted]);
 
@@ -83,23 +77,26 @@ export const BasicTwitchPlayer: React.FC<BasicTwitchPlayerProps> = ({
     setLoadAttempts(0);
   }, [stream.user_login]);
 
-  const handleWebViewError = useCallback((syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.error('❌ Basic Twitch player error:', stream.user_login, nativeEvent);
-    
-    setLoadAttempts(prev => prev + 1);
-    
-    if (loadAttempts < 2) {
-      // Try reloading
-      console.log('🔄 Retrying Twitch player load...');
-      setTimeout(() => {
-        webViewRef.current?.reload();
-      }, 2000);
-    } else {
-      setError('Stream not available');
-      setIsLoading(false);
-    }
-  }, [stream.user_login, loadAttempts]);
+  const handleWebViewError = useCallback(
+    (syntheticEvent: any) => {
+      const { nativeEvent } = syntheticEvent;
+      console.error('❌ Basic Twitch player error:', stream.user_login, nativeEvent);
+
+      setLoadAttempts(prev => prev + 1);
+
+      if (loadAttempts < 2) {
+        // Try reloading
+        console.log('🔄 Retrying Twitch player load...');
+        setTimeout(() => {
+          webViewRef.current?.reload();
+        }, 2000);
+      } else {
+        setError('Stream not available');
+        setIsLoading(false);
+      }
+    },
+    [stream.user_login, loadAttempts]
+  );
 
   const handleWebViewLoadStart = useCallback(() => {
     console.log('🔄 Basic Twitch player loading:', stream.user_login);
@@ -151,10 +148,10 @@ export const BasicTwitchPlayer: React.FC<BasicTwitchPlayerProps> = ({
           onLoad={handleWebViewLoad}
           onError={handleWebViewError}
           onLoadStart={handleWebViewLoadStart}
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
           scalesPageToFit={false}
           bounces={false}
@@ -162,9 +159,9 @@ export const BasicTwitchPlayer: React.FC<BasicTwitchPlayerProps> = ({
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['*']}
-          mixedContentMode={'compatibility'}
+          mixedContentMode="compatibility"
           allowsFullscreenVideo={false}
-          allowsProtectedMedia={true}
+          allowsProtectedMedia
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
         />
 
@@ -197,10 +194,7 @@ export const BasicTwitchPlayer: React.FC<BasicTwitchPlayerProps> = ({
         {/* Stream Info Overlay */}
         {!error && (
           <View style={styles.infoOverlay}>
-            <LinearGradient
-              colors={['rgba(0,0,0,0.8)', 'transparent']}
-              style={styles.infoGradient}
-            >
+            <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.infoGradient}>
               <View style={styles.streamInfo}>
                 <View style={styles.platformBadge}>
                   <Text style={styles.platformText}>LIVE</Text>
@@ -231,21 +225,15 @@ export const BasicTwitchPlayer: React.FC<BasicTwitchPlayerProps> = ({
             >
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={onMuteToggle}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={onMuteToggle}>
                     {isMuted ? (
                       <VolumeX size={16} color="#fff" />
                     ) : (
                       <Volume2 size={16} color="#fff" />
                     )}
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handleOpenExternal}
-                  >
+
+                  <TouchableOpacity style={styles.controlButton} onPress={handleOpenExternal}>
                     <ExternalLink size={16} color="#fff" />
                   </TouchableOpacity>
                 </View>

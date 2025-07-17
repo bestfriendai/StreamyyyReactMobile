@@ -1,12 +1,3 @@
-import React from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  Dimensions,
-  Platform,
-} from 'react-native';
-import { MotiView, MotiText } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Loader2,
@@ -22,6 +13,9 @@ import {
   Activity,
   Sparkles,
 } from 'lucide-react-native';
+import { MotiView, MotiText } from 'moti';
+import React from 'react';
+import { View, StyleSheet, Text, Dimensions, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -61,45 +55,32 @@ export const EnhancedLoadingState: React.FC<LoadingProps> = ({
   const rotation = useSharedValue(0);
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
-  
+
   // Start rotation animation
   React.useEffect(() => {
-    rotation.value = withRepeat(
-      withTiming(360, { duration: 2000 }),
-      -1,
-      false
-    );
-    
+    rotation.value = withRepeat(withTiming(360, { duration: 2000 }), -1, false);
+
     scale.value = withRepeat(
-      withSequence(
-        withTiming(1.1, { duration: 1000 }),
-        withTiming(1, { duration: 1000 })
-      ),
+      withSequence(withTiming(1.1, { duration: 1000 }), withTiming(1, { duration: 1000 })),
       -1,
       true
     );
-    
+
     opacity.value = withRepeat(
-      withSequence(
-        withTiming(0.7, { duration: 1500 }),
-        withTiming(1, { duration: 1500 })
-      ),
+      withSequence(withTiming(0.7, { duration: 1500 }), withTiming(1, { duration: 1500 })),
       -1,
       true
     );
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { rotate: `${rotation.value}deg` },
-      { scale: scale.value },
-    ],
+    transform: [{ rotate: `${rotation.value}deg` }, { scale: scale.value }],
     opacity: opacity.value,
   }));
 
   const getIcon = () => {
     const iconSize = size === 'small' ? 24 : size === 'medium' ? 32 : 48;
-    
+
     switch (type) {
       case 'streams':
         return <Play size={iconSize} color={color} />;
@@ -213,10 +194,7 @@ export const EnhancedLoadingState: React.FC<LoadingProps> = ({
 
         {/* Main loading icon */}
         <Animated.View style={[styles.iconContainer, animatedStyle]}>
-          <LinearGradient
-            colors={[color, `${color}80`, color]}
-            style={styles.iconGradient}
-          >
+          <LinearGradient colors={[color, `${color}80`, color]} style={styles.iconGradient}>
             {getIcon()}
           </LinearGradient>
         </Animated.View>
@@ -399,10 +377,7 @@ export const EnhancedErrorState: React.FC<ErrorProps> = ({
               transition={{ delay: 400 }}
             >
               <Animated.View style={[styles.retryButton, buttonAnimatedStyle]}>
-                <LinearGradient
-                  colors={['#8B5CF6', '#7C3AED']}
-                  style={styles.retryGradient}
-                >
+                <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.retryGradient}>
                   <View style={styles.retryButtonContent}>
                     <RefreshCw size={16} color="#fff" />
                     <Text style={styles.retryButtonText}>{retryText}</Text>

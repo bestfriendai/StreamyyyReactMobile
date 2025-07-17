@@ -1,3 +1,5 @@
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
@@ -15,8 +17,6 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import {
   Search,
   Filter,
@@ -34,9 +34,6 @@ import {
   Heart,
   ChevronRight,
 } from 'lucide-react-native';
-import { TwitchStream, TwitchGame, TwitchUser, twitchApi } from '@/services/twitchApi';
-import { ModernTheme } from '@/theme/modernTheme';
-import { StreamPreviewCard } from '@/components/StreamPreviewCard';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -48,6 +45,9 @@ import Animated, {
   withSequence,
   interpolate,
 } from 'react-native-reanimated';
+import { StreamPreviewCard } from '@/components/StreamPreviewCard';
+import { TwitchStream, TwitchGame, TwitchUser, twitchApi } from '@/services/twitchApi';
+import { ModernTheme } from '@/theme/modernTheme';
 // import { HapticFeedback } from '@/utils/haptics';
 
 interface EnhancedDiscoverScreenV3Props {
@@ -103,14 +103,46 @@ const GAME_CATEGORIES: GameCategory[] = [
     name: 'Gaming',
     icon: <Gamepad2 size={16} color="#fff" />,
     gradient: ['#EF4444', '#F97316'],
-    gameIds: ['32982', '21779', '33214', '511224', '27471', '460630', '18122', '29595', '493057', '516575', '512710', '1469308723', '65632', '138585', '490100', '491931', '506416', '1678052513', '1229128718', '515025'], // Popular games: Fortnite, League of Legends, Valorant, Apex Legends, Minecraft, Call of Duty, etc.
+    gameIds: [
+      '32982',
+      '21779',
+      '33214',
+      '511224',
+      '27471',
+      '460630',
+      '18122',
+      '29595',
+      '493057',
+      '516575',
+      '512710',
+      '1469308723',
+      '65632',
+      '138585',
+      '490100',
+      '491931',
+      '506416',
+      '1678052513',
+      '1229128718',
+      '515025',
+    ], // Popular games: Fortnite, League of Legends, Valorant, Apex Legends, Minecraft, Call of Duty, etc.
   },
   {
     id: 'irl',
     name: 'Just Chatting',
     icon: <Users size={16} color="#fff" />,
     gradient: ['#06B6D4', '#0891B2'],
-    gameIds: ['509658', '509659', '509664', '509663', '509670', '509671', '509672', '509673', '509674', '509675'], // Just Chatting, Travel & Outdoors, Pools Hot Tubs and Beaches, ASMR, Talk Shows, Food & Drink, etc.
+    gameIds: [
+      '509658',
+      '509659',
+      '509664',
+      '509663',
+      '509670',
+      '509671',
+      '509672',
+      '509673',
+      '509674',
+      '509675',
+    ], // Just Chatting, Travel & Outdoors, Pools Hot Tubs and Beaches, ASMR, Talk Shows, Food & Drink, etc.
   },
   {
     id: 'music',
@@ -149,7 +181,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
   isStreamActive,
 }) => {
   const { width: screenWidth } = Dimensions.get('window');
-  
+
   // State management
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
@@ -168,7 +200,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
   const [categoryStreams, setCategoryStreams] = useState<TwitchStream[]>([]);
   const [loadingCategory, setLoadingCategory] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-  
+
   // Animation values
   const searchBarScale = useSharedValue(1);
   const filtersHeight = useSharedValue(0);
@@ -203,9 +235,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
       setTotalViewers(viewers);
 
       // Set featured streams (top 5 by viewers)
-      const featured = [...streams]
-        .sort((a, b) => b.viewer_count - a.viewer_count)
-        .slice(0, 5);
+      const featured = [...streams].sort((a, b) => b.viewer_count - a.viewer_count).slice(0, 5);
       setFeaturedStreams(featured);
     } catch (error) {
       console.error('Error loading additional data:', error);
@@ -215,23 +245,20 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
   // Sparkle animation
   useEffect(() => {
     sparkleRotation.value = withRepeat(
-      withSequence(
-        withTiming(360, { duration: 3000 }),
-        withTiming(0, { duration: 0 })
-      ),
+      withSequence(withTiming(360, { duration: 3000 }), withTiming(0, { duration: 0 })),
       -1
     );
   }, []);
-  
+
   // Calculate grid dimensions
   const getGridDimensions = useCallback(() => {
     const padding = ModernTheme.spacing.md;
     const itemSpacing = ModernTheme.spacing.sm;
     const columns = viewMode === 'grid' ? 2 : 1;
-    const availableWidth = screenWidth - (padding * 2);
-    const itemWidth = (availableWidth - (itemSpacing * (columns - 1))) / columns;
+    const availableWidth = screenWidth - padding * 2;
+    const itemWidth = (availableWidth - itemSpacing * (columns - 1)) / columns;
     const itemHeight = viewMode === 'grid' ? itemWidth * 0.75 : itemWidth * 0.4;
-    
+
     return {
       itemWidth,
       itemHeight,
@@ -239,31 +266,33 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
       spacing: itemSpacing,
     };
   }, [screenWidth, viewMode]);
-  
+
   const gridDimensions = getGridDimensions();
-  
+
   // Filter and sort streams
   const filteredStreams = useMemo(() => {
     // Use category-specific streams if a category is selected and we have them
-    const sourceStreams = searchFilters.category !== 'all' && categoryStreams.length > 0 
-      ? categoryStreams 
-      : streams;
-    
-    let filtered = sourceStreams.filter(stream => {
-      const matchesQuery = !searchFilters.query || 
+    const sourceStreams =
+      searchFilters.category !== 'all' && categoryStreams.length > 0 ? categoryStreams : streams;
+
+    const filtered = sourceStreams.filter(stream => {
+      const matchesQuery =
+        !searchFilters.query ||
         stream.user_name.toLowerCase().includes(searchFilters.query.toLowerCase()) ||
         stream.game_name.toLowerCase().includes(searchFilters.query.toLowerCase());
-      
+
       const matchesViewers = stream.viewer_count >= searchFilters.minViewers;
-      
+
       // If using category streams, they're already filtered by category
-      const matchesCategory = searchFilters.category === 'all' || 
-        categoryStreams.length > 0 || 
-        GAME_CATEGORIES.find(cat => cat.id === searchFilters.category)?.gameIds?.includes(stream.game_id);
-      
+      const matchesCategory =
+        searchFilters.category === 'all' ||
+        categoryStreams.length > 0 ||
+        GAME_CATEGORIES.find(cat => cat.id === searchFilters.category)?.gameIds?.includes(
+          stream.game_id
+
       return matchesQuery && matchesViewers && matchesCategory;
     });
-    
+
     // Sort streams
     switch (searchFilters.sortBy) {
       case 'viewers':
@@ -273,10 +302,12 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
         filtered.sort((a, b) => a.user_name.localeCompare(b.user_name));
         break;
       case 'recent':
-        filtered.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
+        filtered.sort(
+          (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+        );
         break;
     }
-    
+
     return filtered;
   }, [streams, categoryStreams, searchFilters]);
 
@@ -322,7 +353,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
         const catStreams = streams
           .filter(stream => category.gameIds?.includes(stream.game_id))
           .slice(0, 20); // Increased from 12 to 20 streams per category
-        
+
         if (catStreams.length > 0) {
           sections.push({
             title: category.name,
@@ -336,7 +367,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
 
     return sections;
   }, [featuredStreams, filteredStreams, streams, selectedCategory, categoryStreams]);
-  
+
   // Handle refresh
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -344,20 +375,20 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
     await loadAdditionalData();
     setRefreshing(false);
   }, [onRefresh]);
-  
+
   // Handle search
   const handleSearch = useCallback((query: string) => {
     searchBarScale.value = withSpring(0.95, { damping: 15 }, () => {
       searchBarScale.value = withSpring(1);
     });
-    
+
     if (query.length === 1) {
       // HapticFeedback.light();
     }
-    
+
     setSearchFilters(prev => ({ ...prev, query }));
   }, []);
-  
+
   // Toggle filters
   const toggleFilters = useCallback(() => {
     // HapticFeedback.medium();
@@ -381,7 +412,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
     setLoadingCategory(true);
     try {
       const allCategoryStreams: TwitchStream[] = [];
-      
+
       // Fetch streams for each game ID in the category
       for (const gameId of category.gameIds) {
         try {
@@ -391,12 +422,12 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
           console.warn(`Failed to fetch streams for game ${gameId}:`, error);
         }
       }
-      
+
       // Remove duplicates and sort by viewer count
-      const uniqueStreams = allCategoryStreams.filter((stream, index, self) => 
-        index === self.findIndex(s => s.id === stream.id)
+      const uniqueStreams = allCategoryStreams.filter(
+        (stream, index, self) => index === self.findIndex(s => s.id === stream.id)
       );
-      
+
       uniqueStreams.sort((a, b) => b.viewer_count - a.viewer_count);
       setCategoryStreams(uniqueStreams.slice(0, 500)); // Increased from 200 to 500 streams
     } catch (error) {
@@ -408,12 +439,15 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
   }, []);
 
   // Handle category selection
-  const handleCategorySelect = useCallback(async (categoryId: string) => {
-    // HapticFeedback.light();
-    setSelectedCategory(categoryId);
-    setSearchFilters(prev => ({ ...prev, category: categoryId as CategoryFilter }));
-    await loadCategoryStreams(categoryId);
-  }, [loadCategoryStreams]);
+  const handleCategorySelect = useCallback(
+    async (categoryId: string) => {
+      // HapticFeedback.light();
+      setSelectedCategory(categoryId);
+      setSearchFilters(prev => ({ ...prev, category: categoryId as CategoryFilter }));
+      await loadCategoryStreams(categoryId);
+    },
+    [loadCategoryStreams]
+  );
 
   // Handle view mode change
   const handleViewModeChange = useCallback((mode: ViewMode) => {
@@ -426,7 +460,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
     // HapticFeedback.light();
     setSearchFilters(prev => ({ ...prev, sortBy: sort }));
   }, []);
-  
+
   // Animated styles
   const searchBarStyle = useAnimatedStyle(() => ({
     transform: [{ scale: searchBarScale.value }],
@@ -444,7 +478,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
   // Render category item
   const renderCategoryItem = ({ item, index }: { item: GameCategory; index: number }) => {
     const isSelected = selectedCategory === item.id;
-    
+
     return (
       <TouchableOpacity
         onPress={() => handleCategorySelect(item.id)}
@@ -471,10 +505,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
         style={styles.gameImage}
         resizeMode="cover"
       />
-      <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.8)']}
-        style={styles.gameOverlay}
-      >
+      <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={styles.gameOverlay}>
         <Text style={styles.gameName} numberOfLines={2}>
           {item.name}
         </Text>
@@ -483,21 +514,24 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
   );
 
   // Handle see all button press
-  const handleSeeAll = useCallback((sectionTitle: string) => {
-    const newExpanded = new Set(expandedSections);
-    if (expandedSections.has(sectionTitle)) {
-      newExpanded.delete(sectionTitle);
-    } else {
-      newExpanded.add(sectionTitle);
-    }
-    setExpandedSections(newExpanded);
-  }, [expandedSections]);
+  const handleSeeAll = useCallback(
+    (sectionTitle: string) => {
+      const newExpanded = new Set(expandedSections);
+      if (expandedSections.has(sectionTitle)) {
+        newExpanded.delete(sectionTitle);
+      } else {
+        newExpanded.add(sectionTitle);
+      }
+      setExpandedSections(newExpanded);
+    },
+    [expandedSections]
+  );
 
   // Render stream section
   const renderStreamSection = ({ item }: { item: StreamSection }) => {
     const isExpanded = expandedSections.has(item.title);
     const displayStreams = isExpanded ? item.streams : item.streams.slice(0, 6);
-    
+
     return (
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -509,22 +543,17 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
             </View>
           </View>
           {item.streams.length > 6 && (
-            <TouchableOpacity 
-              style={styles.seeAllButton}
-              onPress={() => handleSeeAll(item.title)}
-            >
-              <Text style={styles.seeAllText}>
-                {isExpanded ? 'Show Less' : 'See All'}
-              </Text>
-              <ChevronRight 
-                size={16} 
-                color={ModernTheme.colors.primary[400]} 
+            <TouchableOpacity style={styles.seeAllButton} onPress={() => handleSeeAll(item.title)}>
+              <Text style={styles.seeAllText}>{isExpanded ? 'Show Less' : 'See All'}</Text>
+              <ChevronRight
+                size={16}
+                color={ModernTheme.colors.primary[400]}
                 style={{ transform: [{ rotate: isExpanded ? '90deg' : '0deg' }] }}
               />
             </TouchableOpacity>
           )}
         </View>
-        
+
         {isExpanded ? (
           <FlatList
             data={displayStreams}
@@ -542,7 +571,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
                 />
               </View>
             )}
-            keyExtractor={(stream) => stream.id}
+            keyExtractor={stream => stream.id}
             numColumns={2}
             scrollEnabled={false}
             contentContainerStyle={styles.gridList}
@@ -564,7 +593,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
                 />
               </View>
             )}
-            keyExtractor={(stream) => stream.id}
+            keyExtractor={stream => stream.id}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalList}
@@ -583,9 +612,9 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
           </Animated.View>
           <Text style={styles.loadingText}>Discovering Amazing Streams</Text>
           <Text style={styles.loadingSubtext}>Finding the best content for you...</Text>
-          <ActivityIndicator 
-            size="large" 
-            color={ModernTheme.colors.primary[400]} 
+          <ActivityIndicator
+            size="large"
+            color={ModernTheme.colors.primary[400]}
             style={{ marginTop: ModernTheme.spacing.md }}
           />
         </Animated.View>
@@ -608,11 +637,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
       >
         {/* Header */}
         <LinearGradient
-          colors={[
-            'rgba(15, 15, 15, 1)',
-            'rgba(26, 26, 26, 0.95)',
-            'rgba(15, 15, 15, 0.8)'
-          ]}
+          colors={['rgba(15, 15, 15, 1)', 'rgba(26, 26, 26, 0.95)', 'rgba(15, 15, 15, 0.8)']}
           style={styles.header}
         >
           <View style={styles.headerContent}>
@@ -622,20 +647,16 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
               </Animated.View>
               <Text style={styles.headerTitle}>Discover</Text>
             </View>
-            
+
             {/* Live Stats */}
             <View style={styles.quickStats}>
               <View style={styles.statItem}>
                 <Eye size={14} color={ModernTheme.colors.primary[400]} />
-                <Text style={styles.statText}>
-                  {totalViewers.toLocaleString()} watching
-                </Text>
+                <Text style={styles.statText}>{totalViewers.toLocaleString()} watching</Text>
               </View>
               <View style={styles.statItem}>
                 <Users size={14} color={ModernTheme.colors.primary[400]} />
-                <Text style={styles.statText}>
-                  {liveStreamers.toLocaleString()} live
-                </Text>
+                <Text style={styles.statText}>{liveStreamers.toLocaleString()} live</Text>
               </View>
             </View>
 
@@ -656,7 +677,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
                   </TouchableOpacity>
                 )}
               </View>
-              
+
               {/* Controls */}
               <View style={styles.controls}>
                 <TouchableOpacity
@@ -665,14 +686,14 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
                 >
                   <Filter size={18} color="#fff" />
                 </TouchableOpacity>
-                
+
                 <TouchableOpacity
                   style={[styles.controlButton, viewMode === 'grid' && styles.controlButtonActive]}
                   onPress={() => handleViewModeChange('grid')}
                 >
                   <Grid3X3 size={18} color="#fff" />
                 </TouchableOpacity>
-                
+
                 <TouchableOpacity
                   style={[styles.controlButton, viewMode === 'list' && styles.controlButtonActive]}
                   onPress={() => handleViewModeChange('list')}
@@ -688,7 +709,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
                 <View style={styles.filterRow}>
                   <Text style={styles.filterLabel}>Sort by</Text>
                   <View style={styles.filterButtons}>
-                    {(['viewers', 'recent', 'alphabetical'] as SortBy[]).map((sort) => (
+                    {(['viewers', 'recent', 'alphabetical'] as SortBy[]).map(sort => (
                       <TouchableOpacity
                         key={sort}
                         style={[
@@ -724,17 +745,14 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
           <FlatList
             data={GAME_CATEGORIES}
             renderItem={renderCategoryItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={item => item.id}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.categoriesList}
           />
           {loadingCategory && (
             <View style={styles.categoryLoadingContainer}>
-              <ActivityIndicator 
-                size="small" 
-                color={ModernTheme.colors.primary[400]} 
-              />
+              <ActivityIndicator size="small" color={ModernTheme.colors.primary[400]} />
               <Text style={styles.categoryLoadingText}>Loading streams...</Text>
             </View>
           )}
@@ -752,11 +770,11 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
                 </View>
               </View>
             </View>
-            
+
             <FlatList
               data={trendingGames}
               renderItem={renderGameCard}
-              keyExtractor={(item) => item.id}
+              keyExtractor={item => item.id}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.gamesList}
@@ -768,7 +786,7 @@ export const EnhancedDiscoverScreenV3: React.FC<EnhancedDiscoverScreenV3Props> =
         <FlatList
           data={streamSections}
           renderItem={renderStreamSection}
-          keyExtractor={(item) => item.title}
+          keyExtractor={item => item.title}
           scrollEnabled={false}
         />
 

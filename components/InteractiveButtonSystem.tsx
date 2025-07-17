@@ -1,36 +1,5 @@
-import React, { useCallback, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
-  ViewStyle,
-  TextStyle,
-  Pressable,
-  Dimensions,
-} from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-  withSequence,
-  withDelay,
-  interpolate,
-  interpolateColor,
-  runOnJS,
-  SlideInRight,
-  SlideOutLeft,
-  FadeIn,
-  FadeOut,
-  BounceIn,
-  ZoomIn,
-  FlipInEasyX,
-} from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MotiView, MotiText, AnimatePresence } from 'moti';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   Play,
   Pause,
@@ -66,21 +35,52 @@ import {
   Lock,
   Unlock,
 } from 'lucide-react-native';
+import { MotiView, MotiText, AnimatePresence } from 'moti';
+import React, { useCallback, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  ViewStyle,
+  TextStyle,
+  Pressable,
+  Dimensions,
+} from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+  withSequence,
+  withDelay,
+  interpolate,
+  interpolateColor,
+  runOnJS,
+  SlideInRight,
+  SlideOutLeft,
+  FadeIn,
+  FadeOut,
+  BounceIn,
+  ZoomIn,
+  FlipInEasyX,
+} from 'react-native-reanimated';
 import { Theme } from '@/constants/Theme';
 import { hapticFeedbackService } from '@/services/hapticFeedbackService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Button variants and styles
-export type ButtonVariant = 
-  | 'primary' 
-  | 'secondary' 
-  | 'outline' 
-  | 'ghost' 
-  | 'danger' 
-  | 'success' 
-  | 'warning' 
-  | 'premium' 
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'outline'
+  | 'ghost'
+  | 'danger'
+  | 'success'
+  | 'warning'
+  | 'premium'
   | 'gradient'
   | 'glassmorphic'
   | 'neon'
@@ -90,15 +90,15 @@ export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'custom';
 
 export type ButtonState = 'idle' | 'loading' | 'success' | 'error' | 'disabled';
 
-export type AnimationType = 
-  | 'bounce' 
-  | 'pulse' 
-  | 'shake' 
-  | 'glow' 
-  | 'ripple' 
-  | 'morph' 
-  | 'slide' 
-  | 'rotate' 
+export type AnimationType =
+  | 'bounce'
+  | 'pulse'
+  | 'shake'
+  | 'glow'
+  | 'ripple'
+  | 'morph'
+  | 'slide'
+  | 'rotate'
   | 'scale'
   | 'flip';
 
@@ -241,7 +241,7 @@ export const InteractiveButton: React.FC<InteractiveButtonProps> = ({
   // Get variant styles
   const getVariantStyles = useCallback(() => {
     const baseStyles = getBaseStyles();
-    
+
     switch (config.variant) {
       case 'primary':
         return {
@@ -334,14 +334,17 @@ export const InteractiveButton: React.FC<InteractiveButtonProps> = ({
   }, [config.variant, gradient, glowColor]);
 
   // Get base styles
-  const getBaseStyles = useCallback(() => ({
-    borderRadius: borderRadius || getSizeConfig().borderRadius,
-    paddingHorizontal: getSizeConfig().paddingHorizontal,
-    paddingVertical: getSizeConfig().paddingVertical,
-    minHeight: getSizeConfig().height,
-    minWidth: minWidth || getSizeConfig().minWidth,
-    maxWidth: maxWidth,
-  }), [borderRadius, minWidth, maxWidth]);
+  const getBaseStyles = useCallback(
+    () => ({
+      borderRadius: borderRadius || getSizeConfig().borderRadius,
+      paddingHorizontal: getSizeConfig().paddingHorizontal,
+      paddingVertical: getSizeConfig().paddingVertical,
+      minHeight: getSizeConfig().height,
+      minWidth: minWidth || getSizeConfig().minWidth,
+      maxWidth,
+    }),
+    [borderRadius, minWidth, maxWidth]
+  );
 
   // Get size configuration
   const getSizeConfig = useCallback(() => {
@@ -411,8 +414,10 @@ export const InteractiveButton: React.FC<InteractiveButtonProps> = ({
 
   // Get text color
   const getTextColor = useCallback(() => {
-    if (disabled) return Theme.colors.text.disabled;
-    
+    if (disabled) {
+      return Theme.colors.text.disabled;
+    }
+
     switch (config.variant) {
       case 'primary':
       case 'danger':
@@ -435,7 +440,9 @@ export const InteractiveButton: React.FC<InteractiveButtonProps> = ({
 
   // Start auto animation
   const startAutoAnimation = useCallback(() => {
-    if (!config.animation) return;
+    if (!config.animation) {
+      return;
+    }
 
     const runAnimation = () => {
       switch (config.animation) {
@@ -486,10 +493,12 @@ export const InteractiveButton: React.FC<InteractiveButtonProps> = ({
 
   // Handle press events
   const handlePressIn = useCallback(() => {
-    if (disabled || loading) return;
+    if (disabled || loading) {
+      return;
+    }
 
     pressStartTime.current = Date.now();
-    
+
     // Haptic feedback
     if (config.hapticType) {
       hapticFeedbackService.quickFeedback(config.hapticType);
@@ -497,7 +506,7 @@ export const InteractiveButton: React.FC<InteractiveButtonProps> = ({
 
     // Visual feedback
     scale.value = withSpring(activeScale, { damping: 15 });
-    
+
     if (config.variant === 'neon' || config.animation === 'glow') {
       glowOpacity.value = withTiming(1, { duration: 100 });
     }
@@ -522,10 +531,12 @@ export const InteractiveButton: React.FC<InteractiveButtonProps> = ({
   }, [disabled, loading, config, activeScale, onPressIn, onLongPress]);
 
   const handlePressOut = useCallback(() => {
-    if (disabled || loading) return;
+    if (disabled || loading) {
+      return;
+    }
 
     const pressDuration = Date.now() - pressStartTime.current;
-    
+
     // Reset visual state
     scale.value = withSpring(1, { damping: 15 });
     glowOpacity.value = withTiming(0, { duration: 200 });
@@ -539,7 +550,9 @@ export const InteractiveButton: React.FC<InteractiveButtonProps> = ({
   }, [disabled, loading, onPressOut]);
 
   const handlePress = useCallback(() => {
-    if (disabled || loading) return;
+    if (disabled || loading) {
+      return;
+    }
 
     // Double tap detection
     if (config.doubleClickEnabled && onDoublePress) {
@@ -624,11 +637,7 @@ export const InteractiveButton: React.FC<InteractiveButtonProps> = ({
   const contentLayout = getContentLayout();
 
   return (
-    <View style={[
-      fullWidth && { width: '100%' },
-      aspectRatio && { aspectRatio },
-      customStyle,
-    ]}>
+    <View style={[fullWidth && { width: '100%' }, aspectRatio && { aspectRatio }, customStyle]}>
       {/* Glow Effect */}
       {(config.variant === 'neon' || config.animation === 'glow') && (
         <Animated.View
@@ -668,23 +677,18 @@ export const InteractiveButton: React.FC<InteractiveButtonProps> = ({
           }}
         >
           {/* Background Gradient */}
-          {(config.variant === 'gradient' || config.variant === 'primary' || 
-            config.variant === 'premium') && variantStyles.colors && (
-            <LinearGradient
-              colors={variantStyles.colors}
-              style={StyleSheet.absoluteFill}
-            />
+          {(config.variant === 'gradient' ||
+            config.variant === 'primary' ||
+            config.variant === 'premium') &&
+            variantStyles.colors && (
+            <LinearGradient colors={variantStyles.colors} style={StyleSheet.absoluteFill} />
           )}
 
           {/* Progress Bar */}
           {progress > 0 && (
             <View style={styles.progressContainer}>
               <Animated.View
-                style={[
-                  styles.progressBar,
-                  { backgroundColor: textColor },
-                  animatedProgressStyle,
-                ]}
+                style={[styles.progressBar, { backgroundColor: textColor }, animatedProgressStyle]}
               />
             </View>
           )}
@@ -712,11 +716,13 @@ export const InteractiveButton: React.FC<InteractiveButtonProps> = ({
           >
             {/* Icon */}
             {icon && (iconPosition === 'left' || iconPosition === 'top') && (
-              <View style={[
-                styles.iconContainer,
-                iconPosition === 'top' && styles.iconTop,
-                iconPosition === 'left' && title && styles.iconLeft,
-              ]}>
+              <View
+                style={[
+                  styles.iconContainer,
+                  iconPosition === 'top' && styles.iconTop,
+                  iconPosition === 'left' && title && styles.iconLeft,
+                ]}
+              >
                 {React.cloneElement(icon as React.ReactElement, {
                   size: sizeConfig.iconSize,
                   color: textColor,
@@ -743,7 +749,7 @@ export const InteractiveButton: React.FC<InteractiveButtonProps> = ({
                     {title}
                   </Text>
                 )}
-                
+
                 {subtitle && (
                   <Text
                     style={[
@@ -760,18 +766,20 @@ export const InteractiveButton: React.FC<InteractiveButtonProps> = ({
                     {subtitle}
                   </Text>
                 )}
-                
+
                 {children}
               </View>
             )}
 
             {/* Icon Right/Bottom */}
             {icon && (iconPosition === 'right' || iconPosition === 'bottom') && (
-              <View style={[
-                styles.iconContainer,
-                iconPosition === 'bottom' && styles.iconBottom,
-                iconPosition === 'right' && title && styles.iconRight,
-              ]}>
+              <View
+                style={[
+                  styles.iconContainer,
+                  iconPosition === 'bottom' && styles.iconBottom,
+                  iconPosition === 'right' && title && styles.iconRight,
+                ]}
+              >
                 {React.cloneElement(icon as React.ReactElement, {
                   size: sizeConfig.iconSize,
                   color: textColor,

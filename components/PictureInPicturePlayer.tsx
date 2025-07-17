@@ -1,3 +1,14 @@
+import {
+  X,
+  Maximize2,
+  Volume2,
+  VolumeX,
+  Play,
+  Pause,
+  RotateCcw,
+  Minimize2,
+  Move3D,
+} from 'lucide-react-native';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
@@ -11,24 +22,13 @@ import {
   TouchableOpacity,
   Text,
 } from 'react-native';
-import {
-  X,
-  Maximize2,
-  Volume2,
-  VolumeX,
-  Play,
-  Pause,
-  RotateCcw,
-  Minimize2,
-  Move3D,
-} from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { TwitchStream } from '@/services/twitchApi';
 import { UniversalStream } from '@/services/multiPlatformStreamingApi';
+import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
+import EnhancedKickPlayer from './EnhancedKickPlayer';
 import EnhancedTwitchPlayer from './EnhancedTwitchPlayer';
 import EnhancedYouTubePlayer from './EnhancedYouTubePlayer';
-import EnhancedKickPlayer from './EnhancedKickPlayer';
 
 interface PictureInPicturePlayerProps {
   stream: TwitchStream | UniversalStream;
@@ -124,13 +124,13 @@ export const PictureInPicturePlayer: React.FC<PictureInPicturePlayerProps> = ({
   // Auto-hide controls
   useEffect(() => {
     if (autoHideControls && showControls) {
-      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      if (controlsTimer.current) {clearTimeout(controlsTimer.current);}
       controlsTimer.current = setTimeout(() => {
         hideControls();
       }, 3000);
     }
     return () => {
-      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      if (controlsTimer.current) {clearTimeout(controlsTimer.current);}
     };
   }, [showControls, autoHideControls]);
 
@@ -155,148 +155,166 @@ export const PictureInPicturePlayer: React.FC<PictureInPicturePlayerProps> = ({
   }, [controlsOpacity]);
 
   // Handle pan gesture (dragging)
-  const onPanGestureEvent = useCallback((event: any) => {
-    const { translationX: tx, translationY: ty } = event.nativeEvent;
-    
-    if (!pipState.isDragging) return;
+  const onPanGestureEvent = useCallback(
+    (event: any) => {
+      const { translationX: tx, translationY: ty } = event.nativeEvent;
 
-    let newX = pipState.position.x + tx;
-    let newY = pipState.position.y + ty;
+    if (!pipState.isDragging) {return;}
 
-    // Boundary checking
-    if (!allowOutsideBounds) {
-      newX = Math.max(0, Math.min(SCREEN_DIMENSIONS.width - pipState.size.width, newX));
-      newY = Math.max(0, Math.min(SCREEN_DIMENSIONS.height - pipState.size.height, newY));
-    }
+      let newX = pipState.position.x + tx;
+      let newY = pipState.position.y + ty;
 
-    // Check for docking
-    let dockSide: PiPState['dockSide'] = null;
-    let shouldDock = false;
-
-    if (enableDocking) {
-      if (newX < DOCK_THRESHOLD) {
-        dockSide = 'left';
-        shouldDock = true;
-        newX = 0;
-      } else if (newX > SCREEN_DIMENSIONS.width - pipState.size.width - DOCK_THRESHOLD) {
-        dockSide = 'right';
-        shouldDock = true;
-        newX = SCREEN_DIMENSIONS.width - pipState.size.width;
+      // Boundary checking
+      if (!allowOutsideBounds) {
+        newX = Math.max(0, Math.min(SCREEN_DIMENSIONS.width - pipState.size.width, newX));
+        newY = Math.max(0, Math.min(SCREEN_DIMENSIONS.height - pipState.size.height, newY));
       }
 
-      if (newY < DOCK_THRESHOLD) {
-        dockSide = 'top';
-        shouldDock = true;
-        newY = 0;
-      } else if (newY > SCREEN_DIMENSIONS.height - pipState.size.height - DOCK_THRESHOLD) {
-        dockSide = 'bottom';
-        shouldDock = true;
-        newY = SCREEN_DIMENSIONS.height - pipState.size.height;
+      // Check for docking
+      let dockSide: PiPState['dockSide'] = null;
+      let shouldDock = false;
+
+      if (enableDocking) {
+        if (newX < DOCK_THRESHOLD) {
+          dockSide = 'left';
+          shouldDock = true;
+          newX = 0;
+        } else if (newX > SCREEN_DIMENSIONS.width - pipState.size.width - DOCK_THRESHOLD) {
+          dockSide = 'right';
+          shouldDock = true;
+          newX = SCREEN_DIMENSIONS.width - pipState.size.width;
+        }
+
+        if (newY < DOCK_THRESHOLD) {
+          dockSide = 'top';
+          shouldDock = true;
+          newY = 0;
+        } else if (newY > SCREEN_DIMENSIONS.height - pipState.size.height - DOCK_THRESHOLD) {
+          dockSide = 'bottom';
+          shouldDock = true;
+          newY = SCREEN_DIMENSIONS.height - pipState.size.height;
+        }
       }
-    }
 
-    // Update position
-    translateX.setValue(newX);
-    translateY.setValue(newY);
+      // Update position
+      translateX.setValue(newX);
+      translateY.setValue(newY);
 
-    // Update state
-    setPipState(prev => ({
-      ...prev,
-      position: { x: newX, y: newY },
-      isDocked: shouldDock,
-      dockSide,
-    }));
+      // Update state
+      setPipState(prev => ({
+        ...prev,
+        position: { x: newX, y: newY },
+        isDocked: shouldDock,
+        dockSide,
+      }));
 
-    onPositionChange?.({ x: newX, y: newY });
-  }, [pipState, enableDocking, allowOutsideBounds, onPositionChange]);
+      onPositionChange?.({ x: newX, y: newY });
+    },
+    [pipState, enableDocking, allowOutsideBounds, onPositionChange]
+  );
 
-  const onPanHandlerStateChange = useCallback((event: any) => {
-    const { state } = event.nativeEvent;
+  const onPanHandlerStateChange = useCallback(
+    (event: any) => {
+      const { state } = event.nativeEvent;
 
-    if (state === State.BEGAN) {
-      setPipState(prev => ({ ...prev, isDragging: true }));
-      showControlsAnimated();
-    } else if (state === State.END || state === State.CANCELLED) {
-      setPipState(prev => ({ ...prev, isDragging: false }));
-      
+      if (state === State.BEGAN) {
+        setPipState(prev => ({ ...prev, isDragging: true }));
+        showControlsAnimated();
+      } else if (state === State.END || state === State.CANCELLED) {
+        setPipState(prev => ({ ...prev, isDragging: false }));
+
       // Snap to dock if close enough
-      if (enableDocking && pipState.isDocked) {
-        animateToPosition(pipState.position);
+        if (enableDocking && pipState.isDocked) {
+          animateToPosition(pipState.position);
+        }
       }
-    }
-  }, [pipState, enableDocking, showControlsAnimated]);
+    },
+    [pipState, enableDocking, showControlsAnimated]
+  );
 
   // Handle resize gesture
-  const onResizeGestureEvent = useCallback((event: any) => {
-    if (!enableResizing || !pipState.isResizing) return;
+  const onResizeGestureEvent = useCallback(
+    (event: any) => {
+      if (!enableResizing || !pipState.isResizing) {return;}
 
-    const { translationX: tx, translationY: ty } = event.nativeEvent;
-    
+      const { translationX: tx, translationY: ty } = event.nativeEvent;
+
     let newWidth = Math.max(minSize.width, Math.min(maxSize.width, pipState.size.width + tx));
-    let newHeight = Math.max(minSize.height, Math.min(maxSize.height, pipState.size.height + ty));
+      let newHeight = Math.max(minSize.height, Math.min(maxSize.height, pipState.size.height + ty));
 
-    // Maintain aspect ratio (16:9)
-    const aspectRatio = 16 / 9;
-    if (newWidth / newHeight > aspectRatio) {
-      newWidth = newHeight * aspectRatio;
-    } else {
-      newHeight = newWidth / aspectRatio;
-    }
+      // Maintain aspect ratio (16:9)
+      const aspectRatio = 16 / 9;
+      if (newWidth / newHeight > aspectRatio) {
+        newWidth = newHeight * aspectRatio;
+      } else {
+        newHeight = newWidth / aspectRatio;
+      }
 
-    setPipState(prev => ({
-      ...prev,
-      size: { width: newWidth, height: newHeight }
-    }));
+      setPipState(prev => ({
+        ...prev,
+        size: { width: newWidth, height: newHeight },
+      }));
 
-    onSizeChange?.({ width: newWidth, height: newHeight });
-  }, [pipState, enableResizing, minSize, maxSize, onSizeChange]);
+      onSizeChange?.({ width: newWidth, height: newHeight });
+    },
+    [pipState, enableResizing, minSize, maxSize, onSizeChange]
+  );
 
-  const onResizeHandlerStateChange = useCallback((event: any) => {
-    const { state } = event.nativeEvent;
+  const onResizeHandlerStateChange = useCallback(
+    (event: any) => {
+      const { state } = event.nativeEvent;
 
-    if (state === State.BEGAN) {
-      setPipState(prev => ({ ...prev, isResizing: true }));
-      showControlsAnimated();
-    } else if (state === State.END || state === State.CANCELLED) {
-      setPipState(prev => ({ ...prev, isResizing: false }));
-    }
-  }, [showControlsAnimated]);
+      if (state === State.BEGAN) {
+        setPipState(prev => ({ ...prev, isResizing: true }));
+        showControlsAnimated();
+      } else if (state === State.END || state === State.CANCELLED) {
+        setPipState(prev => ({ ...prev, isResizing: false }));
+      }
+    },
+    [showControlsAnimated]
+  );
 
   // Handle tap gesture
-  const onTapHandlerStateChange = useCallback((event: any) => {
-    const { state } = event.nativeEvent;
+  const onTapHandlerStateChange = useCallback(
+    (event: any) => {
+      const { state } = event.nativeEvent;
 
-    if (state === State.END) {
-      if (showControls) {
-        hideControls();
-      } else {
-        showControlsAnimated();
+      if (state === State.END) {
+        if (showControls) {
+          hideControls();
+        } else {
+          showControlsAnimated();
+        }
       }
-    }
-  }, [showControls, showControlsAnimated, hideControls]);
+    },
+    [showControls, showControlsAnimated, hideControls]
+  );
 
   // Animate to position
-  const animateToPosition = useCallback((position: { x: number; y: number }) => {
-    Animated.parallel([
-      Animated.spring(translateX, {
-        toValue: position.x,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
-      Animated.spring(translateY, {
-        toValue: position.y,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
-    ]).start();
-  }, [translateX, translateY]);
+  const animateToPosition = useCallback(
+    (position: { x: number; y: number }) => {
+      Animated.parallel([
+        Animated.spring(translateX, {
+          toValue: position.x,
+          useNativeDriver: true,
+          tension: 100,
+          friction: 8,
+        }),
+        Animated.spring(translateY, {
+          toValue: position.y,
+          useNativeDriver: true,
+          tension: 100,
+          friction: 8,
+        }),
+      ]).start();
+    },
+    [translateX, translateY]
+  );
 
   // Minimize/restore animations
   const minimizePlayer = useCallback(() => {
     const miniSize = { width: 80, height: 45 };
-    
+
     Animated.parallel([
       Animated.timing(scaleX, {
         toValue: miniSize.width / pipState.size.width,
@@ -362,23 +380,25 @@ export const PictureInPicturePlayer: React.FC<PictureInPicturePlayerProps> = ({
       case 'kick':
         return <EnhancedKickPlayer {...playerProps} stream={stream as UniversalStream} />;
       default:
-        return <View style={[styles.placeholder, { width: pipState.size.width, height: pipState.size.height }]} />;
+        return (
+          <View
+            style={[
+              styles.placeholder,
+              { width: pipState.size.width, height: pipState.size.height },
+            ]}
+          />
+        );
     }
   }, [stream, platform, pipState.size, isMuted, isPlaying]);
 
-  if (!isVisible) return null;
+  if (!isVisible) {return null;}
 
   return (
     <Animated.View
       style={[
         styles.container,
         {
-          transform: [
-            { translateX },
-            { translateY },
-            { scaleX },
-            { scaleY },
-          ],
+          transform: [{ translateX }, { translateY }, { scaleX }, { scaleY }],
           opacity,
           width: pipState.size.width,
           height: pipState.size.height,
@@ -423,11 +443,11 @@ export const PictureInPicturePlayer: React.FC<PictureInPicturePlayerProps> = ({
                       <TouchableOpacity style={styles.controlButton} onPress={onClose}>
                         <X size={16} color="#fff" />
                       </TouchableOpacity>
-                      
+
                       <Text style={styles.streamTitle} numberOfLines={1}>
                         {'user_name' in stream ? stream.user_name : stream.streamerDisplayName}
                       </Text>
-                      
+
                       <TouchableOpacity style={styles.controlButton} onPress={onExpand}>
                         <Maximize2 size={16} color="#fff" />
                       </TouchableOpacity>
@@ -435,30 +455,37 @@ export const PictureInPicturePlayer: React.FC<PictureInPicturePlayerProps> = ({
 
                     {/* Center controls */}
                     <View style={styles.centerControls}>
-                      <TouchableOpacity 
-                        style={styles.controlButton} 
+                      <TouchableOpacity
+                        style={styles.controlButton}
                         onPress={() => setIsMuted(!isMuted)}
                       >
-                        {isMuted ? <VolumeX size={20} color="#fff" /> : <Volume2 size={20} color="#fff" />}
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity 
-                        style={styles.controlButton} 
+                        {isMuted ? (
+                          <VolumeX size={20} color="#fff" />
+                        ) : (
+                          <Volume2 size={20} color="#fff" />
+                        )}
+
+                      <TouchableOpacity
+                        style={styles.controlButton}
                         onPress={() => setIsPlaying(!isPlaying)}
                       >
-                        {isPlaying ? <Pause size={20} color="#fff" /> : <Play size={20} color="#fff" />}
+                        {isPlaying ? (
+                          <Pause size={20} color="#fff" />
+                        ) : (
+                          <Play size={20} color="#fff" />
+                        )}
                       </TouchableOpacity>
                     </View>
 
                     {/* Bottom controls */}
                     <View style={styles.bottomControls}>
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={styles.controlButton}
                         onPress={pipState.isMinimized ? restorePlayer : minimizePlayer}
                       >
                         <Minimize2 size={16} color="#fff" />
                       </TouchableOpacity>
-                      
+
                       <View style={styles.dragHandle}>
                         <Move3D size={16} color="#fff" />
                       </View>
@@ -498,22 +525,22 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     zIndex: 1000,
   } as ViewStyle,
-  
+
   dragArea: {
     flex: 1,
   } as ViewStyle,
-  
+
   playerArea: {
     flex: 1,
     position: 'relative',
   } as ViewStyle,
-  
+
   placeholder: {
     backgroundColor: ModernTheme.colors.background.secondary,
     justifyContent: 'center',
     alignItems: 'center',
   } as ViewStyle,
-  
+
   controlsOverlay: {
     position: 'absolute',
     top: 0,
@@ -521,32 +548,32 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   } as ViewStyle,
-  
+
   controlsGradient: {
     flex: 1,
     justifyContent: 'space-between',
     padding: ModernTheme.spacing.sm,
   } as ViewStyle,
-  
+
   topControls: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   } as ViewStyle,
-  
+
   centerControls: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: ModernTheme.spacing.md,
   } as ViewStyle,
-  
+
   bottomControls: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   } as ViewStyle,
-  
+
   controlButton: {
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     width: 32,
@@ -557,7 +584,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   } as ViewStyle,
-  
+
   streamTitle: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.xs,
@@ -566,11 +593,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginHorizontal: ModernTheme.spacing.xs,
   },
-  
+
   dragHandle: {
     padding: ModernTheme.spacing.xs,
   } as ViewStyle,
-  
+
   resizeHandle: {
     position: 'absolute',
     bottom: 0,
@@ -580,7 +607,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
     borderTopLeftRadius: ModernTheme.borderRadius.sm,
   } as ViewStyle,
-  
+
   dockIndicator: {
     position: 'absolute',
     backgroundColor: '#9146FF',
@@ -588,31 +615,31 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: ModernTheme.borderRadius.xs,
   } as ViewStyle,
-  
+
   dockleft: {
     left: 0,
     top: '50%',
     transform: [{ translateY: -10 }],
   } as ViewStyle,
-  
+
   dockright: {
     right: 0,
     top: '50%',
     transform: [{ translateY: -10 }],
   } as ViewStyle,
-  
+
   docktop: {
     top: 0,
     left: '50%',
     transform: [{ translateX: -25 }],
   } as ViewStyle,
-  
+
   dockbottom: {
     bottom: 0,
     left: '50%',
     transform: [{ translateX: -25 }],
   } as ViewStyle,
-  
+
   dockText: {
     color: ModernTheme.colors.text.primary,
     fontSize: 8,

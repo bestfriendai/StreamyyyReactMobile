@@ -1,18 +1,3 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  ActivityIndicator,
-  ViewStyle,
-  TextStyle,
-  Animated,
-  Dimensions,
-  PanGestureHandler,
-  State,
-} from 'react-native';
-import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Volume2,
@@ -32,11 +17,26 @@ import {
   Minimize,
   Monitor,
 } from 'lucide-react-native';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle,
+  Animated,
+  Dimensions,
+  PanGestureHandler,
+  State,
+} from 'react-native';
+import { WebView, WebViewMessageEvent } from 'react-native-webview';
+import { performanceOptimizer } from '@/services/performanceOptimizer';
+import { streamHealthMonitor } from '@/services/streamHealthMonitor';
+import { streamQualityManager, QualityLevel } from '@/services/streamQualityManager';
 import { TwitchStream, twitchApi } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
-import { streamQualityManager, QualityLevel } from '@/services/streamQualityManager';
-import { streamHealthMonitor } from '@/services/streamHealthMonitor';
-import { performanceOptimizer } from '@/services/performanceOptimizer';
 
 interface EnhancedTwitchPlayerProps {
   stream: TwitchStream;
@@ -106,7 +106,7 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
-  
+
   const webViewRef = useRef<WebView>(null);
   const loadStartTime = useRef<number>(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -116,7 +116,7 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
   useEffect(() => {
     streamQualityManager.initializeStream(stream.id, quality, quality === 'auto');
     streamHealthMonitor.initializeStream(stream);
-    
+
     return () => {
       streamQualityManager.removeStream(stream.id);
       streamHealthMonitor.removeStream(stream.id);
@@ -135,14 +135,18 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
   // Auto-hide controls
   useEffect(() => {
     if (controlsVisible && showControls) {
-      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      if (controlsTimer.current) {
+        clearTimeout(controlsTimer.current);
+      }
       controlsTimer.current = setTimeout(() => {
         setControlsVisible(false);
       }, 3000);
     }
-    
+
     return () => {
-      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      if (controlsTimer.current) {
+        clearTimeout(controlsTimer.current);
+      }
     };
   }, [controlsVisible, showControls]);
 
@@ -150,7 +154,7 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
     // Get performance metrics from the performance optimizer
     const metrics = performanceOptimizer.getCurrentPerformance();
     const qualityState = streamQualityManager.getStreamQuality(stream.id);
-    
+
     if (metrics && qualityState) {
       const newStats: PlayerStats = {
         loadTime: stats.loadTime,
@@ -161,9 +165,9 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
         latency: qualityState.latency,
         memoryUsage: metrics.memoryUsage,
       };
-      
+
       setStats(newStats);
-      
+
       // Update stream quality manager with current metrics
       streamQualityManager.updateStreamMetrics(stream.id, {
         bufferHealth: newStats.bufferHealth,
@@ -183,7 +187,9 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
       quality: quality === 'auto' ? 'auto' : quality,
     });
 
-    const chatUrl = showChat ? `https://www.twitch.tv/embed/${stream.user_login}/chat?parent=localhost&parent=127.0.0.1&parent=expo.dev` : null;
+    const chatUrl = showChat
+      ? `https://www.twitch.tv/embed/${stream.user_login}/chat?parent=localhost&parent=127.0.0.1&parent=expo.dev`
+      : null;
 
     return `
 <!DOCTYPE html>
@@ -418,7 +424,9 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
             </iframe>
         </div>
         
-        ${showChat ? `
+        ${
+  showChat
+    ? `
         <div class="chat-section">
             <iframe 
                 id="twitch-chat"
@@ -427,7 +435,9 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
                 frameborder="0">
             </iframe>
         </div>
-        ` : ''}
+        `
+    : ''
+}
     </div>
     
     <script>
@@ -635,13 +645,16 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
     streamHealthMonitor.recordSuccess(stream.id, loadTime);
   }, [stream.id, stream.user_name]);
 
-  const handleWebViewError = useCallback((syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.error(`❌ Enhanced Twitch player error:`, stream.user_name, nativeEvent);
-    setError('Failed to load enhanced Twitch player');
-    setIsLoading(false);
-    streamHealthMonitor.recordError(stream.id, nativeEvent.description || 'WebView error');
-  }, [stream.id, stream.user_name]);
+  const handleWebViewError = useCallback(
+    (syntheticEvent: any) => {
+      const { nativeEvent } = syntheticEvent;
+      console.error('❌ Enhanced Twitch player error:', stream.user_name, nativeEvent);
+      setError('Failed to load enhanced Twitch player');
+      setIsLoading(false);
+      streamHealthMonitor.recordError(stream.id, nativeEvent.description || 'WebView error');
+    },
+    [stream.id, stream.user_name]
+  );
 
   const handleWebViewLoadStart = useCallback(() => {
     console.log(`🔄 Enhanced Twitch player loading: ${stream.user_name}`);
@@ -652,62 +665,65 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
   }, [stream.user_name]);
 
   // Handle WebView messages
-  const handleWebViewMessage = useCallback((event: WebViewMessageEvent) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      console.log(`Enhanced Twitch player message:`, data);
-      
-      switch (data.type) {
-        case 'loaded':
-          setIsLoading(false);
-          setError(null);
-          setHasLoaded(true);
-          setRetryCount(0);
-          setStats(prev => ({ ...prev, loadTime: data.loadTime }));
-          break;
-          
-        case 'error':
-          setIsLoading(false);
-          setError(data.message || 'Twitch stream unavailable');
-          streamHealthMonitor.recordError(stream.id, data.message);
-          break;
-          
-        case 'retry':
-          setRetryCount(data.retryCount);
-          streamHealthMonitor.recordError(stream.id, 'Retry attempt', true);
-          break;
-          
-        case 'performance_update':
-          setStats(data.stats);
-          break;
-          
-        case 'touch':
-          if (data.target === 'player') {
-            setControlsVisible(true);
-            onPress?.();
-          }
-          break;
-          
-        case 'mute_toggle':
-          onMuteToggle?.();
-          break;
-          
-        case 'play_toggle':
-          onPlayToggle?.();
-          break;
-          
-        case 'stats_toggle':
-          setShowStats(data.visible);
-          break;
-          
-        case 'open_external':
-          // Handle external link opening
-          break;
+  const handleWebViewMessage = useCallback(
+    (event: WebViewMessageEvent) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        console.log('Enhanced Twitch player message:', data);
+
+        switch (data.type) {
+          case 'loaded':
+            setIsLoading(false);
+            setError(null);
+            setHasLoaded(true);
+            setRetryCount(0);
+            setStats(prev => ({ ...prev, loadTime: data.loadTime }));
+            break;
+
+          case 'error':
+            setIsLoading(false);
+            setError(data.message || 'Twitch stream unavailable');
+            streamHealthMonitor.recordError(stream.id, data.message);
+            break;
+
+          case 'retry':
+            setRetryCount(data.retryCount);
+            streamHealthMonitor.recordError(stream.id, 'Retry attempt', true);
+            break;
+
+          case 'performance_update':
+            setStats(data.stats);
+            break;
+
+          case 'touch':
+            if (data.target === 'player') {
+              setControlsVisible(true);
+              onPress?.();
+            }
+            break;
+
+          case 'mute_toggle':
+            onMuteToggle?.();
+            break;
+
+          case 'play_toggle':
+            onPlayToggle?.();
+            break;
+
+          case 'stats_toggle':
+            setShowStats(data.visible);
+            break;
+
+          case 'open_external':
+            // Handle external link opening
+            break;
+        }
+      } catch (error) {
+        console.log('WebView message parse error:', error);
       }
-    } catch (error) {
-      console.log('WebView message parse error:', error);
-    }
-  }, [onPress, onMuteToggle, onPlayToggle, stream.id]);
+    },
+    [onPress, onMuteToggle, onPlayToggle, stream.id]
+  );
 
   // Handle retry
   const handleRetry = useCallback(() => {
@@ -719,33 +735,47 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
   }, []);
 
   // Handle quality change
-  const handleQualityChange = useCallback((newQuality: QualityLevel) => {
-    streamQualityManager.setStreamQuality(stream.id, newQuality, true);
-    onQualityChange?.(newQuality);
-    setShowQualityMenu(false);
-    webViewRef.current?.reload();
-  }, [stream.id, onQualityChange]);
+  const handleQualityChange = useCallback(
+    (newQuality: QualityLevel) => {
+      streamQualityManager.setStreamQuality(stream.id, newQuality, true);
+      onQualityChange?.(newQuality);
+      setShowQualityMenu(false);
+      webViewRef.current?.reload();
+    },
+    [stream.id, onQualityChange]
+  );
 
   // Handle gesture controls
-  const onGestureEvent = useCallback((event: any) => {
-    const { translationX, translationY } = event.nativeEvent;
-    
-    // Swipe right to remove
-    if (translationX > 100) {
-      onRemove?.();
-    }
-    // Swipe up for fullscreen
-    else if (translationY < -100) {
-      onFullscreen?.();
-    }
-    // Swipe down for picture-in-picture
-    else if (translationY > 100) {
-      onPictureInPicture?.();
-    }
-  }, [onRemove, onFullscreen, onPictureInPicture]);
+  const onGestureEvent = useCallback(
+    (event: any) => {
+      const { translationX, translationY } = event.nativeEvent;
+
+      // Swipe right to remove
+      if (translationX > 100) {
+        onRemove?.();
+      }
+      // Swipe up for fullscreen
+      else if (translationY < -100) {
+        onFullscreen?.();
+      }
+      // Swipe down for picture-in-picture
+      else if (translationY > 100) {
+        onPictureInPicture?.();
+      }
+    },
+    [onRemove, onFullscreen, onPictureInPicture]
+  );
 
   const embedHtml = getEmbedHtml();
-  const qualityOptions: QualityLevel[] = ['auto', 'source', '720p60', '720p', '480p', '360p', '160p'];
+  const qualityOptions: QualityLevel[] = [
+    'auto',
+    'source',
+    '720p60',
+    '720p',
+    '480p',
+    '360p',
+    '160p',
+  ];
 
   return (
     <View style={[styles.container, { width, height }]}>
@@ -767,10 +797,10 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
             onError={handleWebViewError}
             onLoadStart={handleWebViewLoadStart}
             onMessage={handleWebViewMessage}
-            allowsInlineMediaPlayback={true}
+            allowsInlineMediaPlayback
             mediaPlaybackRequiresUserAction={false}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
+            javaScriptEnabled
+            domStorageEnabled
             startInLoadingState={false}
             scalesPageToFit={false}
             bounces={false}
@@ -778,12 +808,12 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
             showsHorizontalScrollIndicator={false}
             showsVerticalScrollIndicator={false}
             originWhitelist={['*']}
-            mixedContentMode={'compatibility'}
-            allowsFullscreenVideo={true}
-            allowsProtectedMedia={true}
-            thirdPartyCookiesEnabled={true}
-            sharedCookiesEnabled={true}
-            cacheEnabled={true}
+            mixedContentMode="compatibility"
+            allowsFullscreenVideo
+            allowsProtectedMedia
+            thirdPartyCookiesEnabled
+            sharedCookiesEnabled
+            cacheEnabled
             incognito={false}
             userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
           />
@@ -797,22 +827,16 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
               >
                 <View style={styles.controlsContainer}>
                   <View style={styles.leftControls}>
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={onMuteToggle}
-                    >
+                    <TouchableOpacity style={styles.controlButton} onPress={onMuteToggle}>
                       {isMuted ? (
                         <VolumeX size={18} color="#fff" />
                       ) : (
                         <Volume2 size={18} color="#fff" />
                       )}
                     </TouchableOpacity>
-                    
+
                     {onPlayToggle && (
-                      <TouchableOpacity
-                        style={styles.controlButton}
-                        onPress={onPlayToggle}
-                      >
+                      <TouchableOpacity style={styles.controlButton} onPress={onPlayToggle}>
                         {isPlaying ? (
                           <Pause size={18} color="#fff" />
                         ) : (
@@ -820,14 +844,14 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
                         )}
                       </TouchableOpacity>
                     )}
-                    
+
                     <TouchableOpacity
                       style={styles.controlButton}
                       onPress={() => setShowQualityMenu(!showQualityMenu)}
                     >
                       <Settings size={18} color="#fff" />
                     </TouchableOpacity>
-                    
+
                     <TouchableOpacity
                       style={styles.controlButton}
                       onPress={() => setShowStats(!showStats)}
@@ -847,30 +871,21 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
 
                   <View style={styles.rightControls}>
                     {onPictureInPicture && (
-                      <TouchableOpacity
-                        style={styles.controlButton}
-                        onPress={onPictureInPicture}
-                      >
+                      <TouchableOpacity style={styles.controlButton} onPress={onPictureInPicture}>
                         <Minimize size={18} color="#fff" />
                       </TouchableOpacity>
                     )}
-                    
+
                     {onFullscreen && (
-                      <TouchableOpacity
-                        style={styles.controlButton}
-                        onPress={onFullscreen}
-                      >
+                      <TouchableOpacity style={styles.controlButton} onPress={onFullscreen}>
                         <Maximize size={18} color="#fff" />
                       </TouchableOpacity>
                     )}
-                    
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={handleRetry}
-                    >
+
+                    <TouchableOpacity style={styles.controlButton} onPress={handleRetry}>
                       <RotateCcw size={18} color="#fff" />
                     </TouchableOpacity>
-                    
+
                     {onRemove && (
                       <TouchableOpacity
                         style={[styles.controlButton, styles.removeButton]}
@@ -889,19 +904,13 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
           {showQualityMenu && (
             <View style={styles.qualityMenu}>
               <Text style={styles.qualityTitle}>Video Quality</Text>
-              {qualityOptions.map((q) => (
+              {qualityOptions.map(q => (
                 <TouchableOpacity
                   key={q}
-                  style={[
-                    styles.qualityOption,
-                    quality === q && styles.qualityOptionActive
-                  ]}
+                  style={[styles.qualityOption, quality === q && styles.qualityOptionActive]}
                   onPress={() => handleQualityChange(q)}
                 >
-                  <Text style={[
-                    styles.qualityText,
-                    quality === q && styles.qualityTextActive
-                  ]}>
+                  <Text style={[styles.qualityText, quality === q && styles.qualityTextActive]}>
                     {q.toUpperCase()}
                     {q === 'auto' && ' (Recommended)'}
                   </Text>
@@ -946,10 +955,7 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
           {/* Active Stream Indicator */}
           {isActive && (
             <View style={styles.activeIndicator}>
-              <LinearGradient
-                colors={['#9146FF', '#7928CA']}
-                style={styles.activeGradient}
-              />
+              <LinearGradient colors={['#9146FF', '#7928CA']} style={styles.activeGradient} />
             </View>
           )}
 
@@ -962,16 +968,14 @@ export const EnhancedTwitchPlayer: React.FC<EnhancedTwitchPlayerProps> = ({
 
           {/* Health Status Indicator */}
           <View style={styles.healthIndicator}>
-            <View style={[
-              styles.healthDot,
-              { 
-                backgroundColor: hasLoaded 
-                  ? '#00ff00' 
-                  : isLoading 
-                    ? '#ffff00' 
-                    : '#ff0000' 
-              }
-            ]} />
+            <View
+              style={[
+                styles.healthDot,
+                {
+                  backgroundColor: hasLoaded ? '#00ff00' : isLoading ? '#ffff00' : '#ff0000',
+                },
+              ]}
+            />
           </View>
         </View>
       </PanGestureHandler>
@@ -987,52 +991,52 @@ const styles = StyleSheet.create({
     margin: ModernTheme.spacing.xs,
     ...ModernTheme.shadows.lg,
   } as ViewStyle,
-  
+
   gestureContainer: {
     flex: 1,
     position: 'relative',
   } as ViewStyle,
-  
+
   video: {
     flex: 1,
     backgroundColor: '#000',
   } as ViewStyle,
-  
+
   controlsOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
   } as ViewStyle,
-  
+
   controlsGradient: {
     padding: ModernTheme.spacing.md,
   } as ViewStyle,
-  
+
   controlsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   } as ViewStyle,
-  
+
   leftControls: {
     flexDirection: 'row',
     gap: ModernTheme.spacing.sm,
     flex: 1,
   } as ViewStyle,
-  
+
   centerControls: {
     flex: 2,
     alignItems: 'center',
   } as ViewStyle,
-  
+
   rightControls: {
     flexDirection: 'row',
     gap: ModernTheme.spacing.sm,
     flex: 1,
     justifyContent: 'flex-end',
   } as ViewStyle,
-  
+
   controlButton: {
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     width: 40,
@@ -1043,25 +1047,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   } as ViewStyle,
-  
+
   removeButton: {
     backgroundColor: 'rgba(239, 68, 68, 0.7)',
   } as ViewStyle,
-  
+
   streamTitle: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
     textAlign: 'center',
   } as TextStyle,
-  
+
   streamGame: {
     color: ModernTheme.colors.text.secondary,
     fontSize: ModernTheme.typography.sizes.xs,
     textAlign: 'center',
     marginTop: 2,
   } as TextStyle,
-  
+
   qualityMenu: {
     position: 'absolute',
     bottom: 80,
@@ -1073,35 +1077,35 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   } as ViewStyle,
-  
+
   qualityTitle: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
     marginBottom: ModernTheme.spacing.sm,
   } as TextStyle,
-  
+
   qualityOption: {
     paddingVertical: ModernTheme.spacing.xs,
     paddingHorizontal: ModernTheme.spacing.sm,
     borderRadius: ModernTheme.borderRadius.sm,
     marginBottom: ModernTheme.spacing.xs,
   } as ViewStyle,
-  
+
   qualityOptionActive: {
     backgroundColor: '#9146FF',
   } as ViewStyle,
-  
+
   qualityText: {
     color: ModernTheme.colors.text.secondary,
     fontSize: ModernTheme.typography.sizes.sm,
   } as TextStyle,
-  
+
   qualityTextActive: {
     color: ModernTheme.colors.text.primary,
     fontWeight: ModernTheme.typography.weights.semibold,
   } as TextStyle,
-  
+
   statsOverlay: {
     position: 'absolute',
     top: ModernTheme.spacing.md,
@@ -1113,38 +1117,38 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   } as ViewStyle,
-  
+
   statsTitle: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
     marginBottom: ModernTheme.spacing.sm,
   } as TextStyle,
-  
+
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: ModernTheme.spacing.sm,
   } as ViewStyle,
-  
+
   statItem: {
     width: '48%',
     alignItems: 'center',
   } as ViewStyle,
-  
+
   statLabel: {
     color: ModernTheme.colors.text.secondary,
     fontSize: ModernTheme.typography.sizes.xs,
     marginBottom: 2,
   } as TextStyle,
-  
+
   statValue: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
     fontFamily: 'monospace',
   } as TextStyle,
-  
+
   activeIndicator: {
     position: 'absolute',
     top: 0,
@@ -1155,12 +1159,12 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: 'transparent',
   } as ViewStyle,
-  
+
   activeGradient: {
     flex: 1,
     borderRadius: ModernTheme.borderRadius.lg,
   } as ViewStyle,
-  
+
   priorityIndicator: {
     position: 'absolute',
     top: ModernTheme.spacing.xs,
@@ -1170,20 +1174,20 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: ModernTheme.borderRadius.xs,
   } as ViewStyle,
-  
+
   priorityText: {
     color: ModernTheme.colors.text.primary,
     fontSize: 8,
     fontWeight: ModernTheme.typography.weights.bold,
   } as TextStyle,
-  
+
   healthIndicator: {
     position: 'absolute',
     top: ModernTheme.spacing.xs,
     right: ModernTheme.spacing.xs,
     zIndex: 1000,
   } as ViewStyle,
-  
+
   healthDot: {
     width: 10,
     height: 10,

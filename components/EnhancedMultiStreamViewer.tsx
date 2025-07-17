@@ -1,3 +1,4 @@
+import { MotiView, AnimatePresence } from 'moti';
 import React, { useState, useCallback, useEffect, useMemo, memo } from 'react';
 import {
   View,
@@ -12,7 +13,6 @@ import {
   Modal,
   FlatList,
 } from 'react-native';
-import { MotiView, AnimatePresence } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Grid3X3,
@@ -34,10 +34,6 @@ import {
   MoreHorizontal,
   Headphones,
 } from 'lucide-react-native';
-import { TwitchStream, searchStreams, fetchTopStreams } from '@/services/twitchApi';
-import { ModernTheme } from '@/theme/modernTheme';
-import { WorkingTwitchPlayer } from './WorkingTwitchPlayer';
-import { logError, logDebug, withSyncErrorHandling } from '@/utils/errorHandler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -46,6 +42,10 @@ import Animated, {
   interpolate,
   runOnJS,
 } from 'react-native-reanimated';
+import { TwitchStream, searchStreams, fetchTopStreams } from '@/services/twitchApi';
+import { ModernTheme } from '@/theme/modernTheme';
+import { WorkingTwitchPlayer } from './WorkingTwitchPlayer';
+import { logError, logDebug, withSyncErrorHandling } from '@/utils/errorHandler';
 import { FlatGrid } from 'react-native-super-grid';
 
 interface EnhancedMultiStreamViewerProps {
@@ -77,7 +77,7 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
   maxStreams = 9,
 }) => {
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-  
+
   // State management
   const [gridLayout, setGridLayout] = useState<GridLayout>('2x2');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -99,22 +99,22 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
   });
   const [pipStream, setPipStream] = useState<TwitchStream | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  
+
   // Animation values
   const headerOpacity = useSharedValue(1);
   const controlsScale = useSharedValue(1);
-  
+
   // Calculate grid dimensions with memoization
   const gridDimensions = useMemo(() => {
     const padding = ModernTheme.spacing.md;
     const headerHeight = viewMode === 'focus' ? 80 : 120;
     const controlsHeight = viewMode === 'focus' ? 60 : 80;
-    const availableWidth = screenWidth - (padding * 2);
-    const availableHeight = screenHeight - headerHeight - controlsHeight - (padding * 2);
-    
+    const availableWidth = screenWidth - padding * 2;
+    const availableHeight = screenHeight - headerHeight - controlsHeight - padding * 2;
+
     let columns: number;
     let rows: number;
-    
+
     if (viewMode === 'focus' && focusedStreamId) {
       columns = 1;
       rows = 1;
@@ -149,11 +149,11 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
           rows = 2;
       }
     }
-    
+
     const itemSpacing = ModernTheme.spacing.sm;
-    const itemWidth = (availableWidth - (itemSpacing * (columns - 1))) / columns;
-    const itemHeight = (availableHeight - (itemSpacing * (rows - 1))) / rows;
-    
+    const itemWidth = (availableWidth - itemSpacing * (columns - 1)) / columns;
+    const itemHeight = (availableHeight - itemSpacing * (rows - 1)) / rows;
+
     return {
       itemWidth: Math.floor(itemWidth),
       itemHeight: Math.floor(itemHeight),
@@ -162,29 +162,32 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
       maxItems: columns * rows,
     };
   }, [gridLayout, viewMode, focusedStreamId, screenWidth, screenHeight]);
-  
+
   // Handle stream audio toggle
   const handleStreamAudioToggle = useCallback((streamId: string) => {
-    withSyncErrorHandling(() => {
-      logDebug('Toggling audio for stream', { streamId });
-      setAudioState(prev => {
-        if (prev.activeStreamId === streamId) {
-          // If this stream is currently active, mute it
-          return {
-            ...prev,
-            activeStreamId: null,
-          };
-        } else {
-          // Make this stream the active audio stream
-          return {
-            ...prev,
-            activeStreamId: streamId,
-          };
-        }
-      });
-    }, { component: 'EnhancedMultiStreamViewer', action: 'handleStreamAudioToggle' });
+    withSyncErrorHandling(
+      () => {
+        logDebug('Toggling audio for stream', { streamId });
+        setAudioState(prev => {
+          if (prev.activeStreamId === streamId) {
+            // If this stream is currently active, mute it
+            return {
+              ...prev,
+              activeStreamId: null,
+            };
+          } else {
+            // Make this stream the active audio stream
+            return {
+              ...prev,
+              activeStreamId: streamId,
+            };
+          }
+        });
+      },
+      { component: 'EnhancedMultiStreamViewer', action: 'handleStreamAudioToggle' }
+    );
   }, []);
-  
+
   // Handle global mute toggle
   const handleGlobalMuteToggle = useCallback(() => {
     setAudioState(prev => ({
@@ -193,42 +196,46 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
       activeStreamId: prev.globalMute ? prev.activeStreamId : null,
     }));
   }, []);
-  
+
   // Handle stream selection
   const handleStreamPress = useCallback((streamId: string) => {
-    setSelectedStreamId(prev => prev === streamId ? null : streamId);
+    setSelectedStreamId(prev => (prev === streamId ? null : streamId));
   }, []);
-  
+
   // Handle stream removal
-  const handleStreamRemove = useCallback((streamId: string) => {
-    withSyncErrorHandling(() => {
-      logDebug('Removing stream', { streamId });
-      Alert.alert(
-        'Remove Stream',
-        'Are you sure you want to remove this stream?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Remove',
-            style: 'destructive',
-            onPress: () => {
-              withSyncErrorHandling(() => {
-                onRemoveStream?.(streamId);
-                if (audioState.activeStreamId === streamId) {
-                  setAudioState(prev => ({ ...prev, activeStreamId: null }));
-                }
-                if (selectedStreamId === streamId) {
-                  setSelectedStreamId(null);
-                }
-                logDebug('Stream removed successfully', { streamId });
-              }, { component: 'EnhancedMultiStreamViewer', action: 'removeStreamConfirm' });
+  const handleStreamRemove = useCallback(
+    (streamId: string) => {
+      withSyncErrorHandling(
+        () => {
+          logDebug('Removing stream', { streamId });
+          Alert.alert('Remove Stream', 'Are you sure you want to remove this stream?', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Remove',
+              style: 'destructive',
+              onPress: () => {
+                withSyncErrorHandling(
+                  () => {
+                    onRemoveStream?.(streamId);
+                    if (audioState.activeStreamId === streamId) {
+                      setAudioState(prev => ({ ...prev, activeStreamId: null }));
+                    }
+                    if (selectedStreamId === streamId) {
+                      setSelectedStreamId(null);
+                    }
+                    logDebug('Stream removed successfully', { streamId });
+                  },
+                  { component: 'EnhancedMultiStreamViewer', action: 'removeStreamConfirm' }
+                );
+              },
             },
-          },
-        ]
+          ]);
+        },
+        { component: 'EnhancedMultiStreamViewer', action: 'handleStreamRemove' }
       );
-    }, { component: 'EnhancedMultiStreamViewer', action: 'handleStreamRemove' });
-  }, [onRemoveStream, audioState.activeStreamId, selectedStreamId]);
-  
+    },
+    [onRemoveStream, audioState.activeStreamId, selectedStreamId]
+
   // Handle layout change
   const handleLayoutChange = useCallback((layout: GridLayout) => {
     controlsScale.value = withSpring(0.9, { damping: 15 }, () => {
@@ -236,7 +243,7 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
     });
     setGridLayout(layout);
   }, []);
-  
+
   // Handle stream search
   const handleStreamSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
@@ -245,7 +252,7 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
     }
 
     setSearchResults(prev => ({ ...prev, loading: true, error: null }));
-    
+
     try {
       const results = await searchStreams(query, 20);
       setSearchResults({
@@ -263,39 +270,48 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
   }, []);
 
   // Handle add stream from search
-  const handleAddStreamFromSearch = useCallback((stream: TwitchStream) => {
-    if (streams.length >= maxStreams) {
-      Alert.alert('Maximum Streams', `You can only have ${maxStreams} streams at once.`);
-      return;
-    }
-    
+  const handleAddStreamFromSearch = useCallback(
+    (stream: TwitchStream) => {
+      if (streams.length >= maxStreams) {
+        Alert.alert('Maximum Streams', `You can only have ${maxStreams} streams at once.`);
+        return;
+      }
+
     onAddStream?.(stream);
-    setShowSearchModal(false);
-    setSearchQuery('');
-    setSearchResults({ streams: [], loading: false, error: null });
-  }, [streams.length, maxStreams, onAddStream]);
+      setShowSearchModal(false);
+      setSearchQuery('');
+      setSearchResults({ streams: [], loading: false, error: null });
+    },
+    [streams.length, maxStreams, onAddStream]
+  );
 
   // Handle focus mode
-  const handleFocusStream = useCallback((streamId: string) => {
-    if (viewMode === 'focus' && focusedStreamId === streamId) {
-      setViewMode('grid');
-      setFocusedStreamId(null);
-    } else {
-      setViewMode('focus');
-      setFocusedStreamId(streamId);
-    }
-  }, [viewMode, focusedStreamId]);
+  const handleFocusStream = useCallback(
+    (streamId: string) => {
+      if (viewMode === 'focus' && focusedStreamId === streamId) {
+        setViewMode('grid');
+        setFocusedStreamId(null);
+      } else {
+        setViewMode('focus');
+        setFocusedStreamId(streamId);
+      }
+    },
+    [viewMode, focusedStreamId]
+  );
 
   // Handle picture-in-picture
-  const handleTogglePiP = useCallback((stream: TwitchStream) => {
-    if (pipStream?.id === stream.id) {
-      setPipStream(null);
-      setViewMode('grid');
-    } else {
-      setPipStream(stream);
-      setViewMode('pip');
-    }
-  }, [pipStream]);
+  const handleTogglePiP = useCallback(
+    (stream: TwitchStream) => {
+      if (pipStream?.id === stream.id) {
+        setPipStream(null);
+        setViewMode('grid');
+      } else {
+        setPipStream(stream);
+        setViewMode('pip');
+      }
+    },
+    [pipStream]
+  );
 
   // Handle view mode change
   const handleViewModeChange = useCallback((mode: ViewMode) => {
@@ -317,7 +333,7 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
   const handlePlayPauseAll = useCallback(() => {
     setIsPlaying(!isPlaying);
   }, [isPlaying]);
-  
+
   // Get streams to display based on view mode with memoization
   const displayStreams = useMemo(() => {
     if (viewMode === 'focus' && focusedStreamId) {
@@ -336,7 +352,7 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
   const gridData = useMemo(() => {
     const maxItems = gridDimensions.maxItems;
     const data = [...displayStreams.slice(0, maxItems)];
-    
+
     // Add empty slots for adding new streams
     if (data.length < maxItems && data.length < maxStreams) {
       data.push({
@@ -349,83 +365,86 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
         type: 'add' as any,
       });
     }
-    
+
     return data;
   }, [displayStreams, gridDimensions.maxItems, maxStreams]);
-  
+
   // Animated styles
   const headerStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
   }));
-  
+
   const controlsStyle = useAnimatedStyle(() => ({
     transform: [{ scale: controlsScale.value }],
   }));
-  
+
   // Render grid item with memoization
-  const renderGridItem = useCallback(({ item, index }: { item: any; index: number }) => {
-    if (item.type === 'add') {
-      return (
-        <AddStreamButton
+  const renderGridItem = useCallback(
+    ({ item, index }: { item: any; index: number }) => {
+      if (item.type === 'add') {
+        return (
+          <AddStreamButton
+            width={gridDimensions.itemWidth}
+            height={gridDimensions.itemHeight}
+            onPress={() => setShowSearchModal(true)}
+          />
+        );
+      }
+
+      const isActive = selectedStreamId === item.id;
+      const isMuted = audioState.globalMute || audioState.activeStreamId !== item.id;
+
+    return (
+        <MemoizedWorkingTwitchPlayer
+          key={item.id}
+          stream={item}
           width={gridDimensions.itemWidth}
           height={gridDimensions.itemHeight}
-          onPress={() => setShowSearchModal(true)}
+          isActive={isActive}
+          isMuted={isMuted}
+          onPress={() => handleStreamPress(item.id)}
+          onMuteToggle={() => handleStreamAudioToggle(item.id)}
+          onRemove={() => handleStreamRemove(item.id)}
+          showControls={showControls}
         />
       );
-    }
-    
-    const isActive = selectedStreamId === item.id;
-    const isMuted = audioState.globalMute || audioState.activeStreamId !== item.id;
-    
-    return (
-      <MemoizedWorkingTwitchPlayer
-        key={item.id}
-        stream={item}
-        width={gridDimensions.itemWidth}
-        height={gridDimensions.itemHeight}
-        isActive={isActive}
-        isMuted={isMuted}
-        onPress={() => handleStreamPress(item.id)}
-        onMuteToggle={() => handleStreamAudioToggle(item.id)}
-        onRemove={() => handleStreamRemove(item.id)}
-        showControls={showControls}
-      />
-    );
-  }, [
-    gridDimensions.itemWidth,
-    gridDimensions.itemHeight,
-    selectedStreamId,
-    audioState.globalMute,
-    audioState.activeStreamId,
-    showControls,
-    handleStreamPress,
-    handleStreamAudioToggle,
-    handleStreamRemove,
-  ]);
-  
+    },
+    [
+      gridDimensions.itemWidth,
+      gridDimensions.itemHeight,
+      selectedStreamId,
+      audioState.globalMute,
+      audioState.activeStreamId,
+      showControls,
+      handleStreamPress,
+      handleStreamAudioToggle,
+      handleStreamRemove,
+    ]
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <Animated.View style={[styles.header, headerStyle]}>
         <LinearGradient
-          colors={[
-            'rgba(0, 0, 0, 0.95)',
-            'rgba(0, 0, 0, 0.8)',
-            'rgba(0, 0, 0, 0.4)',
-          ]}
+          colors={['rgba(0, 0, 0, 0.95)', 'rgba(0, 0, 0, 0.8)', 'rgba(0, 0, 0, 0.4)']}
           style={styles.headerGradient}
         >
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
               <Text style={styles.headerTitle}>
-                {viewMode === 'focus' ? '🎯 Focus Mode' : viewMode === 'pip' ? '📺 Picture-in-Picture' : '🎮 Multi-Stream Viewer'}
+                {viewMode === 'focus'
+                  ? '🎯 Focus Mode'
+                  : viewMode === 'pip'
+                    ? '📺 Picture-in-Picture'
+                    : '🎮 Multi-Stream Viewer'}
               </Text>
               <Text style={styles.headerSubtitle}>
                 {streams.length} of {maxStreams} streams • {totalViewers.toLocaleString()} viewers
-                {audioState.activeStreamId && ` • 🔊 ${streams.find(s => s.id === audioState.activeStreamId)?.user_name || 'Unknown'}`}
+                {audioState.activeStreamId &&
+                  ` • 🔊 ${streams.find(s => s.id === audioState.activeStreamId)?.user_name || 'Unknown'}`}
               </Text>
             </View>
-            
+
             <View style={styles.headerRight}>
               {/* View Mode Toggle */}
               <TouchableOpacity
@@ -439,16 +458,14 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
                   <Settings size={18} color={ModernTheme.colors.text.primary} />
                 </LinearGradient>
               </TouchableOpacity>
-              
+
               {/* Audio Control */}
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={handleGlobalMuteToggle}
-              >
+              <TouchableOpacity style={styles.headerButton} onPress={handleGlobalMuteToggle}>
                 <LinearGradient
-                  colors={audioState.globalMute ? 
-                    [ModernTheme.colors.error[600], ModernTheme.colors.error[500]] :
-                    [ModernTheme.colors.primary[600], ModernTheme.colors.primary[500]]
+                  colors={
+                    audioState.globalMute
+                      ? [ModernTheme.colors.error[600], ModernTheme.colors.error[500]]
+                      : [ModernTheme.colors.primary[600], ModernTheme.colors.primary[500]]
                   }
                   style={styles.headerButtonGradient}
                 >
@@ -459,7 +476,7 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
                   )}
                 </LinearGradient>
               </TouchableOpacity>
-              
+
               {/* Add Stream */}
               <TouchableOpacity
                 style={styles.headerButton}
@@ -476,7 +493,7 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
           </View>
         </LinearGradient>
       </Animated.View>
-      
+
       {/* Grid Container */}
       <View style={styles.gridContainer}>
         <FlatGrid
@@ -489,7 +506,7 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
           showsVerticalScrollIndicator={false}
         />
       </View>
-      
+
       {/* Picture-in-Picture */}
       {viewMode === 'pip' && pipStream && (
         <MotiView
@@ -502,12 +519,12 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
             stream={pipStream}
             width={200}
             height={120}
-            isActive={true}
+            isActive
             isMuted={audioState.globalMute || audioState.activeStreamId !== pipStream.id}
             onPress={() => handleTogglePiP(pipStream)}
             onMuteToggle={() => handleStreamAudioToggle(pipStream.id)}
             onRemove={() => handleStreamRemove(pipStream.id)}
-            showControls={true}
+            showControls
           />
         </MotiView>
       )}
@@ -515,10 +532,7 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
       {/* Controls */}
       <Animated.View style={[styles.controls, controlsStyle]}>
         <LinearGradient
-          colors={[
-            'rgba(0, 0, 0, 0.9)',
-            'rgba(0, 0, 0, 0.7)',
-          ]}
+          colors={['rgba(0, 0, 0, 0.9)', 'rgba(0, 0, 0, 0.7)']}
           style={styles.controlsGradient}
         >
           <View style={styles.controlsContent}>
@@ -526,7 +540,7 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
             <View style={styles.controlSection}>
               <Text style={styles.controlsLabel}>📐 Layout Grid</Text>
               <View style={styles.layoutButtons}>
-                {(['1x1', '2x2', '3x3', '4x4'] as GridLayout[]).map((layout) => {
+                {(['1x1', '2x2', '3x3', '4x4'] as GridLayout[]).map(layout => {
                   const isActive = gridLayout === layout;
                   const IconComponent = {
                     '1x1': Square,
@@ -534,7 +548,7 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
                     '3x3': Grid3X3,
                     '4x4': Grid3X3,
                   }[layout];
-                  
+
                   return (
                     <MotiView
                       key={layout}
@@ -549,24 +563,26 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
                       }}
                     >
                       <TouchableOpacity
-                        style={[
-                          styles.layoutButton,
-                          isActive && styles.layoutButtonActive,
-                        ]}
+                        style={[styles.layoutButton, isActive && styles.layoutButtonActive]}
                         onPress={() => handleLayoutChange(layout)}
                       >
                         <LinearGradient
-                          colors={isActive 
-                            ? [ModernTheme.colors.primary[600], ModernTheme.colors.primary[500]]
-                            : [ModernTheme.colors.gray[700], ModernTheme.colors.gray[600]]
+                          colors={
+                            isActive
+                              ? [ModernTheme.colors.primary[600], ModernTheme.colors.primary[500]]
+                              : [ModernTheme.colors.gray[700], ModernTheme.colors.gray[600]]
                           }
                           style={[
                             styles.layoutButtonGradient,
-                            isActive && { borderColor: ModernTheme.colors.primary[400] }
+                            isActive && { borderColor: ModernTheme.colors.primary[400] },
                           ]}
                         >
                           <IconComponent size={18} color={ModernTheme.colors.text.primary} />
-                          <Text style={[styles.layoutButtonText, isActive && { fontWeight: '700' }]}>{layout}</Text>
+                          <Text
+                            style={[styles.layoutButtonText, isActive && { fontWeight: '700' }]}
+                          >
+                            {layout}
+                          </Text>
                         </LinearGradient>
                       </TouchableOpacity>
                     </MotiView>
@@ -579,7 +595,7 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
             <View style={styles.controlSection}>
               <Text style={styles.controlsLabel}>👁️ View Mode</Text>
               <View style={styles.viewModeButtons}>
-                {(['grid', 'focus', 'pip'] as ViewMode[]).map((mode) => {
+                {(['grid', 'focus', 'pip'] as ViewMode[]).map(mode => {
                   const isActive = viewMode === mode;
                   const IconComponent = {
                     grid: Grid3X3,
@@ -591,7 +607,7 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
                     focus: 'Focus',
                     pip: 'PiP',
                   };
-                  
+
                   return (
                     <MotiView
                       key={mode}
@@ -606,24 +622,24 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
                       }}
                     >
                       <TouchableOpacity
-                        style={[
-                          styles.viewModeButton,
-                          isActive && styles.viewModeButtonActive,
-                        ]}
+                        style={[styles.viewModeButton, isActive && styles.viewModeButtonActive]}
                         onPress={() => handleViewModeChange(mode)}
                       >
                         <LinearGradient
-                          colors={isActive 
-                            ? [ModernTheme.colors.accent[600], ModernTheme.colors.accent[500]]
-                            : [ModernTheme.colors.gray[700], ModernTheme.colors.gray[600]]
+                          colors={
+                            isActive
+                              ? [ModernTheme.colors.accent[600], ModernTheme.colors.accent[500]]
+                              : [ModernTheme.colors.gray[700], ModernTheme.colors.gray[600]]
                           }
                           style={[
                             styles.viewModeButtonGradient,
-                            isActive && { borderColor: ModernTheme.colors.accent[400] }
+                            isActive && { borderColor: ModernTheme.colors.accent[400] },
                           ]}
-                      >
+                        >
                           <IconComponent size={18} color={ModernTheme.colors.text.primary} />
-                          <Text style={[styles.viewModeButtonText, isActive && { fontWeight: '700' }]}>
+                          <Text
+                            style={[styles.viewModeButtonText, isActive && { fontWeight: '700' }]}
+                          >
                             {modeLabels[mode]}
                           </Text>
                         </LinearGradient>
@@ -647,14 +663,12 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
                     damping: 15,
                   }}
                 >
-                  <TouchableOpacity
-                    style={styles.playbackButton}
-                    onPress={handlePlayPauseAll}
-                  >
+                  <TouchableOpacity style={styles.playbackButton} onPress={handlePlayPauseAll}>
                     <LinearGradient
-                      colors={isPlaying 
-                        ? [ModernTheme.colors.success[600], ModernTheme.colors.success[500]]
-                        : [ModernTheme.colors.error[600], ModernTheme.colors.error[500]]
+                      colors={
+                        isPlaying
+                          ? [ModernTheme.colors.success[600], ModernTheme.colors.success[500]]
+                          : [ModernTheme.colors.error[600], ModernTheme.colors.error[500]]
                       }
                       style={styles.playbackButtonGradient}
                     >
@@ -666,7 +680,7 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
                     </LinearGradient>
                   </TouchableOpacity>
                 </MotiView>
-                
+
                 <MotiView
                   animate={{
                     scale: showControls ? 1.05 : 1,
@@ -682,9 +696,10 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
                     onPress={() => setShowControls(!showControls)}
                   >
                     <LinearGradient
-                      colors={showControls 
-                        ? [ModernTheme.colors.primary[600], ModernTheme.colors.primary[500]]
-                        : [ModernTheme.colors.gray[700], ModernTheme.colors.gray[600]]
+                      colors={
+                        showControls
+                          ? [ModernTheme.colors.primary[600], ModernTheme.colors.primary[500]]
+                          : [ModernTheme.colors.gray[700], ModernTheme.colors.gray[600]]
                       }
                       style={styles.playbackButtonGradient}
                     >
@@ -737,7 +752,11 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
             {/* Search Input */}
             <View style={styles.searchContainer}>
               <View style={styles.searchInputWrapper}>
-                <Search size={18} color={ModernTheme.colors.text.secondary} style={styles.searchIcon} />
+                <Search
+                  size={18}
+                  color={ModernTheme.colors.text.secondary}
+                  style={styles.searchIcon}
+                />
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Search for streams, games, or streamers..."
@@ -764,9 +783,10 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
                   disabled={!searchQuery.trim() || searchResults.loading}
                 >
                   <LinearGradient
-                    colors={searchQuery.trim() 
-                      ? [ModernTheme.colors.primary[600], ModernTheme.colors.primary[500]]
-                      : [ModernTheme.colors.gray[700], ModernTheme.colors.gray[600]]
+                    colors={
+                      searchQuery.trim()
+                        ? [ModernTheme.colors.primary[600], ModernTheme.colors.primary[500]]
+                        : [ModernTheme.colors.gray[700], ModernTheme.colors.gray[600]]
                     }
                     style={styles.searchButtonGradient}
                   >
@@ -801,15 +821,15 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
               ) : (
                 <FlatList
                   data={searchResults.streams}
-                  keyExtractor={(item) => item.id}
+                  keyExtractor={item => item.id}
                   renderItem={({ item, index }) => (
                     <MotiView
                       from={{ opacity: 0, translateX: -50 }}
                       animate={{ opacity: 1, translateX: 0 }}
-                      transition={{ 
-                        type: 'spring', 
+                      transition={{
+                        type: 'spring',
                         damping: 15,
-                        delay: index * 100 
+                        delay: index * 100
                       }}
                     >
                       <TouchableOpacity
@@ -817,7 +837,10 @@ const EnhancedMultiStreamViewerComponent: React.FC<EnhancedMultiStreamViewerProp
                         onPress={() => handleAddStreamFromSearch(item)}
                       >
                         <LinearGradient
-                          colors={[ModernTheme.colors.background.secondary, ModernTheme.colors.background.primary]}
+                          colors={[
+                            ModernTheme.colors.background.secondary,
+                            ModernTheme.colors.background.primary,
+                          ]}
                           style={styles.searchResultGradient}
                         >
                           <View style={styles.searchResultContent}>
@@ -1152,23 +1175,19 @@ const styles = StyleSheet.create({
 // Memoized components for performance
 const MemoizedWorkingTwitchPlayer = memo(WorkingTwitchPlayer);
 
-const AddStreamButton = memo(({ width, height, onPress }: { width: number; height: number; onPress: () => void }) => (
-  <TouchableOpacity
-    style={[
-      styles.addStreamContainer,
-      { width, height },
-    ]}
-    onPress={onPress}
-  >
-    <LinearGradient
-      colors={ModernTheme.colors.gradients.primary}
-      style={styles.addStreamGradient}
-    >
-      <Plus size={32} color={ModernTheme.colors.text.primary} />
-      <Text style={styles.addStreamText}>Add Stream</Text>
-    </LinearGradient>
-  </TouchableOpacity>
-));
+const AddStreamButton = memo(
+  ({ width, height, onPress }: { width: number; height: number; onPress: () => void }) => (
+    <TouchableOpacity style={[styles.addStreamContainer, { width, height }]} onPress={onPress}>
+      <LinearGradient
+        colors={ModernTheme.colors.gradients.primary}
+        style={styles.addStreamGradient}
+      >
+        <Plus size={32} color={ModernTheme.colors.text.primary} />
+        <Text style={styles.addStreamText}>Add Stream</Text>
+      </LinearGradient>
+    </TouchableOpacity>
+  )
+);
 
 // Memoize the main component
 export const EnhancedMultiStreamViewer = memo(EnhancedMultiStreamViewerComponent);

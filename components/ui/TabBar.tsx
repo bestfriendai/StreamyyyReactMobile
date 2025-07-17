@@ -3,15 +3,10 @@
  * Uses unified theme system for consistent styling
  */
 
-import React from 'react';
-import {
-  View,
-  TouchableOpacity,
-  Text,
-  ViewStyle,
-  Platform,
-} from 'react-native';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import { View, TouchableOpacity, Text, ViewStyle, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -19,7 +14,6 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface TabBarItem {
@@ -67,7 +61,7 @@ export const TabBar: React.FC<TabBarProps> = ({
           borderTopWidth: 1,
           borderTopColor: theme.border.primary,
         };
-      
+
       case 'floating':
         return {
           ...baseStyles,
@@ -77,14 +71,14 @@ export const TabBar: React.FC<TabBarProps> = ({
           borderRadius: theme.tokens.radius.xl,
           ...theme.tokens.shadows.lg,
         };
-      
+
       case 'minimal':
         return {
           ...baseStyles,
           backgroundColor: 'transparent',
           borderTopWidth: 0,
         };
-      
+
       default:
         return baseStyles;
     }
@@ -122,9 +116,10 @@ export const TabBar: React.FC<TabBarProps> = ({
         justifyContent: 'center',
         paddingVertical: theme.tokens.spacing[2],
         borderRadius: theme.tokens.radius.lg,
-        backgroundColor: isActive && variant === 'floating' 
-          ? helpers.getColorWithOpacity(theme.interactive.primary, 0.1)
-          : 'transparent',
+        backgroundColor:
+          isActive && variant === 'floating'
+            ? helpers.getColorWithOpacity(theme.interactive.primary, 0.1)
+            : 'transparent',
       };
     };
 
@@ -158,7 +153,7 @@ export const TabBar: React.FC<TabBarProps> = ({
               }}
             />
           )}
-          
+
           {/* Icon */}
           <View
             style={{
@@ -174,8 +169,8 @@ export const TabBar: React.FC<TabBarProps> = ({
           <Text
             style={{
               fontSize: theme.tokens.typography.sizes.xs,
-              fontWeight: isActive 
-                ? theme.tokens.typography.weights.semibold 
+              fontWeight: isActive
+                ? theme.tokens.typography.weights.semibold
                 : theme.tokens.typography.weights.medium,
               color: isActive ? theme.interactive.primary : theme.text.tertiary,
               textAlign: 'center',
@@ -205,9 +200,7 @@ export const TabBar: React.FC<TabBarProps> = ({
   };
 
   const TabBarContent = () => (
-    <View style={tabBarStyles}>
-      {items.map((item, index) => renderTabItem(item, index))}
-    </View>
+    <View style={tabBarStyles}>{items.map((item, index) => renderTabItem(item, index))}</View>
   );
 
   // Render different variants
@@ -215,10 +208,7 @@ export const TabBar: React.FC<TabBarProps> = ({
     case 'floating':
       return (
         <View style={[{ position: 'absolute', bottom: 0, left: 0, right: 0 }, style]}>
-          <LinearGradient
-            colors={theme.gradients.card}
-            style={tabBarStyles}
-          >
+          <LinearGradient colors={theme.gradients.card} style={tabBarStyles}>
             {items.map((item, index) => renderTabItem(item, index))}
           </LinearGradient>
         </View>
@@ -243,12 +233,9 @@ export const TabBar: React.FC<TabBarProps> = ({
           </BlurView>
         );
       }
-      
+
       return (
-        <LinearGradient
-          colors={theme.gradients.card}
-          style={[tabBarStyles, style]}
-        >
+        <LinearGradient colors={theme.gradients.card} style={[tabBarStyles, style]}>
           {items.map((item, index) => renderTabItem(item, index))}
         </LinearGradient>
       );

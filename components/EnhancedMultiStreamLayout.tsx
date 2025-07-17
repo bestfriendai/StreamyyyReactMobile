@@ -1,3 +1,16 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  Grid,
+  List,
+  Maximize2,
+  PictureInPicture,
+  Focus,
+  Settings,
+  RotateCcw,
+  Save,
+  Eye,
+  EyeOff,
+} from 'lucide-react-native';
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
@@ -9,19 +22,6 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { 
-  Grid, 
-  List, 
-  Maximize2, 
-  PictureInPicture, 
-  Focus, 
-  Settings, 
-  RotateCcw,
-  Save,
-  Eye,
-  EyeOff
-} from 'lucide-react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -29,9 +29,9 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { StreamViewer } from './StreamViewer';
 import { TwitchStream } from '@/services/twitchApi';
 import { useAppStore } from '@/store/useAppStore';
+import { StreamViewer } from './StreamViewer';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -92,7 +92,7 @@ export function EnhancedMultiStreamLayout({
           },
           secondary: {
             width: containerWidth * 0.25,
-            height: (containerWidth * 0.25) * (9 / 16),
+            height: containerWidth * 0.25 * (9 / 16),
           },
         };
       case 'focus':
@@ -103,7 +103,7 @@ export function EnhancedMultiStreamLayout({
           },
           secondary: {
             width: containerWidth * 0.3,
-            height: (containerWidth * 0.3) * (9 / 16),
+            height: containerWidth * 0.3 * (9 / 16),
           },
         };
       default:
@@ -114,43 +114,46 @@ export function EnhancedMultiStreamLayout({
     }
   }, [gridType, gridColumns, streams.length]);
 
-  const handleStreamLongPress = useCallback((stream: TwitchStream) => {
-    Alert.alert(
-      'Stream Options',
-      `${stream.title}\n${stream.user_name}`,
-      [
-        {
-          text: 'Set as Focus',
-          onPress: () => {
-            setFocusedStreamId(stream.id);
-            setGridType('focus');
+  const handleStreamLongPress = useCallback(
+    (stream: TwitchStream) => {
+      Alert.alert(
+        'Stream Options',
+        `${stream.title}\n${stream.user_name}`,
+        [
+          {
+            text: 'Set as Focus',
+            onPress: () => {
+              setFocusedStreamId(stream.id);
+              setGridType('focus');
+            },
           },
-        },
-        {
-          text: mutedStreams.has(stream.id) ? 'Unmute' : 'Mute',
-          onPress: () => {
-            const newMutedStreams = new Set(mutedStreams);
-            if (mutedStreams.has(stream.id)) {
-              newMutedStreams.delete(stream.id);
-            } else {
-              newMutedStreams.add(stream.id);
-            }
-            setMutedStreams(newMutedStreams);
+          {
+            text: mutedStreams.has(stream.id) ? 'Unmute' : 'Mute',
+            onPress: () => {
+              const newMutedStreams = new Set(mutedStreams);
+              if (mutedStreams.has(stream.id)) {
+                newMutedStreams.delete(stream.id);
+              } else {
+                newMutedStreams.add(stream.id);
+              }
+              setMutedStreams(newMutedStreams);
+            },
           },
-        },
-        {
-          text: 'Remove',
-          onPress: () => onStreamRemove(stream.id),
-          style: 'destructive',
-        },
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-      ],
-      { cancelable: true }
-    );
-  }, [mutedStreams, onStreamRemove]);
+          {
+            text: 'Remove',
+            onPress: () => onStreamRemove(stream.id),
+            style: 'destructive',
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+        ],
+        { cancelable: true }
+      );
+    },
+    [mutedStreams, onStreamRemove]
+  );
 
   const renderGridLayout = () => {
     const rows = [];
@@ -158,7 +161,7 @@ export function EnhancedMultiStreamLayout({
       const rowStreams = streams.slice(i, i + gridColumns);
       rows.push(
         <View key={i} style={styles.gridRow}>
-          {rowStreams.map((stream) => (
+          {rowStreams.map(stream => (
             <TouchableOpacity
               key={stream.id}
               onLongPress={() => handleStreamLongPress(stream)}
@@ -212,7 +215,7 @@ export function EnhancedMultiStreamLayout({
   };
 
   const renderPiPLayout = () => {
-    const mainStream = focusedStreamId 
+    const mainStream = focusedStreamId
       ? streams.find(s => s.id === focusedStreamId) || streams[0]
       : streams[0];
     const secondaryStreams = streams.filter(s => s.id !== mainStream?.id);
@@ -237,7 +240,7 @@ export function EnhancedMultiStreamLayout({
               width={getStreamDimensions.main.width}
               height={getStreamDimensions.main.height}
               muted={mutedStreams.has(mainStream.id)}
-              showControls={true}
+              showControls
             />
           </TouchableOpacity>
         )}
@@ -250,7 +253,7 @@ export function EnhancedMultiStreamLayout({
             style={styles.secondaryStreams}
             contentContainerStyle={styles.secondaryStreamsContent}
           >
-            {secondaryStreams.map((stream) => (
+            {secondaryStreams.map(stream => (
               <TouchableOpacity
                 key={stream.id}
                 onLongPress={() => handleStreamLongPress(stream)}
@@ -269,7 +272,7 @@ export function EnhancedMultiStreamLayout({
                   onRemove={onStreamRemove}
                   width={getStreamDimensions.secondary.width}
                   height={getStreamDimensions.secondary.height}
-                  muted={true}
+                  muted
                   showControls={false}
                 />
                 <View style={styles.streamOverlay}>
@@ -287,11 +290,8 @@ export function EnhancedMultiStreamLayout({
 
   const renderStackedLayout = () => {
     return (
-      <ScrollView
-        style={styles.stackedContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {streams.map((stream) => (
+      <ScrollView style={styles.stackedContainer} showsVerticalScrollIndicator={false}>
+        {streams.map(stream => (
           <TouchableOpacity
             key={stream.id}
             onLongPress={() => handleStreamLongPress(stream)}
@@ -358,10 +358,7 @@ export function EnhancedMultiStreamLayout({
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']}
-        style={styles.background}
-      />
+      <LinearGradient colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']} style={styles.background} />
 
       {/* Header Controls */}
       {showControls && (
@@ -391,7 +388,7 @@ export function EnhancedMultiStreamLayout({
                 showsHorizontalScrollIndicator={false}
                 style={styles.layoutControls}
               >
-                {layoutOptions.map((option) => {
+                {layoutOptions.map(option => {
                   const IconComponent = option.icon;
                   return (
                     <AnimatedTouchableOpacity
@@ -410,10 +407,7 @@ export function EnhancedMultiStreamLayout({
                         }
                         style={styles.layoutGradient}
                       >
-                        <IconComponent
-                          size={16}
-                          color={gridType === option.id ? '#fff' : '#666'}
-                        />
+                        <IconComponent size={16} color={gridType === option.id ? '#fff' : '#666'} />
                         <Text
                           style={[
                             styles.layoutButtonText,
@@ -448,19 +442,13 @@ export function EnhancedMultiStreamLayout({
                 )}
 
                 <TouchableOpacity style={styles.actionButton} onPress={onSaveLayout}>
-                  <LinearGradient
-                    colors={['#22C55E', '#16A34A']}
-                    style={styles.actionGradient}
-                  >
+                  <LinearGradient colors={['#22C55E', '#16A34A']} style={styles.actionGradient}>
                     <Save size={16} color="#fff" />
                   </LinearGradient>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.actionButton} onPress={onClearAll}>
-                  <LinearGradient
-                    colors={['#EF4444', '#DC2626']}
-                    style={styles.actionGradient}
-                  >
+                  <LinearGradient colors={['#EF4444', '#DC2626']} style={styles.actionGradient}>
                     <RotateCcw size={16} color="#fff" />
                   </LinearGradient>
                 </TouchableOpacity>
@@ -472,14 +460,8 @@ export function EnhancedMultiStreamLayout({
 
       {/* Floating Toggle Button */}
       {!showControls && (
-        <TouchableOpacity
-          style={styles.floatingButton}
-          onPress={() => setShowControls(true)}
-        >
-          <LinearGradient
-            colors={['#8B5CF6', '#7C3AED']}
-            style={styles.floatingGradient}
-          >
+        <TouchableOpacity style={styles.floatingButton} onPress={() => setShowControls(true)}>
+          <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.floatingGradient}>
             <Maximize2 size={20} color="#fff" />
           </LinearGradient>
         </TouchableOpacity>

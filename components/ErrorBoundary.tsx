@@ -1,7 +1,7 @@
 import React, { Component, ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
-import { performanceMonitor } from '@/utils/performanceMonitor';
 import { logError, ErrorContext } from '@/utils/errorHandler';
+import { performanceMonitor } from '@/utils/performanceMonitor';
 
 interface Props {
   children: ReactNode;
@@ -23,12 +23,7 @@ interface State {
   errorBoundaryId: string;
 }
 
-type RecoveryStrategy = 
-  | 'reload'
-  | 'clearState'
-  | 'fallbackComponent'
-  | 'restartApp'
-  | 'clearCache';
+type RecoveryStrategy = 'reload' | 'clearState' | 'fallbackComponent' | 'restartApp' | 'clearCache';
 
 interface ErrorReport {
   error: Error;
@@ -52,7 +47,7 @@ export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.sessionId = this.generateSessionId();
-    this.state = { 
+    this.state = {
       hasError: false,
       retryCount: 0,
       isRecovering: false,
@@ -64,9 +59,9 @@ export class ErrorBoundary extends Component<Props, State> {
   static getDerivedStateFromError(error: Error): Partial<State> {
     // Track error occurrence
     performanceMonitor.trackStreamError('error_boundary', error.name);
-    
-    return { 
-      hasError: true, 
+
+    return {
+      hasError: true,
       error,
       isRecovering: false,
     };
@@ -74,7 +69,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: any) {
     this.setState({ errorInfo });
-    
+
     // Create comprehensive error report
     const errorReport: ErrorReport = {
       error,
@@ -88,21 +83,21 @@ export class ErrorBoundary extends Component<Props, State> {
       retryCount: this.state.retryCount,
       performanceMetrics: performanceMonitor.getPerformanceReport(),
     };
-    
+
     // Enhanced error logging
     this.logDetailedError(errorReport);
-    
+
     // Add to error queue for analysis
     this.errorQueue.push(errorReport);
-    
+
     // Keep only last 10 errors
     if (this.errorQueue.length > 10) {
       this.errorQueue.shift();
     }
-    
+
     // Notify parent component
     this.props.onError?.(error, errorInfo);
-    
+
     // Attempt automatic recovery if enabled
     if (this.props.enableRecovery && !this.state.recoveryAttempted) {
       this.attemptRecovery();
@@ -111,7 +106,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   handleRetry = () => {
     const maxRetries = this.props.maxRetries || 3;
-    
+
     if (this.state.retryCount >= maxRetries) {
       Alert.alert(
         'Maximum Retries Reached',
@@ -124,16 +119,16 @@ export class ErrorBoundary extends Component<Props, State> {
       );
       return;
     }
-    
-    this.setState(prevState => ({ 
-      hasError: false, 
+
+    this.setState(prevState => ({
+      hasError: false,
       error: undefined,
       errorInfo: undefined,
       retryCount: prevState.retryCount + 1,
       isRecovering: false,
       recoveryAttempted: false,
     }));
-    
+
     console.log(`🔄 Retrying component (attempt ${this.state.retryCount + 1}/${maxRetries})`);
   };
 
@@ -153,18 +148,15 @@ export class ErrorBoundary extends Component<Props, State> {
 
   handleShowErrorDetails = () => {
     const report = this.generateErrorReport();
-    
+
     Alert.alert(
       'Error Details',
       `Error: ${this.state.error?.name}\n` +
-      `Message: ${this.state.error?.message}\n` +
-      `Retries: ${this.state.retryCount}\n` +
-      `Session: ${this.sessionId}\n` +
-      `Context: ${this.props.context || 'Unknown'}`,
-      [
-        { text: 'Copy Report', onPress: () => this.copyErrorReport(report) },
-        { text: 'Close' },
-      ]
+        `Message: ${this.state.error?.message}\n` +
+        `Retries: ${this.state.retryCount}\n` +
+        `Session: ${this.sessionId}\n` +
+        `Context: ${this.props.context || 'Unknown'}`,
+      [{ text: 'Copy Report', onPress: () => this.copyErrorReport(report) }, { text: 'Close' }]
     );
   };
 
@@ -189,28 +181,30 @@ export class ErrorBoundary extends Component<Props, State> {
             <View style={styles.content}>
               <Text style={styles.icon}>⚠️</Text>
               <Text style={styles.title}>Something went wrong</Text>
-              
+
               <Text style={styles.message}>
                 {this.state.error?.message || 'An unexpected error occurred'}
               </Text>
-              
+
               {this.state.isRecovering && (
                 <View style={styles.recoveryContainer}>
                   <Text style={styles.recoveryText}>🔄 Attempting automatic recovery...</Text>
                 </View>
               )}
-              
+
               <View style={styles.errorMetadata}>
                 <Text style={styles.metadataText}>Error Type: {this.state.error?.name}</Text>
-                <Text style={styles.metadataText}>Retry Count: {this.state.retryCount}/{maxRetries}</Text>
+                <Text style={styles.metadataText}>
+                  Retry Count: {this.state.retryCount}/{maxRetries}
+                </Text>
                 <Text style={styles.metadataText}>Context: {this.props.context || 'Unknown'}</Text>
                 <Text style={styles.metadataText}>Session: {this.sessionId.slice(0, 8)}...</Text>
               </View>
-              
+
               <View style={styles.buttonContainer}>
                 {canRetry && (
-                  <TouchableOpacity 
-                    style={[styles.actionButton, styles.retryButton]} 
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.retryButton]}
                     onPress={this.handleRetry}
                     disabled={this.state.isRecovering}
                   >
@@ -218,29 +212,29 @@ export class ErrorBoundary extends Component<Props, State> {
                     <Text style={styles.buttonText}>Try Again</Text>
                   </TouchableOpacity>
                 )}
-                
-                <TouchableOpacity 
-                  style={[styles.actionButton, styles.detailsButton]} 
+
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.detailsButton]}
                   onPress={this.handleShowErrorDetails}
                 >
                   <Text style={styles.detailsIcon}>ℹ️</Text>
                   <Text style={styles.buttonText}>Details</Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.actionButton, styles.clearButton]} 
+
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.clearButton]}
                   onPress={this.handleClearCache}
                 >
                   <Text style={styles.clearIcon}>🧹</Text>
                   <Text style={styles.buttonText}>Clear Cache</Text>
                 </TouchableOpacity>
               </View>
-              
+
               {!canRetry && (
                 <View style={styles.finalActions}>
                   <Text style={styles.finalText}>Maximum retries reached</Text>
-                  <TouchableOpacity 
-                    style={[styles.actionButton, styles.restartButton]} 
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.restartButton]}
                     onPress={this.handleRestartApp}
                   >
                     <Text style={styles.restartIcon}>🔄</Text>
@@ -279,7 +273,7 @@ export class ErrorBoundary extends Component<Props, State> {
     });
     console.log('📊 Performance Metrics:', errorReport.performanceMetrics?.summary);
     console.groupEnd();
-    
+
     // Use the enhanced error handler
     const context: ErrorContext = {
       component: 'ErrorBoundary',
@@ -291,44 +285,44 @@ export class ErrorBoundary extends Component<Props, State> {
         sessionId: this.sessionId,
       },
     };
-    
+
     logError(errorReport.error, context);
   }
 
   private async attemptRecovery(): Promise<void> {
     this.setState({ isRecovering: true, recoveryAttempted: true });
-    
+
     const strategies = this.props.recoveryStrategies || ['reload', 'clearState'];
-    
+
     for (const strategy of strategies) {
       try {
         console.log(`🔧 Attempting recovery strategy: ${strategy}`);
-        
+
         switch (strategy) {
           case 'reload':
             // Wait a bit then retry
             await this.delay(2000);
             this.handleRetry();
             return;
-            
+
           case 'clearState':
             // Clear component state and retry
-            this.setState({ 
-              hasError: false, 
+            this.setState({
+              hasError: false,
               error: undefined,
               errorInfo: undefined,
               isRecovering: false,
             });
             return;
-            
+
           case 'clearCache':
             this.handleClearCache();
             return;
-            
+
           case 'restartApp':
             this.handleRestartApp();
             return;
-            
+
           default:
             console.warn(`Unknown recovery strategy: ${strategy}`);
         }
@@ -336,7 +330,7 @@ export class ErrorBoundary extends Component<Props, State> {
         console.error(`Recovery strategy '${strategy}' failed:`, recoveryError);
       }
     }
-    
+
     // If all recovery strategies fail
     this.setState({ isRecovering: false });
     console.error('🚨 All recovery strategies failed');
@@ -364,7 +358,7 @@ export class ErrorBoundary extends Component<Props, State> {
       errorQueue: this.errorQueue.slice(-5), // Last 5 errors
       performanceMetrics: performanceMonitor.getPerformanceReport(),
     };
-    
+
     return JSON.stringify(report, null, 2);
   }
 

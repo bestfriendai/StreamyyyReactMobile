@@ -1,4 +1,5 @@
 import React from 'react';
+import { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -7,7 +8,6 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { useEffect } from 'react';
 import { Theme } from '@/constants/Theme';
 
 interface LoadingSpinnerProps {
@@ -15,15 +15,14 @@ interface LoadingSpinnerProps {
   color?: string;
 }
 
-export function LoadingSpinner({ size = 24, color = Theme.colors.accent.primary }: LoadingSpinnerProps) {
+export function LoadingSpinner({
+  size = 24,
+  color = Theme.colors.accent.primary,
+}: LoadingSpinnerProps) {
   const rotation = useSharedValue(0);
 
   useEffect(() => {
-    rotation.value = withRepeat(
-      withTiming(360, { duration: 1000 }),
-      -1,
-      false
-    );
+    rotation.value = withRepeat(withTiming(360, { duration: 1000 }), -1, false);
   }, [rotation]);
 
   const animatedStyle = useAnimatedStyle(() => {

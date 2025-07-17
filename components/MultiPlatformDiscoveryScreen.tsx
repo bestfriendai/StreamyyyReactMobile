@@ -1,22 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Platform,
-  StatusBar,
-  RefreshControl,
-  Dimensions,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  ScrollView,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MotiView, MotiText } from 'moti';
-import { BlurViewFallback as BlurView } from './BlurViewFallback';
 import {
   Search,
   Filter,
@@ -38,6 +20,22 @@ import {
   X,
   Check,
 } from 'lucide-react-native';
+import { MotiView, MotiText } from 'moti';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  Platform,
+  StatusBar,
+  RefreshControl,
+  Dimensions,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  ScrollView,
+  Alert,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -46,13 +44,31 @@ import Animated, {
   interpolate,
   runOnJS,
 } from 'react-native-reanimated';
-import { MultiPlatformStreamCard } from './MultiPlatformStreamCard';
-import { platformService, UnifiedStream, Platform, fetchAllLiveStreams, fetchStreamsByPlatform, searchAllPlatforms, fetchPlatformStats } from '@/services/platformService';
-import { socialService, getUserProfile, followStreamer } from '@/services/socialService';
-import { notificationService, sendStreamLiveNotification, updateNotificationPreferences } from '@/services/notificationService';
-import { discordService, sendStreamNotification, createStreamCommunity } from '@/services/discordService';
-import { useStreamManager } from '@/hooks/useStreamManager';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
+import { useStreamManager } from '@/hooks/useStreamManager';
+import {
+  discordService,
+  sendStreamNotification,
+  createStreamCommunity,
+} from '@/services/discordService';
+import {
+  notificationService,
+  sendStreamLiveNotification,
+  updateNotificationPreferences,
+} from '@/services/notificationService';
+import {
+  platformService,
+  UnifiedStream,
+  Platform,
+  fetchAllLiveStreams,
+  fetchStreamsByPlatform,
+  searchAllPlatforms,
+  fetchPlatformStats,
+} from '@/services/platformService';
+import { socialService, getUserProfile, followStreamer } from '@/services/socialService';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
+import { MultiPlatformStreamCard } from './MultiPlatformStreamCard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -119,7 +135,7 @@ const quickCategories = [
 export const MultiPlatformDiscoveryScreen: React.FC = () => {
   const { user } = useAuth();
   const { addStream, toggleFavorite, isFavorite, isStreamActive } = useStreamManager();
-  
+
   const [streams, setStreams] = useState<UnifiedStream[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -132,7 +148,7 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
   const [platformStats, setPlatformStats] = useState<any[]>([]);
   const [followedStreamers, setFollowedStreamers] = useState<string[]>([]);
   const [totalStreamers, setTotalStreamers] = useState(0);
-  
+
   const [filters, setFilters] = useState<FilterOptions>({
     platforms: ['twitch', 'youtube', 'kick'],
     categories: [],
@@ -165,11 +181,7 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
   const initializeData = async () => {
     try {
       setLoading(true);
-      await Promise.all([
-        fetchStreams(),
-        loadPlatformStats(),
-        loadFollowedStreamers(),
-      ]);
+      await Promise.all([fetchStreams(), loadPlatformStats(), loadFollowedStreamers()]);
     } catch (error) {
       console.error('Failed to initialize data:', error);
       setError('Failed to load streams. Please try again.');
@@ -181,15 +193,11 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
   const fetchStreams = async () => {
     try {
       setError(null);
-      
+
       let result: UnifiedStream[] = [];
-      
+
       if (searchQuery.trim()) {
-        result = await searchAllPlatforms(
-          searchQuery,
-          filters.platforms,
-          20
-        );
+        result = await searchAllPlatforms(searchQuery, filters.platforms, 20);
       } else if (selectedPlatform === 'all') {
         result = await fetchAllLiveStreams(20);
       } else {
@@ -198,10 +206,10 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
 
       // Apply filters
       result = applyFilters(result);
-      
+
       // Sort streams
       result = sortStreams(result);
-      
+
       setStreams(result);
       setTotalStreamers(result.length);
     } catch (error) {
@@ -220,8 +228,10 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
   };
 
   const loadFollowedStreamers = async () => {
-    if (!user?.id) return;
-    
+    if (!user?.id) {
+      return;
+    }
+
     try {
       const streamers = await socialService.getFollowedStreamers(user.id);
       setFollowedStreamers(streamers.map(s => s.id));
@@ -233,26 +243,37 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
   const applyFilters = (streams: UnifiedStream[]): UnifiedStream[] => {
     return streams.filter(stream => {
       // Platform filter
-      if (!filters.platforms.includes(stream.platform)) return false;
-      
+      if (!filters.platforms.includes(stream.platform)) {
+        return false;
+      }
+
       // Category filter
-      if (selectedCategory && !stream.category.toLowerCase().includes(selectedCategory.toLowerCase())) {
+      if (
+        selectedCategory &&
+        !stream.category.toLowerCase().includes(selectedCategory.toLowerCase())
+      ) {
         return false;
       }
-      
+
       // Language filter
-      if (filters.languages.length > 0 && stream.language && !filters.languages.includes(stream.language)) {
+      if (
+        filters.languages.length > 0 &&
+        stream.language &&
+        !filters.languages.includes(stream.language)
+      ) {
         return false;
       }
-      
+
       // Viewer count filter
       if (stream.viewerCount < filters.minViewers || stream.viewerCount > filters.maxViewers) {
         return false;
       }
-      
+
       // Live only filter
-      if (filters.showLiveOnly && !stream.isLive) return false;
-      
+      if (filters.showLiveOnly && !stream.isLive) {
+        return false;
+      }
+
       return true;
     });
   };
@@ -265,13 +286,20 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
         case 'recent':
           return new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime();
         case 'trending':
-          return (b.viewerCount * 0.7 + new Date(b.startedAt).getTime() * 0.3) - 
-                 (a.viewerCount * 0.7 + new Date(a.startedAt).getTime() * 0.3);
+          return (
+            b.viewerCount * 0.7 +
+            new Date(b.startedAt).getTime() * 0.3 -
+            (a.viewerCount * 0.7 + new Date(a.startedAt).getTime() * 0.3)
+          );
         case 'followed':
           const aFollowed = followedStreamers.includes(a.streamerName);
           const bFollowed = followedStreamers.includes(b.streamerName);
-          if (aFollowed && !bFollowed) return -1;
-          if (!aFollowed && bFollowed) return 1;
+          if (aFollowed && !bFollowed) {
+            return -1;
+          }
+          if (!aFollowed && bFollowed) {
+            return 1;
+          }
           return b.viewerCount - a.viewerCount;
         default:
           return 0;
@@ -281,11 +309,7 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([
-      fetchStreams(),
-      loadPlatformStats(),
-      loadFollowedStreamers(),
-    ]);
+    await Promise.all([fetchStreams(), loadPlatformStats(), loadFollowedStreamers()]);
     setRefreshing(false);
   }, []);
 
@@ -297,7 +321,7 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
     headerScale.value = withSpring(0.95, { damping: 15 }, () => {
       headerScale.value = withSpring(1);
     });
-    
+
     setSelectedPlatform(platformId);
     setSelectedCategory('');
   };
@@ -310,7 +334,7 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
     const newState = !showSearch;
     setShowSearch(newState);
     searchOpacity.value = withTiming(newState ? 1 : 0, { duration: 300 });
-    
+
     if (newState) {
       setTimeout(() => searchInputRef.current?.focus(), 100);
     } else {
@@ -332,7 +356,7 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
 
   const handleAddStream = (stream: UnifiedStream) => {
     addStream(stream);
-    
+
     // Track activity
     if (user?.id) {
       socialService.trackActivity({
@@ -352,10 +376,10 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
 
   const handleToggleFavorite = async (stream: UnifiedStream) => {
     toggleFavorite(stream.streamerName);
-    
+
     if (user?.id) {
       const isCurrentlyFavorite = isFavorite(stream.streamerName);
-      
+
       if (!isCurrentlyFavorite) {
         try {
           await followStreamer(user.id, stream.streamerName, stream.platform);
@@ -376,8 +400,10 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
   };
 
   const handleCreateCommunity = async (stream: UnifiedStream) => {
-    if (!user?.id) return;
-    
+    if (!user?.id) {
+      return;
+    }
+
     try {
       await createStreamCommunity({
         name: `${stream.streamerDisplayName} Community`,
@@ -402,7 +428,7 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
           voiceChannels: true,
         },
       });
-      
+
       Alert.alert('Community Created', `Created community for ${stream.streamerDisplayName}!`);
     } catch (error) {
       console.error('Failed to create community:', error);
@@ -445,7 +471,7 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
             >
               <Sparkles size={28} color="#8B5CF6" />
             </MotiView>
-            
+
             <View style={styles.titleTextContainer}>
               <MotiText
                 from={{ opacity: 0, translateX: -20 }}
@@ -471,13 +497,13 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
                   <Search size={20} color="#8B5CF6" />
                 </BlurView>
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={styles.actionButton} onPress={toggleFilters}>
                 <BlurView style={styles.actionButtonBlur} blurType="dark" blurAmount={10}>
                   <Filter size={20} color="#8B5CF6" />
                 </BlurView>
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={styles.actionButton}>
                 <BlurView style={styles.actionButtonBlur} blurType="dark" blurAmount={10}>
                   <Bell size={20} color="#8B5CF6" />
@@ -514,7 +540,11 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
             transition={{ delay: 500 }}
             style={styles.platformTabs}
           >
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsList}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.tabsList}
+            >
               {platformTabs.map((tab, index) => (
                 <MotiView
                   key={tab.id}
@@ -523,15 +553,27 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
                   transition={{ type: 'spring', damping: 15, delay: 600 + index * 100 }}
                 >
                   <TouchableOpacity
-                    style={[styles.platformTab, selectedPlatform === tab.id && styles.activePlatformTab]}
+                    style={[
+                      styles.platformTab,
+                      selectedPlatform === tab.id && styles.activePlatformTab,
+                    ]}
                     onPress={() => handlePlatformSelect(tab.id)}
                   >
                     <LinearGradient
-                      colors={selectedPlatform === tab.id ? tab.gradient : ['rgba(42, 42, 42, 0.8)', 'rgba(58, 58, 58, 0.8)']}
+                      colors={
+                        selectedPlatform === tab.id
+                          ? tab.gradient
+                          : ['rgba(42, 42, 42, 0.8)', 'rgba(58, 58, 58, 0.8)']
+                      }
                       style={styles.platformTabGradient}
                     >
                       {tab.icon}
-                      <Text style={[styles.platformTabText, selectedPlatform === tab.id && styles.activePlatformTabText]}>
+                      <Text
+                        style={[
+                          styles.platformTabText,
+                          selectedPlatform === tab.id && styles.activePlatformTabText,
+                        ]}
+                      >
                         {tab.name}
                       </Text>
                     </LinearGradient>
@@ -548,7 +590,11 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
             transition={{ delay: 700 }}
             style={styles.quickCategories}
           >
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesList}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoriesList}
+            >
               {quickCategories.map((category, index) => (
                 <MotiView
                   key={category.id}
@@ -557,11 +603,19 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
                   transition={{ type: 'spring', damping: 15, delay: 800 + index * 50 }}
                 >
                   <TouchableOpacity
-                    style={[styles.categoryButton, selectedCategory === category.id && styles.activeCategoryButton]}
+                    style={[
+                      styles.categoryButton,
+                      selectedCategory === category.id && styles.activeCategoryButton,
+                    ]}
                     onPress={() => handleCategorySelect(category.id)}
                   >
                     <Text style={styles.categoryEmoji}>{category.icon}</Text>
-                    <Text style={[styles.categoryText, selectedCategory === category.id && styles.activeCategoryText]}>
+                    <Text
+                      style={[
+                        styles.categoryText,
+                        selectedCategory === category.id && styles.activeCategoryText,
+                      ]}
+                    >
                       {category.name}
                     </Text>
                   </TouchableOpacity>
@@ -578,7 +632,11 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
               transition={{ delay: 900 }}
               style={styles.statsContainer}
             >
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsList}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.statsList}
+              >
                 {platformStats.map((stat, index) => (
                   <MotiView
                     key={stat.platform}
@@ -589,7 +647,12 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
                     <BlurView style={styles.statCard} blurType="dark" blurAmount={10}>
                       <View style={styles.statHeader}>
                         <Text style={styles.statPlatform}>{stat.platform.toUpperCase()}</Text>
-                        <View style={[styles.statusIndicator, { backgroundColor: stat.isOnline ? '#22C55E' : '#EF4444' }]} />
+                        <View
+                          style={[
+                            styles.statusIndicator,
+                            { backgroundColor: stat.isOnline ? '#22C55E' : '#EF4444' },
+                          ]}
+                        />
                       </View>
                       <Text style={styles.statValue}>{stat.totalStreams.toLocaleString()}</Text>
                       <Text style={styles.statLabel}>Live Streams</Text>
@@ -619,7 +682,7 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
         isFavorite={isFavorite(item.streamerName)}
         isActive={isStreamActive(item.id)}
         showAddButton={!isStreamActive(item.id)}
-        showSocialFeatures={true}
+        showSocialFeatures
         userId={user?.id}
       />
     </MotiView>
@@ -660,7 +723,13 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
           key={index}
           from={{ opacity: 0.3 }}
           animate={{ opacity: 0.8 }}
-          transition={{ type: 'timing', duration: 1000, loop: true, repeatReverse: true, delay: index * 200 }}
+          transition={{
+            type: 'timing',
+            duration: 1000,
+            loop: true,
+            repeatReverse: true,
+            delay: index * 200,
+          }}
           style={styles.loadingSkeleton}
         />
       ))}
@@ -670,12 +739,12 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      
+
       <LinearGradient colors={['#0a0a0a', '#1a1a1a', '#0f0f0f']} style={styles.background} />
-      
+
       <SafeAreaView style={styles.safeArea}>
         {renderHeader()}
-        
+
         {loading ? (
           renderLoadingState()
         ) : streams.length === 0 ? (
@@ -685,7 +754,7 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
             ref={flatListRef}
             data={streams}
             renderItem={renderStreamCard}
-            keyExtractor={(item) => item.id}
+            keyExtractor={item => item.id}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
             refreshControl={
@@ -696,7 +765,7 @@ export const MultiPlatformDiscoveryScreen: React.FC = () => {
                 colors={['#8B5CF6']}
               />
             }
-            onScroll={(event) => {
+            onScroll={event => {
               scrollY.value = event.nativeEvent.contentOffset.y;
             }}
           />

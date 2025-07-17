@@ -1,20 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-  StatusBar,
-  Platform,
-  Dimensions,
-  FlatList,
-  RefreshControl,
-  Pressable,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import {
@@ -39,14 +22,31 @@ import {
   MoreVertical,
 } from 'lucide-react-native';
 import { MotiView, AnimatePresence, MotiText } from 'moti';
-import { useStreamManager } from '@/hooks/useStreamManager';
-import { ModernTheme } from '@/theme/modernTheme';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+  StatusBar,
+  Platform,
+  Dimensions,
+  FlatList,
+  RefreshControl,
+  Pressable,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   withSpring,
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useStreamManager } from '@/hooks/useStreamManager';
+import { ModernTheme } from '@/theme/modernTheme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -79,7 +79,7 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedStreams, setSelectedStreams] = useState<string[]>([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
-  
+
   // Animation values
   const headerOpacity = useSharedValue(1);
   const cardScale = useSharedValue(1);
@@ -120,9 +120,10 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
 
   const filteredAndSortedStreams = favoriteStreams
     .filter(stream => {
-      const matchesSearch = stream.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           stream.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           stream.game.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        stream.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        stream.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        stream.game.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesFilter = !filterLive || stream.isLive;
       return matchesSearch && matchesFilter;
     })
@@ -143,23 +144,19 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
     });
 
   const handleRemoveFavorite = (streamId: string, username: string) => {
-    Alert.alert(
-      'Remove Favorite',
-      `Remove ${username} from your favorites?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => {
-            setFavoriteStreams(prev => prev.filter(s => s.id !== streamId));
-            removeFavorite(streamId);
-          },
+    Alert.alert('Remove Favorite', `Remove ${username} from your favorites?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => {
+          setFavoriteStreams(prev => prev.filter(s => s.id !== streamId));
+          removeFavorite(streamId);
         },
-      ]
-    );
+      },
+    ]);
   };
-  
+
   const handleRefresh = async () => {
     setRefreshing(true);
     // Simulate API call
@@ -182,9 +179,12 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
       `${stream.username} has been added to your multi-view grid.`,
       [
         { text: 'OK' },
-        { text: 'View Grid', onPress: () => {
-          router.push('/(tabs)/grid');
-        }}
+        {
+          text: 'View Grid',
+          onPress: () => {
+            router.push('/(tabs)/grid');
+          },
+        },
       ]
     );
   };
@@ -208,7 +208,7 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
         key={stream.id}
         from={{ opacity: 0, translateY: 30, scale: 0.9 }}
         animate={{ opacity: 1, translateY: 0, scale: 1 }}
-        transition={{ 
+        transition={{
           delay: index * 80,
           type: 'spring',
           damping: 15,
@@ -223,179 +223,175 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
       >
         <View style={styles.cardWrapper}>
           <LinearGradient
-            colors={isSelected 
-              ? ['rgba(139, 92, 246, 0.2)', 'rgba(124, 58, 237, 0.15)', 'rgba(42, 42, 42, 0.95)']
-              : ['rgba(42, 42, 42, 0.95)', 'rgba(28, 28, 28, 0.95)', 'rgba(15, 15, 15, 0.98)']
+            colors={
+              isSelected
+                ? ['rgba(139, 92, 246, 0.2)', 'rgba(124, 58, 237, 0.15)', 'rgba(42, 42, 42, 0.95)']
+                : ['rgba(42, 42, 42, 0.95)', 'rgba(28, 28, 28, 0.95)', 'rgba(15, 15, 15, 0.98)']
             }
             style={styles.cardGradient}
           >
-          {/* Enhanced Live Indicator */}
-          {stream.isLive && (
-            <MotiView
-              from={{ scale: 0.8, opacity: 0.8 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{
-                type: 'spring',
-                damping: 12,
-                loop: true,
-                repeatReverse: true,
-              }}
-              style={styles.liveIndicator}
-            >
-              <LinearGradient
-                colors={['#ff4444', '#dc2626']}
-                style={styles.liveGradient}
+            {/* Enhanced Live Indicator */}
+            {stream.isLive && (
+              <MotiView
+                from={{ scale: 0.8, opacity: 0.8 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{
+                  type: 'spring',
+                  damping: 12,
+                  loop: true,
+                  repeatReverse: true,
+                }}
+                style={styles.liveIndicator}
               >
-                <MotiView
-                  from={{ scale: 0.8 }}
-                  animate={{ scale: 1.2 }}
-                  transition={{
-                    type: 'timing',
-                    duration: 1000,
-                    loop: true,
-                    repeatReverse: true,
-                  }}
-                  style={styles.liveDot}
-                />
-                <Text style={styles.liveText}>LIVE</Text>
-              </LinearGradient>
-            </MotiView>
-          )}
-          
-          {/* Quality Badge */}
-          <View style={styles.qualityBadge}>
-            <LinearGradient
-              colors={['rgba(16, 185, 129, 0.9)', 'rgba(5, 150, 105, 0.8)']}
-              style={styles.qualityGradient}
-            >
-              <Zap size={10} color="#fff" />
-              <Text style={styles.qualityText}>HD</Text>
-            </LinearGradient>
-          </View>
+                <LinearGradient colors={['#ff4444', '#dc2626']} style={styles.liveGradient}>
+                  <MotiView
+                    from={{ scale: 0.8 }}
+                    animate={{ scale: 1.2 }}
+                    transition={{
+                      type: 'timing',
+                      duration: 1000,
+                      loop: true,
+                      repeatReverse: true,
+                    }}
+                    style={styles.liveDot}
+                  />
+                  <Text style={styles.liveText}>LIVE</Text>
+                </LinearGradient>
+              </MotiView>
+            )}
 
-          {/* Enhanced Stream Info */}
-          <View style={styles.streamInfo}>
-            <MotiText
-              from={{ opacity: 0, translateX: -10 }}
-              animate={{ opacity: 1, translateX: 0 }}
-              transition={{ delay: 100 }}
-              style={styles.streamUsername}
-              numberOfLines={1}
-            >
-              {stream.username}
-            </MotiText>
-            
-            <MotiText
-              from={{ opacity: 0, translateX: -10 }}
-              animate={{ opacity: 1, translateX: 0 }}
-              transition={{ delay: 150 }}
-              style={styles.streamTitle}
-              numberOfLines={isGrid ? 2 : 1}
-            >
-              {stream.title}
-            </MotiText>
-            
-            <View style={styles.gameContainer}>
+            {/* Quality Badge */}
+            <View style={styles.qualityBadge}>
               <LinearGradient
-                colors={['rgba(139, 92, 246, 0.3)', 'rgba(124, 58, 237, 0.2)']}
-                style={styles.gameGradient}
+                colors={['rgba(16, 185, 129, 0.9)', 'rgba(5, 150, 105, 0.8)']}
+                style={styles.qualityGradient}
               >
-                <Text style={styles.streamGame} numberOfLines={1}>
-                  {stream.game}
-                </Text>
+                <Zap size={10} color="#fff" />
+                <Text style={styles.qualityText}>HD</Text>
               </LinearGradient>
             </View>
-            
-            <View style={styles.streamStats}>
-              <View style={styles.statItem}>
-                <Eye size={14} color={ModernTheme.colors.textSecondary} />
-                <Text style={styles.statText}>
-                  {formatViewers(stream.viewers)}
-                </Text>
+
+            {/* Enhanced Stream Info */}
+            <View style={styles.streamInfo}>
+              <MotiText
+                from={{ opacity: 0, translateX: -10 }}
+                animate={{ opacity: 1, translateX: 0 }}
+                transition={{ delay: 100 }}
+                style={styles.streamUsername}
+                numberOfLines={1}
+              >
+                {stream.username}
+              </MotiText>
+
+              <MotiText
+                from={{ opacity: 0, translateX: -10 }}
+                animate={{ opacity: 1, translateX: 0 }}
+                transition={{ delay: 150 }}
+                style={styles.streamTitle}
+                numberOfLines={isGrid ? 2 : 1}
+              >
+                {stream.title}
+              </MotiText>
+
+              <View style={styles.gameContainer}>
+                <LinearGradient
+                  colors={['rgba(139, 92, 246, 0.3)', 'rgba(124, 58, 237, 0.2)']}
+                  style={styles.gameGradient}
+                >
+                  <Text style={styles.streamGame} numberOfLines={1}>
+                    {stream.game}
+                  </Text>
+                </LinearGradient>
               </View>
-              <View style={styles.statItem}>
-                <Clock size={14} color={ModernTheme.colors.accent} />
-                <Text style={styles.statText}>
-                  {stream.addedAt.toLocaleDateString()}
-                </Text>
-              </View>
-              <View style={styles.statItem}>
-                <TrendingUp size={14} color="#10B981" />
-                <Text style={[styles.statText, { color: '#10B981' }]}>+{Math.floor(Math.random() * 50)}%</Text>
+
+              <View style={styles.streamStats}>
+                <View style={styles.statItem}>
+                  <Eye size={14} color={ModernTheme.colors.textSecondary} />
+                  <Text style={styles.statText}>{formatViewers(stream.viewers)}</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Clock size={14} color={ModernTheme.colors.accent} />
+                  <Text style={styles.statText}>{stream.addedAt.toLocaleDateString()}</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <TrendingUp size={14} color="#10B981" />
+                  <Text style={[styles.statText, { color: '#10B981' }]}>
+                    +{Math.floor(Math.random() * 50)}%
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
 
-          {/* Enhanced Action Buttons */}
-          <View style={styles.actionButtons}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.actionButton, 
-                styles.playButton,
-                pressed && { transform: [{ scale: 0.95 }] }
-              ]}
-              onPress={() => {
-                HapticFeedback.medium();
-                cardScale.value = withSpring(1.05, { damping: 15 }, () => {
-                  cardScale.value = withSpring(1);
-                });
-                handleAddToMultiView(stream);
-              }}
-            >
-              <LinearGradient
-                colors={['#8B5CF6', '#7C3AED', '#6366F1']}
-                style={styles.actionGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+            {/* Enhanced Action Buttons */}
+            <View style={styles.actionButtons}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.actionButton,
+                  styles.playButton,
+                  pressed && { transform: [{ scale: 0.95 }] },
+                ]}
+                onPress={() => {
+                  HapticFeedback.medium();
+                  cardScale.value = withSpring(1.05, { damping: 15 }, () => {
+                    cardScale.value = withSpring(1);
+                  });
+                  handleAddToMultiView(stream);
+                }}
               >
-                <Plus size={16} color="#fff" />
-                <Text style={styles.actionText}>Add</Text>
-              </LinearGradient>
-            </Pressable>
-            
-            <Pressable
-              style={({ pressed }) => [
-                styles.actionButton, 
-                styles.bookmarkButton,
-                pressed && { transform: [{ scale: 0.95 }] }
-              ]}
-              onPress={() => {
-                HapticFeedback.light();
-                // Toggle bookmark/priority
-                Alert.alert('Bookmark', 'Stream bookmarked!');
-              }}
-            >
-              <LinearGradient
-                colors={['#F59E0B', '#D97706']}
-                style={styles.actionGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+                <LinearGradient
+                  colors={['#8B5CF6', '#7C3AED', '#6366F1']}
+                  style={styles.actionGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Plus size={16} color="#fff" />
+                  <Text style={styles.actionText}>Add</Text>
+                </LinearGradient>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.actionButton,
+                  styles.bookmarkButton,
+                  pressed && { transform: [{ scale: 0.95 }] },
+                ]}
+                onPress={() => {
+                  HapticFeedback.light();
+                  // Toggle bookmark/priority
+                  Alert.alert('Bookmark', 'Stream bookmarked!');
+                }}
               >
-                <Bookmark size={16} color="#fff" />
-              </LinearGradient>
-            </Pressable>
-            
-            <Pressable
-              style={({ pressed }) => [
-                styles.actionButton, 
-                styles.moreButton,
-                pressed && { transform: [{ scale: 0.95 }] }
-              ]}
-              onPress={() => {
-                HapticFeedback.light();
-                // Show more options
-                Alert.alert('More Options', 'Share, Remove, Settings...');
-              }}
-            >
-              <LinearGradient
-                colors={['rgba(55, 65, 81, 0.8)', 'rgba(31, 41, 55, 0.8)']}
-                style={styles.actionGradient}
+                <LinearGradient
+                  colors={['#F59E0B', '#D97706']}
+                  style={styles.actionGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Bookmark size={16} color="#fff" />
+                </LinearGradient>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.actionButton,
+                  styles.moreButton,
+                  pressed && { transform: [{ scale: 0.95 }] },
+                ]}
+                onPress={() => {
+                  HapticFeedback.light();
+                  // Show more options
+                  Alert.alert('More Options', 'Share, Remove, Settings...');
+                }}
               >
-                <MoreVertical size={16} color="#fff" />
-              </LinearGradient>
-            </Pressable>
-          </View>
-        </LinearGradient>
+                <LinearGradient
+                  colors={['rgba(55, 65, 81, 0.8)', 'rgba(31, 41, 55, 0.8)']}
+                  style={styles.actionGradient}
+                >
+                  <MoreVertical size={16} color="#fff" />
+                </LinearGradient>
+              </Pressable>
+            </View>
+          </LinearGradient>
         </View>
       </MotiView>
     );
@@ -428,7 +424,7 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
         >
           <Heart size={80} color={ModernTheme.colors.primary[500]} />
         </MotiView>
-        
+
         <MotiView
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
@@ -436,9 +432,7 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
           style={styles.emptyTextContainer}
         >
           <Text style={styles.emptyTitle}>No Favorites Yet</Text>
-          <Text style={styles.emptySubtitle}>
-            Add streamers to your favorites to see them here
-          </Text>
+          <Text style={styles.emptySubtitle}>Add streamers to your favorites to see them here</Text>
           <View style={styles.emptyFeatures}>
             <View style={styles.emptyFeature}>
               <Sparkles size={16} color={ModernTheme.colors.primary[500]} />
@@ -450,13 +444,13 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
             </View>
           </View>
         </MotiView>
-        
+
         <MotiView
           from={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 600 }}
         >
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.emptyButton}
             onPress={() => Alert.alert('Navigate', 'Navigate to discover screen')}
           >
@@ -478,26 +472,22 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" translucent />
-      <LinearGradient
-        colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']}
-        style={styles.background}
-      />
-      
+      <LinearGradient colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']} style={styles.background} />
+
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
           <LinearGradient
-            colors={[
-              'rgba(26, 26, 26, 0.98)',
-              'rgba(15, 15, 15, 0.95)',
-              'rgba(0, 0, 0, 0.9)'
-            ]}
+            colors={['rgba(26, 26, 26, 0.98)', 'rgba(15, 15, 15, 0.95)', 'rgba(0, 0, 0, 0.9)']}
             style={styles.headerGradient}
           >
             <View style={styles.titleContainer}>
               <View style={styles.titleIconContainer}>
                 <LinearGradient
-                  colors={[ModernTheme.colors.primary[500], ModernTheme.colors.background.secondary]}
+                  colors={[
+                    ModernTheme.colors.primary[500],
+                    ModernTheme.colors.background.secondary,
+                  ]}
                   style={styles.titleIcon}
                 >
                   <Heart size={24} color="#fff" />
@@ -506,7 +496,8 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
               <View>
                 <Text style={styles.title}>Favorites</Text>
                 <Text style={styles.subtitle}>
-                  {favoriteStreams.length} streamers • {favoriteStreams.filter(s => s.isLive).length} live
+                  {favoriteStreams.length} streamers •{' '}
+                  {favoriteStreams.filter(s => s.isLive).length} live
                 </Text>
               </View>
             </View>
@@ -535,13 +526,19 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
                   style={[styles.viewModeButton, viewMode === 'grid' && styles.activeViewMode]}
                   onPress={() => setViewMode('grid')}
                 >
-                  <Grid3X3 size={18} color={viewMode === 'grid' ? '#fff' : ModernTheme.colors.textSecondary} />
+                  <Grid3X3
+                    size={18}
+                    color={viewMode === 'grid' ? '#fff' : ModernTheme.colors.textSecondary}
+                  />
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.viewModeButton, viewMode === 'list' && styles.activeViewMode]}
                   onPress={() => setViewMode('list')}
                 >
-                  <List size={18} color={viewMode === 'list' ? '#fff' : ModernTheme.colors.textSecondary} />
+                  <List
+                    size={18}
+                    color={viewMode === 'list' ? '#fff' : ModernTheme.colors.textSecondary}
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -569,13 +566,15 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
                     <View style={styles.filterRow}>
                       <Text style={styles.filterLabel}>Sort by:</Text>
                       <View style={styles.sortButtons}>
-                        {['name', 'viewers', 'added'].map((sort) => (
+                        {['name', 'viewers', 'added'].map(sort => (
                           <TouchableOpacity
                             key={sort}
                             style={[styles.sortButton, sortBy === sort && styles.activeSortButton]}
                             onPress={() => setSortBy(sort as any)}
                           >
-                            <Text style={[styles.sortText, sortBy === sort && styles.activeSortText]}>
+                            <Text
+                              style={[styles.sortText, sortBy === sort && styles.activeSortText]}
+                            >
                               {sort.charAt(0).toUpperCase() + sort.slice(1)}
                             </Text>
                           </TouchableOpacity>
@@ -592,14 +591,16 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
                         </TouchableOpacity>
                       </View>
                     </View>
-                    
+
                     <View style={styles.filterRow}>
                       <Text style={styles.filterLabel}>Show only live:</Text>
                       <TouchableOpacity
                         style={[styles.liveFilterButton, filterLive && styles.activeLiveFilter]}
                         onPress={() => setFilterLive(!filterLive)}
                       >
-                        <Text style={[styles.liveFilterText, filterLive && styles.activeLiveFilterText]}>
+                        <Text
+                          style={[styles.liveFilterText, filterLive && styles.activeLiveFilterText]}
+                        >
                           {filterLive ? 'ON' : 'OFF'}
                         </Text>
                       </TouchableOpacity>
@@ -615,7 +616,7 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
         <FlatList
           data={filteredAndSortedStreams}
           renderItem={({ item, index }) => renderStreamCard(item, index)}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           numColumns={viewMode === 'grid' ? 2 : 1}
           key={viewMode} // Force re-render when view mode changes
           contentContainerStyle={styles.scrollContent}

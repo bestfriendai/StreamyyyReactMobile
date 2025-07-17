@@ -9,56 +9,87 @@ import { WebView } from 'react-native-webview';
 
 interface UnifiedTwitchPlayerProps {
   streamId: string;
+  muted?: boolean;
   onLoad?: () => void;
   onError?: (error: any) => void;
   style?: any;
+  isVisible?: boolean; // For viewport culling
+  priority?: 'high' | 'normal' | 'low'; // Loading priority
 }
 
-export const UnifiedTwitchPlayer: React.FC<UnifiedTwitchPlayerProps> = ({
-  streamId,
-  onLoad,
-  onError,
-  style,
-}) => {
-  const [loading, setLoading] = useState(true);
-  const webViewRef = useRef<WebView>(null);
+export const UnifiedTwitchPlayer: React.FC<UnifiedTwitchPlayerProps> = React.memo(
+  ({ streamId, muted = true, onLoad, onError, style, isVisible = true, priority = 'normal' }) => {
+    const [loading, setLoading] = useState(true);
+    const [shouldLoad, setShouldLoad] = useState(priority === 'high');
+    const [currentMuted, setCurrentMuted] = useState(muted);
+    const webViewRef = useRef<WebView>(null);
 
-  // Simple parent domain configuration that works
-  const embedUrl = `https://player.twitch.tv/?channel=${streamId}&parent=localhost&parent=expo.dev&muted=true&autoplay=true&controls=true`;
+    // Lazy loading based on visibility and priority
+    React.useEffect(() => {
+      if (isVisible && !shouldLoad) {
+        // Add delay based on priority to prevent all WebViews loading at once
+        const delay = priority === 'high' ? 0 : priority === 'normal' ? 300 : 600;
+        const timer = setTimeout(() => setShouldLoad(true), delay);
+        return () => clearTimeout(timer);
+      }
+    }, [isVisible, priority, shouldLoad]);
 
-  const handleLoadEnd = () => {
-    setLoading(false);
-    onLoad?.();
-  };
+    // Update muted state and trigger efficient refresh only when needed
+    React.useEffect(() => {
+      if (muted !== currentMuted) {
+        setCurrentMuted(muted);
+      }
+    }, [muted, currentMuted]);
 
-  const handleError = (event: any) => {
-    setLoading(false);
-    onError?.(event);
-  };
+    // Optimized embed URL that updates only mute parameter
+    const embedUrl = React.useMemo(() => {
+      return `https://player.twitch.tv/?channel=${streamId}&parent=localhost&parent=expo.dev&parent=expo.io&parent=snack.expo.dev&muted=${currentMuted}&autoplay=${isVisible}&controls=false&time=0s`;
+    }, [streamId, currentMuted, isVisible]);
 
-  return (
-    <View style={[styles.container, style]}>
-      {loading && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#9146FF" />
-        </View>
-      )}
-      
-      <WebView
-        ref={webViewRef}
-        source={{ uri: embedUrl }}
-        style={styles.webview}
-        onLoadEnd={handleLoadEnd}
-        onError={handleError}
-        allowsInlineMediaPlayback
-        mediaPlaybackRequiresUserAction={false}
-        javaScriptEnabled
-        domStorageEnabled
-        startInLoadingState={true}
-      />
-    </View>
-  );
-};
+    const handleLoadEnd = () => {
+      setLoading(false);
+      onLoad?.();
+    };
+
+    const handleError = (event: any) => {
+      setLoading(false);
+      onError?.(event);
+    };
+
+    return (
+      <View style={[styles.container, style]}>
+        {(loading || !shouldLoad) && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#9146FF" />
+          </View>
+        )}
+
+        {shouldLoad && (
+          <WebView
+            ref={webViewRef}
+            source={{ uri: embedUrl }}
+            style={styles.webview}
+            onLoadEnd={handleLoadEnd}
+            onError={handleError}
+            allowsInlineMediaPlayback
+            mediaPlaybackRequiresUserAction={false}
+            javaScriptEnabled
+            domStorageEnabled
+            startInLoadingState={false} // Reduce loading state duration
+            // Performance optimizations for faster mute changes
+            cacheEnabled={false} // Disable cache to ensure mute state updates
+            mixedContentMode="compatibility"
+            allowsBackForwardNavigationGestures={false}
+            // Optimize rendering for mute state changes
+            renderLoading={() => null} // Remove loading overlay for faster transitions
+          />
+        )}
+      </View>
+    );
+  }
+);
+
+UnifiedTwitchPlayer.displayName = 'UnifiedTwitchPlayer';
 
 const styles = StyleSheet.create({
   container: {

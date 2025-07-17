@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Volume2, VolumeX, X, Eye } from 'lucide-react-native';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
@@ -9,13 +11,6 @@ import {
   TextStyle,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Volume2,
-  VolumeX,
-  X,
-  Eye,
-} from 'lucide-react-native';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
 
@@ -174,12 +169,15 @@ export const SimpleTwitchPlayer: React.FC<SimpleTwitchPlayerProps> = ({
     console.log('✅ Simple Twitch player loaded:', stream.user_login);
   }, [stream.user_login]);
 
-  const handleWebViewError = useCallback((syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.error('❌ Simple Twitch player error:', stream.user_login, nativeEvent);
-    setError('Failed to load stream');
-    setIsLoading(false);
-  }, [stream.user_login]);
+  const handleWebViewError = useCallback(
+    (syntheticEvent: any) => {
+      const { nativeEvent } = syntheticEvent;
+      console.error('❌ Simple Twitch player error:', stream.user_login, nativeEvent);
+      setError('Failed to load stream');
+      setIsLoading(false);
+    },
+    [stream.user_login]
+  );
 
   const handleWebViewLoadStart = useCallback(() => {
     console.log('🔄 Simple Twitch player loading:', stream.user_login);
@@ -188,27 +186,30 @@ export const SimpleTwitchPlayer: React.FC<SimpleTwitchPlayerProps> = ({
   }, [stream.user_login]);
 
   // Handle WebView messages
-  const handleWebViewMessage = useCallback((event: any) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      
-      switch (data.type) {
-        case 'loaded':
-          setIsLoading(false);
-          setError(null);
-          break;
-        case 'error':
-          setIsLoading(false);
-          setError(data.message || 'Failed to load stream');
-          break;
-        case 'touch':
-          onPress?.();
-          break;
+  const handleWebViewMessage = useCallback(
+    (event: any) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+
+        switch (data.type) {
+          case 'loaded':
+            setIsLoading(false);
+            setError(null);
+            break;
+          case 'error':
+            setIsLoading(false);
+            setError(data.message || 'Failed to load stream');
+            break;
+          case 'touch':
+            onPress?.();
+            break;
+        }
+      } catch (error) {
+        console.log('WebView message error:', error);
       }
-    } catch (error) {
-      console.log('WebView message error:', error);
-    }
-  }, [onPress]);
+    },
+    [onPress]
+  );
 
   // Handle retry
   const handleRetry = useCallback(() => {
@@ -221,11 +222,7 @@ export const SimpleTwitchPlayer: React.FC<SimpleTwitchPlayerProps> = ({
 
   return (
     <View style={[styles.container, { width, height }]}>
-      <TouchableOpacity
-        style={styles.touchArea}
-        onPress={onPress}
-        activeOpacity={1}
-      >
+      <TouchableOpacity style={styles.touchArea} onPress={onPress} activeOpacity={1}>
         {/* Simple Twitch WebView */}
         <WebView
           ref={webViewRef}
@@ -235,10 +232,10 @@ export const SimpleTwitchPlayer: React.FC<SimpleTwitchPlayerProps> = ({
           onError={handleWebViewError}
           onLoadStart={handleWebViewLoadStart}
           onMessage={handleWebViewMessage}
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
           scalesPageToFit={false}
           bounces={false}
@@ -246,9 +243,9 @@ export const SimpleTwitchPlayer: React.FC<SimpleTwitchPlayerProps> = ({
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['*']}
-          mixedContentMode={'compatibility'}
+          mixedContentMode="compatibility"
           allowsFullscreenVideo={false}
-          allowsProtectedMedia={true}
+          allowsProtectedMedia
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
         />
 
@@ -273,10 +270,7 @@ export const SimpleTwitchPlayer: React.FC<SimpleTwitchPlayerProps> = ({
         {/* Stream Info Overlay */}
         {!isLoading && !error && (
           <View style={styles.infoOverlay}>
-            <LinearGradient
-              colors={['rgba(0,0,0,0.8)', 'transparent']}
-              style={styles.infoGradient}
-            >
+            <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.infoGradient}>
               <View style={styles.streamInfo}>
                 <View style={styles.platformBadge}>
                   <Text style={styles.platformText}>LIVE</Text>
@@ -306,10 +300,7 @@ export const SimpleTwitchPlayer: React.FC<SimpleTwitchPlayerProps> = ({
               style={styles.controlsGradient}
             >
               <View style={styles.controlsContainer}>
-                <TouchableOpacity
-                  style={styles.controlButton}
-                  onPress={onMuteToggle}
-                >
+                <TouchableOpacity style={styles.controlButton} onPress={onMuteToggle}>
                   {isMuted ? (
                     <VolumeX size={16} color="#fff" />
                   ) : (
@@ -318,10 +309,7 @@ export const SimpleTwitchPlayer: React.FC<SimpleTwitchPlayerProps> = ({
                 </TouchableOpacity>
 
                 {onRemove && (
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={onRemove}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={onRemove}>
                     <X size={16} color="#fff" />
                   </TouchableOpacity>
                 )}

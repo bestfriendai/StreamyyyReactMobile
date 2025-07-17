@@ -4,7 +4,6 @@
  */
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Dimensions, Text } from 'react-native';
-
 import { adMobService } from '@/services/adMobService';
 import { logDebug, logError } from '@/utils/errorHandler';
 
@@ -47,7 +46,7 @@ export const BannerAdComponent: React.FC<BannerAdComponentProps> = ({
   const checkAdMobStatus = async () => {
     const canShow = adMobService.canShowAds();
     setCanShowAds(canShow);
-    
+
     if (!canShow) {
       logDebug('Banner ad not shown - AdMob not ready or no consent');
     }
@@ -85,16 +84,12 @@ export const BannerAdComponent: React.FC<BannerAdComponentProps> = ({
         onAdLoaded={handleAdLoaded}
         onAdFailedToLoad={handleAdError}
       />
-      
+
       {/* Show placeholder only if ad failed to load */}
       {adError && (
         <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>
-            Ad failed to load
-          </Text>
-          <Text style={styles.errorText}>
-            {adError}
-          </Text>
+          <Text style={styles.placeholderText}>Ad failed to load</Text>
+          <Text style={styles.errorText}>{adError}</Text>
         </View>
       )}
     </View>

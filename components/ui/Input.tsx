@@ -3,6 +3,7 @@
  * Uses unified theme system for consistent styling
  */
 
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState, useRef } from 'react';
 import {
   TextInput,
@@ -13,7 +14,6 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -82,7 +82,7 @@ export const Input: React.FC<InputProps> = ({
   const { theme, helpers } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
-  
+
   // Animation values
   const borderColor = useSharedValue(theme.border.primary);
   const scale = useSharedValue(1);
@@ -168,9 +168,7 @@ export const Input: React.FC<InputProps> = ({
   const getInputStyles = (): TextStyle => {
     return {
       flex: 1,
-      fontSize: theme.tokens.typography.sizes[
-        size === 'sm' ? 'sm' : size === 'lg' ? 'md' : 'base'
-      ],
+      fontSize: theme.tokens.typography.sizes[size === 'sm' ? 'sm' : size === 'lg' ? 'md' : 'base'],
       fontFamily: theme.tokens.typography.fonts.primary,
       color: theme.text.primary,
       textAlignVertical: multiline ? 'top' : 'center',
@@ -318,9 +316,11 @@ export const Input: React.FC<InputProps> = ({
 };
 
 // Specialized input variants
-export const SearchInput: React.FC<Omit<InputProps, 'variant' | 'leftIcon'> & {
-  leftIcon?: React.ReactNode;
-}> = ({ leftIcon, ...props }) => {
+export const SearchInput: React.FC<
+  Omit<InputProps, 'variant' | 'leftIcon'> & {
+    leftIcon?: React.ReactNode;
+  }
+> = ({ leftIcon, ...props }) => {
   return (
     <Input
       {...props}
@@ -345,9 +345,7 @@ export const PasswordInput: React.FC<Omit<InputProps, 'secureTextEntry' | 'right
       secureTextEntry={!showPassword}
       rightIcon={
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <Text style={{ color: theme.text.tertiary }}>
-            {showPassword ? 'Hide' : 'Show'}
-          </Text>
+          <Text style={{ color: theme.text.tertiary }}>{showPassword ? 'Hide' : 'Show'}</Text>
         </TouchableOpacity>
       }
       onRightIconPress={() => setShowPassword(!showPassword)}

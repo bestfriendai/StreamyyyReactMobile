@@ -3,18 +3,7 @@
  * Demonstrates proper usage of the new theme system and UI components
  */
 
-import React, { useState, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  Switch,
-  Alert,
-  Platform,
-  Linking,
-} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Settings,
@@ -42,14 +31,25 @@ import {
   RefreshCw,
   Bug,
 } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  Switch,
+  Alert,
+  Platform,
+  Linking,
+} from 'react-native';
 
 // Import unified theme components
-import { useTheme } from '@/contexts/ThemeContext';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import { AnimatedContainer, StaggeredContainer } from '@/components/ui/AnimatedContainer';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useTheme } from '@/contexts/ThemeContext';
 import { ColorContrastUtils, ScreenReaderUtils, TouchTargetUtils } from '@/utils/accessibility';
 
 interface SettingsItem {
@@ -72,7 +72,7 @@ interface SettingsSection {
 
 export const EnhancedSettingsScreenWithTheme: React.FC = () => {
   const { theme, isDark, toggleTheme, helpers } = useTheme();
-  
+
   // State management
   const [settings, setSettings] = useState({
     notifications: true,
@@ -84,37 +84,38 @@ export const EnhancedSettingsScreenWithTheme: React.FC = () => {
     hapticFeedback: true,
     analytics: false,
   });
-  
+
   const [expandedSections, setExpandedSections] = useState<string[]>(['account', 'streaming']);
   const [showErrorTesting, setShowErrorTesting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Handle setting toggle
-  const handleToggle = useCallback(async (key: string, value: boolean) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-    
-    // Handle theme toggle
-    if (key === 'darkMode') {
-      toggleTheme();
-    }
-    
-    // Save to AsyncStorage
-    try {
-      await AsyncStorage.setItem(`setting_${key}`, JSON.stringify(value));
-      
-      // Announce change to screen reader
-      ScreenReaderUtils.announce(`${key} ${value ? 'enabled' : 'disabled'}`);
-    } catch (error) {
-      console.warn('Failed to save setting:', error);
-    }
-  }, [toggleTheme]);
+  const handleToggle = useCallback(
+    async (key: string, value: boolean) => {
+      setSettings(prev => ({ ...prev, [key]: value }));
+
+      // Handle theme toggle
+      if (key === 'darkMode') {
+        toggleTheme();
+      }
+
+      // Save to AsyncStorage
+      try {
+        await AsyncStorage.setItem(`setting_${key}`, JSON.stringify(value));
+
+        // Announce change to screen reader
+        ScreenReaderUtils.announce(`${key} ${value ? 'enabled' : 'disabled'}`);
+      } catch (error) {
+        console.warn('Failed to save setting:', error);
+      }
+    },
+    [toggleTheme]
+  );
 
   // Toggle section expansion
   const toggleSection = useCallback((sectionId: string) => {
-    setExpandedSections(prev => 
-      prev.includes(sectionId)
-        ? prev.filter(id => id !== sectionId)
-        : [...prev, sectionId]
+    setExpandedSections(prev =>
+      prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]
     );
   }, []);
 
@@ -139,7 +140,7 @@ export const EnhancedSettingsScreenWithTheme: React.FC = () => {
           icon: Bell,
           type: 'toggle',
           value: settings.notifications,
-          onToggle: (value) => handleToggle('notifications', value),
+          onToggle: value => handleToggle('notifications', value),
         },
         {
           id: 'privacy',
@@ -162,7 +163,7 @@ export const EnhancedSettingsScreenWithTheme: React.FC = () => {
           icon: isDark ? Moon : Sun,
           type: 'toggle',
           value: settings.darkMode,
-          onToggle: (value) => handleToggle('darkMode', value),
+          onToggle: value => handleToggle('darkMode', value),
         },
         {
           id: 'theme',
@@ -185,7 +186,7 @@ export const EnhancedSettingsScreenWithTheme: React.FC = () => {
           icon: Monitor,
           type: 'toggle',
           value: settings.autoplay,
-          onToggle: (value) => handleToggle('autoplay', value),
+          onToggle: value => handleToggle('autoplay', value),
         },
         {
           id: 'highQuality',
@@ -194,7 +195,7 @@ export const EnhancedSettingsScreenWithTheme: React.FC = () => {
           icon: Eye,
           type: 'toggle',
           value: settings.highQuality,
-          onToggle: (value) => handleToggle('highQuality', value),
+          onToggle: value => handleToggle('highQuality', value),
         },
         {
           id: 'cellularStreaming',
@@ -203,7 +204,7 @@ export const EnhancedSettingsScreenWithTheme: React.FC = () => {
           icon: Wifi,
           type: 'toggle',
           value: settings.cellularStreaming,
-          onToggle: (value) => handleToggle('cellularStreaming', value),
+          onToggle: value => handleToggle('cellularStreaming', value),
         },
         {
           id: 'backgroundAudio',
@@ -212,7 +213,7 @@ export const EnhancedSettingsScreenWithTheme: React.FC = () => {
           icon: Headphones,
           type: 'toggle',
           value: settings.backgroundAudio,
-          onToggle: (value) => handleToggle('backgroundAudio', value),
+          onToggle: value => handleToggle('backgroundAudio', value),
         },
       ],
     },
@@ -227,7 +228,7 @@ export const EnhancedSettingsScreenWithTheme: React.FC = () => {
           icon: Smartphone,
           type: 'toggle',
           value: settings.hapticFeedback,
-          onToggle: (value) => handleToggle('hapticFeedback', value),
+          onToggle: value => handleToggle('hapticFeedback', value),
         },
         {
           id: 'analytics',
@@ -236,7 +237,7 @@ export const EnhancedSettingsScreenWithTheme: React.FC = () => {
           icon: Globe,
           type: 'toggle',
           value: settings.analytics,
-          onToggle: (value) => handleToggle('analytics', value),
+          onToggle: value => handleToggle('analytics', value),
         },
         {
           id: 'clearCache',
@@ -338,7 +339,7 @@ export const EnhancedSettingsScreenWithTheme: React.FC = () => {
                   accessibilityLabel={`${item.title} icon`}
                 />
               </View>
-              
+
               <View style={{ flex: 1 }}>
                 <Text
                   style={{
@@ -376,11 +377,7 @@ export const EnhancedSettingsScreenWithTheme: React.FC = () => {
                   accessibilityLabel={accessibleLabel}
                 />
               ) : (
-                <ChevronRight
-                  size={20}
-                  color={theme.text.tertiary}
-                  accessibilityLabel="Navigate"
-                />
+                <ChevronRight size={20} color={theme.text.tertiary} accessibilityLabel="Navigate" />
               )}
             </View>
           </View>
@@ -497,7 +494,13 @@ export const EnhancedSettingsScreenWithTheme: React.FC = () => {
             title={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
             onPress={toggleTheme}
             variant="secondary"
-            icon={isDark ? <Sun size={20} color={theme.text.primary} /> : <Moon size={20} color={theme.text.primary} />}
+            icon={
+              isDark ? (
+                <Sun size={20} color={theme.text.primary} />
+              ) : (
+                <Moon size={20} color={theme.text.primary} />
+              )
+            }
             style={{ marginBottom: theme.tokens.spacing[4] }}
           />
         </AnimatedContainer>

@@ -3,6 +3,7 @@
  * Uses unified theme system for consistent styling
  */
 
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
   TouchableOpacity,
@@ -12,7 +13,6 @@ import {
   ActivityIndicator,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -120,13 +120,16 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const getTextStyles = (): TextStyle => {
-    const fontSize = theme.tokens.typography.sizes[
-      size === 'xs' ? 'xs' :
-      size === 'sm' ? 'sm' :
-      size === 'md' ? 'base' :
-      size === 'lg' ? 'md' :
-      'lg'
-    ];
+    const fontSize =
+      theme.tokens.typography.sizes[
+        size === 'xs'
+          ? 'xs'
+          : size === 'sm'
+            ? 'sm'
+          size === 'md' ? 'base' :
+            size === 'lg' ? 'md' :
+              'lg'
+      ];
 
     const baseTextStyles: TextStyle = {
       fontSize,

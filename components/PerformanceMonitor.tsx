@@ -3,6 +3,25 @@
  * Real-time dashboard for system performance, stream metrics, and optimization recommendations
  */
 
+import {
+  Activity,
+  Cpu,
+  HardDrive,
+  Wifi,
+  Battery,
+  Zap,
+  AlertTriangle,
+  CheckCircle,
+  TrendingUp,
+  TrendingDown,
+  BarChart3,
+  Settings,
+  RefreshCw,
+  X,
+  Eye,
+  Clock,
+  Signal,
+} from 'lucide-react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -26,28 +45,9 @@ import Animated, {
   SlideInUp,
   SlideOutDown,
 } from 'react-native-reanimated';
-import {
-  Activity,
-  Cpu,
-  HardDrive,
-  Wifi,
-  Battery,
-  Zap,
-  AlertTriangle,
-  CheckCircle,
-  TrendingUp,
-  TrendingDown,
-  BarChart3,
-  Settings,
-  RefreshCw,
-  X,
-  Eye,
-  Clock,
-  Signal,
-} from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurViewFallback as BlurView } from './BlurViewFallback';
 import { ModernTheme } from '@/theme/modernTheme';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
 import { HapticFeedback } from '@/utils/haptics';
 import {
   performanceOptimizer,
@@ -61,10 +61,7 @@ import {
   BandwidthMetrics,
   getCurrentBandwidth,
 } from '@/services/bandwidthMonitor';
-import {
-  streamQualityManager,
-  getOptimalQuality,
-} from '@/services/streamQualityManager';
+import { streamQualityManager, getOptimalQuality } from '@/services/streamQualityManager';
 
 interface PerformanceMonitorProps {
   visible?: boolean;
@@ -111,8 +108,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
   };
 
   const getTrendIcon = () => {
-    if (trend === 'up') return <TrendingUp size={12} color={ModernTheme.colors.success[400]} />;
-    if (trend === 'down') return <TrendingDown size={12} color={ModernTheme.colors.error[400]} />;
+    if (trend === 'up') {return <TrendingUp size={12} color={ModernTheme.colors.success[400]} />;}
+    if (trend === 'down') {return <TrendingDown size={12} color={ModernTheme.colors.error[400]} />;}
     return null;
   };
 
@@ -140,7 +137,9 @@ const MetricCard: React.FC<MetricCardProps> = ({
       <BlurView style={styles.cardBlur} blurType="dark" blurAmount={15}>
         <View style={styles.cardHeader}>
           <View style={styles.cardTitleRow}>
-            <View style={[styles.iconContainer, { backgroundColor: `${getStatusColor(status)}20` }]}>
+            <View
+              style={[styles.iconContainer, { backgroundColor: `${getStatusColor(status)}20` }]}
+            >
               {React.cloneElement(icon as React.ReactElement, {
                 color: getStatusColor(status),
                 size: 16,
@@ -150,17 +149,13 @@ const MetricCard: React.FC<MetricCardProps> = ({
             {getTrendIcon()}
           </View>
           <View style={styles.cardValue}>
-            <Text style={[styles.valueText, { color: getStatusColor(status) }]}>
-              {value}
-            </Text>
+            <Text style={[styles.valueText, { color: getStatusColor(status) }]}>{value}</Text>
             {unit && <Text style={styles.unitText}>{unit}</Text>}
           </View>
         </View>
-        
-        {subtitle && (
-          <Text style={styles.cardSubtitle}>{subtitle}</Text>
-        )}
-        
+
+        {subtitle && <Text style={styles.cardSubtitle}>{subtitle}</Text>}
+
         {typeof value === 'number' && value <= 100 && (
           <View style={styles.progressContainer}>
             <View style={styles.progressBar}>
@@ -208,19 +203,19 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
 
   // Subscribe to real-time updates
   useEffect(() => {
-    if (!visible) return;
+    if (!visible) {return;}
 
     updateMetrics();
 
-    const unsubscribePerf = performanceOptimizer.onPerformanceUpdate((metrics) => {
+    const unsubscribePerf = performanceOptimizer.onPerformanceUpdate(metrics => {
       setPerformanceMetrics(metrics);
     });
 
-    const unsubscribeBandwidth = bandwidthMonitor.onBandwidthUpdate((metrics) => {
+    const unsubscribeBandwidth = bandwidthMonitor.onBandwidthUpdate(metrics => {
       setBandwidthMetrics(metrics);
     });
 
-    const unsubscribeRecs = performanceOptimizer.onRecommendations((recs) => {
+    const unsubscribeRecs = performanceOptimizer.onRecommendations(recs => {
       setRecommendations(recs);
     });
 
@@ -235,11 +230,11 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     HapticFeedback.medium();
-    
+
     refreshRotation.value = withTiming(360, { duration: 1000 });
-    
+
     await updateMetrics();
-    
+
     setTimeout(() => {
       setRefreshing(false);
       refreshRotation.value = 0;
@@ -257,43 +252,49 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
 
   const getMemoryStatus = (usage: number): 'excellent' | 'good' | 'fair' | 'poor' | 'critical' => {
     const percentage = (usage / 1024) * 100; // Assuming 1GB total as baseline
-    if (percentage < 30) return 'excellent';
-    if (percentage < 50) return 'good';
-    if (percentage < 70) return 'fair';
-    if (percentage < 90) return 'poor';
+    if (percentage < 30) {return 'excellent';}
+    if (percentage < 50) {return 'good';}
+    if (percentage < 70) {return 'fair';}
+    if (percentage < 90) {return 'poor';}
     return 'critical';
   };
 
   const getCPUStatus = (usage: number): 'excellent' | 'good' | 'fair' | 'poor' | 'critical' => {
-    if (usage < 30) return 'excellent';
-    if (usage < 50) return 'good';
-    if (usage < 70) return 'fair';
-    if (usage < 90) return 'poor';
+    if (usage < 30) {return 'excellent';}
+    if (usage < 50) {return 'good';}
+    if (usage < 70) {return 'fair';}
+    if (usage < 90) {return 'poor';}
     return 'critical';
   };
 
-  const getBandwidthStatus = (speed: number): 'excellent' | 'good' | 'fair' | 'poor' | 'critical' => {
-    if (speed >= 10) return 'excellent';
-    if (speed >= 5) return 'good';
-    if (speed >= 2) return 'fair';
-    if (speed >= 1) return 'poor';
+  const getBandwidthStatus = (
+    speed: number
+  ): 'excellent' | 'good' | 'fair' | 'poor' | 'critical' => {
+    if (speed >= 10) {return 'excellent';}
+    if (speed >= 5) {return 'good';}
+    if (speed >= 2) {return 'fair';}
+    if (speed >= 1) {return 'poor';}
     return 'critical';
   };
 
-  const getLatencyStatus = (latency: number): 'excellent' | 'good' | 'fair' | 'poor' | 'critical' => {
-    if (latency < 50) return 'excellent';
-    if (latency < 100) return 'good';
-    if (latency < 200) return 'fair';
-    if (latency < 300) return 'poor';
+  const getLatencyStatus = (
+    latency: number
+  ): 'excellent' | 'good' | 'fair' | 'poor' | 'critical' => {
+    if (latency < 50) {return 'excellent';}
+    if (latency < 100) {return 'good';}
+    if (latency < 200) {return 'fair';}
+    if (latency < 300) {return 'poor';}
     return 'critical';
   };
 
-  const getBatteryStatus = (level?: number): 'excellent' | 'good' | 'fair' | 'poor' | 'critical' => {
-    if (!level) return 'good';
-    if (level > 80) return 'excellent';
-    if (level > 60) return 'good';
-    if (level > 40) return 'fair';
-    if (level > 20) return 'poor';
+  const getBatteryStatus = (
+    level?: number
+  ): 'excellent' | 'good' | 'fair' | 'poor' | 'critical' => {
+    if (!level) {return 'good';}
+    if (level > 80) {return 'excellent';}
+    if (level > 60) {return 'good';}
+    if (level > 40) {return 'fair';}
+    if (level > 20) {return 'poor';}
     return 'critical';
   };
 
@@ -307,15 +308,10 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
     transform: [{ rotate: `${refreshRotation.value}deg` }],
   }));
 
-  if (!visible) return null;
+  if (!visible) {return null;}
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <AnimatedView
           entering={SlideInUp.delay(100)}
@@ -352,7 +348,11 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
                     unit="%"
                     status={getCPUStatus(performanceMetrics?.cpuUsage || 0)}
                     icon={<Cpu />}
-                    trend={performanceMetrics?.cpuUsage && performanceMetrics.cpuUsage > 70 ? 'up' : 'stable'}
+                    trend={
+                      performanceMetrics?.cpuUsage && performanceMetrics.cpuUsage > 70
+                        ? 'up'
+                        : 'stable'
+                    }
                   />
                   <MetricCard
                     title="Memory"
@@ -363,13 +363,17 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
                     subtitle={performanceMetrics?.memoryPressure || 'Normal'}
                   />
                 </View>
-                
+
                 <View style={styles.metricsGrid}>
                   <MetricCard
                     title="Frame Rate"
                     value={performanceMetrics?.frameRate || 60}
                     unit="fps"
-                    status={performanceMetrics?.frameRate && performanceMetrics.frameRate < 30 ? 'poor' : 'good'}
+                    status={
+                      performanceMetrics?.frameRate && performanceMetrics.frameRate < 30
+                        ? 'poor'
+                        : 'good'
+                    }
                     icon={<Eye />}
                   />
                   {performanceMetrics?.batteryLevel && (
@@ -405,13 +409,15 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
                     icon={<Signal />}
                   />
                 </View>
-                
+
                 <View style={styles.metricsGrid}>
                   <MetricCard
                     title="Jitter"
                     value={bandwidthMetrics?.jitter || 0}
                     unit="ms"
-                    status={bandwidthMetrics?.jitter && bandwidthMetrics.jitter > 50 ? 'poor' : 'good'}
+                    status={
+                      bandwidthMetrics?.jitter && bandwidthMetrics.jitter > 50 ? 'poor' : 'good'
+                    }
                     icon={<Activity />}
                   />
                   <MetricCard
@@ -466,10 +472,13 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Quick Actions</Text>
                 <View style={styles.actionsGrid}>
-                  <TouchableOpacity style={styles.actionButton} onPress={() => {
-                    HapticFeedback.medium();
-                    // Implement optimization actions
-                  }}>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => {
+                      HapticFeedback.medium();
+                      // Implement optimization actions
+                    }}
+                  >
                     <LinearGradient
                       colors={[ModernTheme.colors.primary[500], ModernTheme.colors.primary[600]]}
                       style={styles.actionGradient}
@@ -478,11 +487,13 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
                       <Text style={styles.actionText}>Optimize Now</Text>
                     </LinearGradient>
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity style={styles.actionButton} onPress={() => {
-                    HapticFeedback.light();
-                    // Open settings
-                  }}>
+
+                    style={styles.actionButton}
+                    onPress={() => {
+                      HapticFeedback.light();
+                      // Open settings
+                    }}
+                  >
                     <View style={styles.actionSecondary}>
                       <Settings size={16} color={ModernTheme.colors.text.primary} />
                       <Text style={styles.actionSecondaryText}>Settings</Text>

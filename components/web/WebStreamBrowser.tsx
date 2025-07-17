@@ -19,16 +19,20 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['twitch', 'youtube', 'kick']);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([
+    'twitch',
+    'youtube',
+    'kick',
+  ]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'viewers' | 'title' | 'platform'>('viewers');
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
-  
+
   // Cross-platform store
   const { webSettings, addStream, activeStreams } = useCrossPlatformStore();
 
@@ -45,7 +49,7 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
   // Infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) => {
+      entries => {
         if (entries[0].isIntersecting && hasMore && !loading) {
           loadMoreStreams();
         }
@@ -62,7 +66,7 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
 
   // Keyboard shortcuts
   useEffect(() => {
-    if (!webSettings.keyboardShortcuts) return;
+    if (!webSettings.keyboardShortcuts) {return;}
 
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
@@ -99,7 +103,7 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
     try {
       setLoading(true);
       setError(null);
-      
+
       const newStreams = await platformService.getAllLiveStreams(50);
       setStreams(newStreams);
       setPage(1);
@@ -114,7 +118,7 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
   const loadMoreStreams = async () => {
     try {
       setLoading(true);
-      
+
       // Simulate pagination (in real app, this would be actual API pagination)
       const newStreams = await platformService.getAllLiveStreams(20);
       setStreams(prev => [...prev, ...newStreams]);
@@ -141,8 +145,8 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
 
     // Category filter
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter(stream => 
-        selectedCategories.some(cat => 
+      filtered = filtered.filter(stream =>
+        selectedCategories.some(cat =>
           stream.category.toLowerCase().includes(cat.toLowerCase())
         )
       );
@@ -151,10 +155,11 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(stream =>
-        stream.title.toLowerCase().includes(query) ||
-        stream.streamerDisplayName.toLowerCase().includes(query) ||
-        stream.category.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        stream =>
+          stream.title.toLowerCase().includes(query) ||
+          stream.streamerDisplayName.toLowerCase().includes(query) ||
+          stream.category.toLowerCase().includes(query)
       );
     }
 
@@ -183,14 +188,17 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
     if (activeStreams.some(s => s.id === stream.id)) {
       return; // Already added
     }
-    
+
     addStream(stream);
     onStreamAdd?.(stream);
   };
 
-  const isStreamActive = useCallback((stream: UnifiedStream) => {
-    return activeStreams.some(s => s.id === stream.id);
-  }, [activeStreams]);
+  const isStreamActive = useCallback(
+    (stream: UnifiedStream) => {
+      return activeStreams.some(s => s.id === stream.id);
+    },
+    [activeStreams]
+  );
 
   // Get unique categories for filter
   const categories = [...new Set(streams.map(s => s.category))].filter(Boolean);
@@ -212,15 +220,17 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
     const hoverStyle: React.CSSProperties = {
       transform: 'translateY(-2px)',
       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-      borderColor: stream.platform === 'twitch' ? '#9146FF' : 
-                  stream.platform === 'youtube' ? '#FF0000' : '#53FC18',
+      borderColor:
+        stream.platform === 'twitch'
+          ? '#9146FF'
+        stream.platform === 'youtube' ? '#FF0000' : '#53FC18',
     };
 
     return (
       <div
         style={cardStyle}
-        onMouseEnter={(e) => Object.assign(e.currentTarget.style, hoverStyle)}
-        onMouseLeave={(e) => Object.assign(e.currentTarget.style, cardStyle)}
+        onMouseEnter={e => Object.assign(e.currentTarget.style, hoverStyle)}
+        onMouseLeave={e => Object.assign(e.currentTarget.style, cardStyle)}
         onClick={() => handleStreamClick(stream)}
       >
         {/* Thumbnail */}
@@ -245,121 +255,140 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
               }}
             />
           )}
-          
+
           {(imageLoading || imageError) && (
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#333',
-              color: '#666',
-              fontSize: '14px',
-            }}>
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#333',
+                color: '#666',
+                fontSize: '14px',
+              }}
+            >
               {imageLoading ? 'Loading...' : '📺'}
             </div>
           )}
 
           {/* Live indicator */}
-          <div style={{
-            position: 'absolute',
-            top: '8px',
-            left: '8px',
-            backgroundColor: '#ff0000',
-            color: '#fff',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            fontSize: '10px',
-            fontWeight: 'bold',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: '8px',
+              left: '8px',
+              backgroundColor: '#ff0000',
+              color: '#fff',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              fontSize: '10px',
+              fontWeight: 'bold',
+            }}
+          >
             LIVE
           </div>
 
           {/* Viewer count */}
-          <div style={{
-            position: 'absolute',
-            bottom: '8px',
-            right: '8px',
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            color: '#fff',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            fontSize: '10px',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '8px',
+              right: '8px',
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              color: '#fff',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              fontSize: '10px',
+            }}
+          >
             {stream.viewerCount.toLocaleString()} viewers
           </div>
 
           {/* Platform badge */}
-          <div style={{
-            position: 'absolute',
-            top: '8px',
-            right: '8px',
-            backgroundColor: stream.platform === 'twitch' ? '#9146FF' : 
-                            stream.platform === 'youtube' ? '#FF0000' : '#53FC18',
-            color: '#fff',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            fontSize: '10px',
-            fontWeight: 'bold',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              backgroundColor:
+                stream.platform === 'twitch'
+                  ? '#9146FF'
+                  : stream.platform === 'youtube'
+                    ? '#FF0000'
+                    : '#53FC18',
+              color: '#fff',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              fontSize: '10px',
+              fontWeight: 'bold',
+            }}
+          >
             {stream.platform.toUpperCase()}
           </div>
         </div>
 
         {/* Stream info */}
         <div style={{ padding: '12px' }}>
-          <h3 style={{
-            margin: '0 0 8px 0',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            color: '#fff',
-            lineHeight: '1.2',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}>
+          <h3
+            style={{
+              margin: '0 0 8px 0',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              color: '#fff',
+              lineHeight: '1.2',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+            }}
+          >
             {stream.title}
           </h3>
 
-          <div style={{
-            fontSize: '12px',
-            color: '#ccc',
-            marginBottom: '4px',
-          }}>
+          <div
+            style={{
+              fontSize: '12px',
+              color: '#ccc',
+              marginBottom: '4px',
+            }}
+          >
             {stream.streamerDisplayName}
           </div>
 
-          <div style={{
-            fontSize: '11px',
-            color: '#999',
-          }}>
+          <div
+            style={{
+              fontSize: '11px',
+              color: '#999',
+            }}
+          >
             {stream.category}
           </div>
         </div>
 
         {/* Action buttons */}
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          display: 'flex',
-          gap: '8px',
-          opacity: 0,
-          transition: 'opacity 0.2s ease',
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          padding: '8px',
-          borderRadius: '4px',
-        }}
-        className="stream-actions"
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            display: 'flex',
+            gap: '8px',
+            opacity: 0,
+            transition: 'opacity 0.2s ease',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: '8px',
+            borderRadius: '4px',
+          }}
+          className="stream-actions"
         >
           <button
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               handleStreamAdd(stream);
             }}
@@ -376,9 +405,9 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
           >
             {isStreamActive(stream) ? 'Added' : 'Add'}
           </button>
-          
+
           <button
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               window.open(stream.embedUrl, '_blank');
             }}
@@ -408,14 +437,16 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
       `}</style>
 
       {/* Header */}
-      <div style={{
-        padding: '16px',
-        backgroundColor: '#1a1a1a',
-        borderBottom: '1px solid #333',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
-      }}>
+      <div
+        style={{
+          padding: '16px',
+          backgroundColor: '#1a1a1a',
+          borderBottom: '1px solid #333',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+        }}
+      >
         {/* Search bar */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <input
@@ -423,7 +454,7 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
             type="text"
             placeholder="Search streams... (press / to focus)"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             style={{
               flex: 1,
               padding: '8px 12px',
@@ -434,7 +465,7 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
               fontSize: '14px',
             }}
           />
-          
+
           <button
             onClick={refreshStreams}
             disabled={loading}
@@ -461,8 +492,8 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
               <button
                 key={platform}
                 onClick={() => {
-                  setSelectedPlatforms(prev => 
-                    prev.includes(platform) 
+                  setSelectedPlatforms(prev =>
+                    prev.includes(platform)
                       ? prev.filter(p => p !== platform)
                       : [...prev, platform]
                   );
@@ -487,7 +518,7 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
             <span style={{ fontSize: '12px', color: '#ccc' }}>Sort:</span>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={e => setSortBy(e.target.value as any)}
               style={{
                 padding: '4px 8px',
                 backgroundColor: '#333',
@@ -546,23 +577,28 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
       {/* Content */}
       <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
         {error && (
-          <div style={{
-            padding: '12px',
-            backgroundColor: '#ff4444',
-            color: '#fff',
-            borderRadius: '4px',
-            marginBottom: '16px',
-          }}>
+          <div
+            style={{
+              padding: '12px',
+              backgroundColor: '#ff4444',
+              color: '#fff',
+              borderRadius: '4px',
+              marginBottom: '16px',
+            }}
+          >
             {error}
           </div>
         )}
 
         {filteredStreams.length > 0 ? (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: view === 'grid' ? 'repeat(auto-fill, minmax(280px, 1fr))' : '1fr',
-            gap: '16px',
-          }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns:
+                view === 'grid' ? 'repeat(auto-fill, minmax(280px, 1fr))' : '1fr',
+              gap: '16px',
+            }}
+          >
             {filteredStreams.map(stream => (
               <div key={stream.id} className="stream-card">
                 <StreamCard stream={stream} />
@@ -571,11 +607,13 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
           </div>
         ) : (
           !loading && (
-            <div style={{
-              textAlign: 'center',
-              color: '#999',
-              marginTop: '40px',
-            }}>
+            <div
+              style={{
+                textAlign: 'center',
+                color: '#999',
+                marginTop: '40px',
+              }}
+            >
               No streams found matching your criteria
             </div>
           )
@@ -583,23 +621,21 @@ const WebStreamBrowser: React.FC<WebStreamBrowserProps> = ({
 
         {/* Loading indicator */}
         <div ref={loadingRef} style={{ padding: '20px', textAlign: 'center' }}>
-          {loading && (
-            <div style={{ color: '#999' }}>
-              Loading streams...
-            </div>
-          )}
+          {loading && <div style={{ color: '#999' }}>Loading streams...</div>}
         </div>
       </div>
 
       {/* Keyboard shortcuts help */}
       {webSettings.keyboardShortcuts && (
-        <div style={{
-          padding: '8px 16px',
-          backgroundColor: '#1a1a1a',
-          borderTop: '1px solid #333',
-          fontSize: '11px',
-          color: '#666',
-        }}>
+        <div
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#1a1a1a',
+            borderTop: '1px solid #333',
+            fontSize: '11px',
+            color: '#666',
+          }}
+        >
           Shortcuts: / Search • Ctrl+R Refresh • Ctrl+G Toggle view
         </div>
       )}

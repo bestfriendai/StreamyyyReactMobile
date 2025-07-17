@@ -1,3 +1,7 @@
+import { useOAuth } from '@clerk/clerk-expo';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Sparkles } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   View,
@@ -13,18 +17,14 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Sparkles } from 'lucide-react-native';
-import { router } from 'expo-router';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
-import { useOAuth } from '@clerk/clerk-expo';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -54,13 +54,13 @@ export default function SignInSignUpPage() {
 
   const validateForm = () => {
     const errors: { [key: string]: string } = {};
-    
+
     if (!email.trim()) {
       errors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       errors.email = 'Please enter a valid email';
     }
-    
+
     if (!password.trim()) {
       errors.password = 'Password is required';
     } else if (password.length < 6) {
@@ -70,18 +70,18 @@ export default function SignInSignUpPage() {
     if (isSignUp && password !== confirmPassword) {
       errors.confirmPassword = 'Passwords do not match';
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleEmailAuth = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      return;
+    }
 
-    const result = isSignUp 
-      ? await signUp(email, password)
-      : await signIn(email, password);
-    
+    const result = isSignUp ? await signUp(email, password, '') : await signIn(email, password);
+
     if (result.error) {
       Alert.alert(
         isSignUp ? 'Sign Up Failed' : 'Sign In Failed',
@@ -138,16 +138,13 @@ export default function SignInSignUpPage() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <LinearGradient
-        colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']}
-        style={styles.background}
-      />
-      
+      <LinearGradient colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']} style={styles.background} />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardContainer}
       >
-        <ScrollView 
+        <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -156,10 +153,7 @@ export default function SignInSignUpPage() {
           {/* Logo Section */}
           <Animated.View style={[styles.logoSection, animatedLogoStyle]}>
             <View style={styles.logoContainer}>
-              <LinearGradient
-                colors={['#8B5CF6', '#A855F7', '#C084FC']}
-                style={styles.logo}
-              >
+              <LinearGradient colors={['#8B5CF6', '#A855F7', '#C084FC']} style={styles.logo}>
                 <Animated.View style={[styles.sparkle, animatedSparkleStyle]}>
                   <Sparkles size={32} color="#fff" />
                 </Animated.View>
@@ -171,21 +165,18 @@ export default function SignInSignUpPage() {
 
           {/* Form Section */}
           <View style={styles.formSection}>
-            <Text style={styles.formTitle}>
-              {isSignUp ? 'Create Account' : 'Welcome Back'}
-            </Text>
+            <Text style={styles.formTitle}>{isSignUp ? 'Create Account' : 'Welcome Back'}</Text>
             <Text style={styles.formSubtitle}>
-              {isSignUp 
-                ? 'Join the multi-stream experience' 
-                : 'Sign in to continue to your multi-stream experience'
-              }
+              {isSignUp
+                ? 'Join the multi-stream experience'
+                : 'Sign in to continue to your multi-stream experience'}
             </Text>
 
             {/* OAuth Buttons */}
             <View style={styles.oauthSection}>
               <TouchableOpacity style={styles.oauthIconButton} onPress={handleGoogleAuth}>
                 <View style={styles.googleButton}>
-                  <Image 
+                  <Image
                     source={require('../../assets/images/google-icon.png')}
                     style={styles.googleLogo}
                     resizeMode="contain"
@@ -195,7 +186,7 @@ export default function SignInSignUpPage() {
 
               <TouchableOpacity style={styles.oauthIconButton} onPress={handleTwitchAuth}>
                 <View style={styles.twitchButton}>
-                  <Image 
+                  <Image
                     source={require('../../assets/images/twitch-icon.svg')}
                     style={styles.twitchLogo}
                     resizeMode="contain"
@@ -226,9 +217,7 @@ export default function SignInSignUpPage() {
                   autoComplete="email"
                 />
               </View>
-              {formErrors.email && (
-                <Text style={styles.errorText}>{formErrors.email}</Text>
-              )}
+              {formErrors.email && <Text style={styles.errorText}>{formErrors.email}</Text>}
             </View>
 
             {/* Password Input */}
@@ -255,9 +244,7 @@ export default function SignInSignUpPage() {
                   )}
                 </TouchableOpacity>
               </View>
-              {formErrors.password && (
-                <Text style={styles.errorText}>{formErrors.password}</Text>
-              )}
+              {formErrors.password && <Text style={styles.errorText}>{formErrors.password}</Text>}
             </View>
 
             {/* Confirm Password Input (Sign Up only) */}
@@ -295,7 +282,7 @@ export default function SignInSignUpPage() {
             {!isSignUp && (
               <TouchableOpacity
                 style={styles.forgotPassword}
-                onPress={() => router.push('/(auth)/forgot-password')}
+                onPress={() => console.log('Forgot password not implemented')}
               >
                 <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
               </TouchableOpacity>
@@ -310,10 +297,7 @@ export default function SignInSignUpPage() {
                 onPressOut={handleButtonPressOut}
                 disabled={isLoading}
               >
-                <LinearGradient
-                  colors={['#8B5CF6', '#7C3AED']}
-                  style={styles.mainGradient}
-                >
+                <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.mainGradient}>
                   {isLoading ? (
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
@@ -340,7 +324,7 @@ export default function SignInSignUpPage() {
             </TouchableOpacity>
 
             {/* Toggle Sign In/Sign Up */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.toggleContainer}
               onPress={() => setIsSignUp(!isSignUp)}
               activeOpacity={0.8}
@@ -348,9 +332,7 @@ export default function SignInSignUpPage() {
               <Text style={styles.toggleText}>
                 {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
               </Text>
-              <Text style={styles.toggleLink}>
-                {isSignUp ? 'Sign In' : 'Sign Up'}
-              </Text>
+              <Text style={styles.toggleLink}>{isSignUp ? 'Sign In' : 'Sign Up'}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

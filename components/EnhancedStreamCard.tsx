@@ -1,3 +1,7 @@
+import { BlurView } from '@react-native-community/blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Play, Heart, Users, Eye, Plus, Check, Star, Clock, Gamepad2 } from 'lucide-react-native';
+import { MotiView, MotiText, AnimatePresence } from 'moti';
 import React, { useState, useRef } from 'react';
 import {
   View,
@@ -8,9 +12,6 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
-import { MotiView, MotiText, AnimatePresence } from 'moti';
-import { BlurView } from '@react-native-community/blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -19,17 +20,6 @@ import Animated, {
   interpolate,
   runOnJS,
 } from 'react-native-reanimated';
-import {
-  Play,
-  Heart,
-  Users,
-  Eye,
-  Plus,
-  Check,
-  Star,
-  Clock,
-  Gamepad2,
-} from 'lucide-react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -70,7 +60,7 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  
+
   // Animation values
   const scale = useSharedValue(1);
   const elevation = useSharedValue(0);
@@ -97,14 +87,16 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
   };
 
   const handleAddPress = async () => {
-    if (isLoading) return;
-    
+    if (isLoading) {
+      return;
+    }
+
     setIsLoading(true);
     addButtonRotation.value = withSequence(
       withTiming(180, { duration: 250 }),
       withTiming(360, { duration: 250 })
     );
-    
+
     try {
       const result = await onAdd(stream);
       if (result.success) {
@@ -153,9 +145,9 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
   const animatedSuccessStyle = useAnimatedStyle(() => ({
     opacity: successOpacity.value,
     transform: [
-      { 
-        scale: interpolate(successOpacity.value, [0, 1], [0.5, 1]) 
-      }
+      {
+        scale: interpolate(successOpacity.value, [0, 1], [0.5, 1]),
+      },
     ],
   }));
 
@@ -174,7 +166,7 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
     const diffMs = now.getTime() - start.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (diffHours > 0) {
       return `${diffHours}h ${diffMinutes}m`;
     }
@@ -211,9 +203,10 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
         >
           {/* Background gradient */}
           <LinearGradient
-            colors={isActive 
-              ? ['rgba(139, 92, 246, 0.2)', 'rgba(124, 58, 237, 0.1)', 'rgba(15, 15, 15, 0.95)']
-              : ['rgba(26, 26, 26, 0.95)', 'rgba(15, 15, 15, 0.98)', 'rgba(10, 10, 10, 1)']
+            colors={
+              isActive
+                ? ['rgba(139, 92, 246, 0.2)', 'rgba(124, 58, 237, 0.1)', 'rgba(15, 15, 15, 0.95)']
+                : ['rgba(26, 26, 26, 0.95)', 'rgba(15, 15, 15, 0.98)', 'rgba(10, 10, 10, 1)']
             }
             style={styles.cardBackground}
           >
@@ -226,10 +219,8 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
                 transition={{ duration: 300 }}
               >
                 <Image
-                  source={{ 
-                    uri: stream.thumbnail_url
-                      .replace('{width}', '320')
-                      .replace('{height}', '180')
+                  source={{
+                    uri: stream.thumbnail_url.replace('{width}', '320').replace('{height}', '180'),
                   }}
                   style={styles.thumbnail}
                   onLoad={() => setIsImageLoaded(true)}
@@ -250,7 +241,11 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
                   style={styles.thumbnailSkeleton}
                 >
                   <LinearGradient
-                    colors={['rgba(51, 51, 51, 0.8)', 'rgba(68, 68, 68, 0.9)', 'rgba(51, 51, 51, 0.8)']}
+                    colors={[
+                      'rgba(51, 51, 51, 0.8)',
+                      'rgba(68, 68, 68, 0.9)',
+                      'rgba(51, 51, 51, 0.8)',
+                    ]}
                     style={StyleSheet.absoluteFill}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
@@ -304,9 +299,7 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
                   style={styles.viewerGradient}
                 >
                   <Eye size={12} color="#fff" />
-                  <Text style={styles.viewerCount}>
-                    {formatViewerCount(stream.viewer_count)}
-                  </Text>
+                  <Text style={styles.viewerCount}>{formatViewerCount(stream.viewer_count)}</Text>
                 </LinearGradient>
               </MotiView>
 
@@ -322,9 +315,7 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
                   style={styles.durationGradient}
                 >
                   <Clock size={12} color="#fff" />
-                  <Text style={styles.durationText}>
-                    {getTimeSinceStart(stream.started_at)}
-                  </Text>
+                  <Text style={styles.durationText}>{getTimeSinceStart(stream.started_at)}</Text>
                 </LinearGradient>
               </MotiView>
 
@@ -335,10 +326,7 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
                   animate={{ opacity: 1, scale: 1 }}
                   style={styles.activeIndicator}
                 >
-                  <LinearGradient
-                    colors={['#8B5CF6', '#7C3AED']}
-                    style={styles.activeGradient}
-                  >
+                  <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.activeGradient}>
                     <Play size={16} color="#fff" fill="#fff" />
                   </LinearGradient>
                 </MotiView>
@@ -358,7 +346,7 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
                 >
                   {stream.user_name}
                 </MotiText>
-                
+
                 <View style={styles.gameInfo}>
                   <Gamepad2 size={14} color="#666" />
                   <MotiText
@@ -387,10 +375,7 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
               {/* Actions */}
               <View style={styles.actions}>
                 {/* Favorite button */}
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={handleFavoritePress}
-                >
+                <TouchableOpacity style={styles.actionButton} onPress={handleFavoritePress}>
                   <Animated.View style={animatedHeartStyle}>
                     <Heart
                       size={20}
@@ -403,9 +388,7 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
                 {/* Rating */}
                 <View style={styles.ratingContainer}>
                   <Star size={14} color="#FFD700" fill="#FFD700" />
-                  <Text style={styles.ratingText}>
-                    {(Math.random() * 2 + 3).toFixed(1)}
-                  </Text>
+                  <Text style={styles.ratingText}>{(Math.random() * 2 + 3).toFixed(1)}</Text>
                 </View>
 
                 {/* Add button */}
@@ -420,11 +403,12 @@ export const EnhancedStreamCard: React.FC<StreamCardProps> = ({
                     disabled={isLoading || isActive}
                   >
                     <LinearGradient
-                      colors={isActive
-                        ? ['#10B981', '#059669']
-                        : isLoading
-                        ? ['#6B7280', '#4B5563']
-                        : ['#8B5CF6', '#7C3AED']
+                      colors={
+                        isActive
+                          ? ['#10B981', '#059669']
+                          : isLoading
+                            ? ['#6B7280', '#4B5563']
+                            : ['#8B5CF6', '#7C3AED']
                       }
                       style={styles.addButtonGradient}
                     >

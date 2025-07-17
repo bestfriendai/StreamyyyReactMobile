@@ -1,21 +1,7 @@
-import React from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  ViewStyle,
-  TextStyle,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Play,
-  Volume2,
-  VolumeX,
-  X,
-  Eye,
-  ExternalLink,
-} from 'lucide-react-native';
+import { Play, Volume2, VolumeX, X, Eye, ExternalLink } from 'lucide-react-native';
+import React from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, ViewStyle, TextStyle } from 'react-native';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
 
@@ -44,18 +30,10 @@ export const StreamPlaceholder: React.FC<StreamPlaceholderProps> = ({
 }) => {
   return (
     <View style={[styles.container, { width, height }]}>
-      <TouchableOpacity
-        style={styles.touchArea}
-        onPress={onPress}
-        activeOpacity={0.8}
-      >
+      <TouchableOpacity style={styles.touchArea} onPress={onPress} activeOpacity={0.8}>
         {/* Background Gradient */}
         <LinearGradient
-          colors={[
-            'rgba(145, 70, 255, 0.3)',
-            'rgba(0, 0, 0, 0.8)',
-            'rgba(145, 70, 255, 0.2)',
-          ]}
+          colors={['rgba(145, 70, 255, 0.3)', 'rgba(0, 0, 0, 0.8)', 'rgba(145, 70, 255, 0.2)']}
           style={styles.background}
         >
           {/* Stream Preview Placeholder */}
@@ -63,26 +41,26 @@ export const StreamPlaceholder: React.FC<StreamPlaceholderProps> = ({
             <View style={styles.playIconContainer}>
               <Play size={32} color="#fff" fill="#fff" />
             </View>
-            
+
             {/* Stream Info */}
             <View style={styles.streamInfo}>
               <View style={styles.liveIndicator}>
                 <View style={styles.liveDot} />
                 <Text style={styles.liveText}>LIVE</Text>
               </View>
-              
+
               <Text style={styles.streamTitle} numberOfLines={2}>
                 {stream.title || `${stream.user_name}'s Stream`}
               </Text>
-              
+
               <Text style={styles.streamerName} numberOfLines={1}>
                 {stream.user_name}
               </Text>
-              
+
               <Text style={styles.gameCategory} numberOfLines={1}>
                 {stream.game_name}
               </Text>
-              
+
               <View style={styles.viewerInfo}>
                 <Eye size={14} color={ModernTheme.colors.text.secondary} />
                 <Text style={styles.viewerCount}>
@@ -101,17 +79,14 @@ export const StreamPlaceholder: React.FC<StreamPlaceholderProps> = ({
               >
                 <View style={styles.controlsContainer}>
                   <View style={styles.leftControls}>
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={onMuteToggle}
-                    >
+                    <TouchableOpacity style={styles.controlButton} onPress={onMuteToggle}>
                       {isMuted ? (
                         <VolumeX size={16} color="#fff" />
                       ) : (
                         <Volume2 size={16} color="#fff" />
                       )}
                     </TouchableOpacity>
-                    
+
                     <TouchableOpacity
                       style={styles.controlButton}
                       onPress={() => {
@@ -140,7 +115,7 @@ export const StreamPlaceholder: React.FC<StreamPlaceholderProps> = ({
 
           {/* Active Stream Indicator */}
           {isActive && <View style={styles.activeIndicator} />}
-          
+
           {/* Tap to Play Overlay */}
           <View style={styles.tapOverlay}>
             <Text style={styles.tapText}>Tap to open in Twitch</Text>

@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
@@ -9,7 +10,6 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   Grid3X3,
   Grid2X2,
@@ -22,10 +22,10 @@ import {
   X,
   Monitor,
 } from 'lucide-react-native';
+import { useStreamManager } from '@/hooks/useStreamManager';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
 import { DirectTwitchPlayer } from './DirectTwitchPlayer';
-import { useStreamManager } from '@/hooks/useStreamManager';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -49,11 +49,11 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
   const [activeStreamId, setActiveStreamId] = useState<string | null>(null);
   const [globalMute, setGlobalMute] = useState(true);
   const [showControls, setShowControls] = useState(true);
-  
+
   // Animation values
   const gridScale = useSharedValue(1);
   const controlsOpacity = useSharedValue(1);
-  
+
   // Calculate grid dimensions
   const getGridDimensions = useCallback(() => {
     const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -61,8 +61,8 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
     const padding = ModernTheme.spacing.md;
     const spacing = ModernTheme.spacing.xs;
 
-    const availableWidth = screenWidth - (padding * 2);
-    const availableHeight = screenHeight - controlsHeight - (padding * 2);
+    const availableWidth = screenWidth - padding * 2;
+    const availableHeight = screenHeight - controlsHeight - padding * 2;
 
     let columns = 1;
     let rows = 1;
@@ -86,8 +86,8 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
         break;
     }
 
-    const itemWidth = (availableWidth - (spacing * (columns - 1))) / columns;
-    const itemHeight = (availableHeight - (spacing * (rows - 1))) / rows;
+    const itemWidth = (availableWidth - spacing * (columns - 1)) / columns;
+    const itemHeight = (availableHeight - spacing * (rows - 1)) / rows;
 
     // Ensure minimum dimensions for readability
     const minWidth = Math.max(itemWidth, 120);
@@ -104,73 +104,71 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
       availableHeight,
     };
   }, [layout]);
-  
+
   const gridDimensions = getGridDimensions();
-  
+
   // Handle layout change
-  const handleLayoutChange = useCallback((newLayout: GridLayout) => {
-    gridScale.value = withSpring(0.95, { damping: 15 }, () => {
-      gridScale.value = withSpring(1);
-    });
-    
+  const handleLayoutChange = useCallback(
+    (newLayout: GridLayout) => {
+      gridScale.value = withSpring(0.95, { damping: 15 }, () => {
+        gridScale.value = withSpring(1);
+      });
+
+
     setLayout(newLayout);
-    onLayoutChange?.(newLayout);
-  }, [onLayoutChange]);
-  
+      onLayoutChange?.(newLayout);
+    },
+    [onLayoutChange]
+  );
+
   // Handle stream removal
-  const handleRemoveStream = useCallback((streamId: string) => {
-    Alert.alert(
-      'Remove Stream',
-      'Are you sure you want to remove this stream?',
-      [
+  const handleRemoveStream = useCallback(
+    (streamId: string) => {
+      Alert.alert('Remove Stream', 'Are you sure you want to remove this stream?', [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Remove', 
+        {
+          text: 'Remove',
           style: 'destructive',
-          onPress: () => removeStream(streamId)
-        }
-      ]
-    );
-  }, [removeStream]);
-  
+          onPress: () => removeStream(streamId),
+        },
+      ]);
+    },
+    [removeStream]
+
   // Handle clear all streams
   const handleClearAll = useCallback(() => {
-    if (activeStreams.length === 0) return;
-    
-    Alert.alert(
-      'Clear All Streams',
-      'Are you sure you want to remove all streams?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Clear All', 
-          style: 'destructive',
-          onPress: clearAllStreams
-        }
-      ]
-    );
+    if (activeStreams.length === 0) {return;}
+
+    Alert.alert('Clear All Streams', 'Are you sure you want to remove all streams?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Clear All',
+        style: 'destructive',
+        onPress: clearAllStreams,
+      },
+    ]);
   }, [activeStreams.length, clearAllStreams]);
-  
+
   // Toggle global mute
   const handleGlobalMuteToggle = useCallback(() => {
     setGlobalMute(!globalMute);
   }, [globalMute]);
-  
+
   // Toggle controls visibility
   const toggleControls = useCallback(() => {
-    setShowControls((prev) => !prev);
+    setShowControls(prev => !prev);
     controlsOpacity.value = withTiming(showControls ? 0 : 1, { duration: 300 });
   }, [showControls, controlsOpacity]);
-  
+
   // Animated styles
   const gridStyle = useAnimatedStyle(() => ({
     transform: [{ scale: gridScale.value }],
   }));
-  
+
   const controlsStyle = useAnimatedStyle(() => ({
     opacity: controlsOpacity.value,
   }));
-  
+
   const renderStreamItem = useCallback(
     (stream: TwitchStream | null, index: number) => {
       if (!stream) {
@@ -215,46 +213,52 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
     [gridDimensions, globalMute, activeStreamId, handleRemoveStream, renderEmptySlot]
   );
 
-  const renderEmptySlot = useCallback((index: number) => (
-    <TouchableOpacity
-      key={`empty-${index}`}
-      style={[
-        styles.emptySlot,
-        {
-          width: gridDimensions.itemWidth,
-          height: gridDimensions.itemHeight,
-        }
-      ]}
-      onPress={() => {
-        // Navigate to discover screen to add streams
-        Alert.alert(
-          'Add Stream',
-          'Go to the Discover tab to find and add streams to your multi-view.',
-          [
-            { text: 'OK' },
-            { text: 'Go to Discover', onPress: () => {
-              // TODO: Navigate to discover tab
-              console.log('Navigate to discover');
-            }}
-          ]
-        );
-      }}
-      activeOpacity={0.8}
-    >
-      <LinearGradient
-        colors={['rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0.03)']}
-        style={styles.emptySlotGradient}
+  const renderEmptySlot = useCallback(
+    (index: number) => (
+      <TouchableOpacity
+        key={`empty-${index}`}
+        style={[
+          styles.emptySlot,
+          {
+            width: gridDimensions.itemWidth,
+            height: gridDimensions.itemHeight,
+          },
+        ]}
+        onPress={() => {
+          // Navigate to discover screen to add streams
+          Alert.alert(
+            'Add Stream',
+            'Go to the Discover tab to find and add streams to your multi-view.',
+            [
+              { text: 'OK' },
+              {
+                text: 'Go to Discover',
+                onPress: () => {
+                  // TODO: Navigate to discover tab
+                  console.log('Navigate to discover');
+                },
+              },
+            ]
+          );
+        }}
+        activeOpacity={0.8}
       >
-        <View style={styles.emptySlotContent}>
-          <View style={styles.addIconContainer}>
-            <Plus size={24} color={ModernTheme.colors.primary[400]} />
+        <LinearGradient
+          colors={['rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0.03)']}
+          style={styles.emptySlotGradient}
+        >
+          <View style={styles.emptySlotContent}>
+            <View style={styles.addIconContainer}>
+              <Plus size={24} color={ModernTheme.colors.primary[400]} />
+            </View>
+            <Text style={styles.emptySlotText}>Add Stream</Text>
+            <Text style={styles.emptySlotSubtext}>Tap to browse streams</Text>
           </View>
-          <Text style={styles.emptySlotText}>Add Stream</Text>
-          <Text style={styles.emptySlotSubtext}>Tap to browse streams</Text>
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  ), [gridDimensions]);
+        </LinearGradient>
+      </TouchableOpacity>
+    ),
+    [gridDimensions]
+  );
 
   const renderControls = () => (
     <Animated.View style={[styles.controlsContainer, controlsStyle]}>
@@ -264,7 +268,11 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
         <ControlButton onPress={() => handleLayoutChange('3x3')} icon={Grid3X3} label="3x3" />
       </View>
       <View style={styles.actionControls}>
-        <ControlButton onPress={handleGlobalMuteToggle} icon={globalMute ? VolumeX : Volume2} label="Mute All" />
+        <ControlButton
+          onPress={handleGlobalMuteToggle}
+          icon={globalMute ? VolumeX : Volume2}
+          label="Mute All"
+        />
         <ControlButton onPress={handleClearAll} icon={RotateCcw} label="Clear All" />
         <ControlButton onPress={toggleControls} icon={Settings} label="Settings" />
       </View>
@@ -284,8 +292,11 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
   );
 };
 
-
-const ControlButton: React.FC<{ onPress: () => void; icon: React.ElementType; label: string }> = ({ onPress, icon: Icon, label }) => (
+const ControlButton: React.FC<{ onPress: () => void; icon: React.ElementType; label: string }> = ({
+  onPress,
+  icon: Icon,
+  label,
+}) => (
   <TouchableOpacity onPress={onPress} style={styles.controlButton}>
     <Icon size={24} color={ModernTheme.colors.primary} />
     <Text style={styles.controlLabel}>{label}</Text>

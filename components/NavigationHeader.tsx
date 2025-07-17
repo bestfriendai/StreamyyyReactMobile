@@ -1,7 +1,6 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, StatusBar } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -9,6 +8,7 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface NavigationHeaderProps {
   title: string;
@@ -18,24 +18,24 @@ interface NavigationHeaderProps {
   variant?: 'default' | 'transparent' | 'minimal';
 }
 
-export function NavigationHeader({ 
-  title, 
-  subtitle, 
-  rightElement, 
+export function NavigationHeader({
+  title,
+  subtitle,
+  rightElement,
   leftElement,
-  variant = 'default' 
+  variant = 'default',
 }: NavigationHeaderProps) {
   const insets = useSafeAreaInsets();
-  
+
   // Animation values
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(-20);
-  
+
   useEffect(() => {
     opacity.value = withSpring(1, { damping: 20, stiffness: 300 });
     translateY.value = withSpring(0, { damping: 20, stiffness: 300 });
   }, []);
-  
+
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
     transform: [{ translateY: translateY.value }],
@@ -56,11 +56,9 @@ export function NavigationHeader({
     <Animated.View style={[styles.container, { paddingTop: insets.top }, animatedStyle]}>
       <View style={styles.content}>
         {leftElement && (
-          <Animated.View style={[styles.leftElement, animatedStyle]}>
-            {leftElement}
-          </Animated.View>
+          <Animated.View style={[styles.leftElement, animatedStyle]}>{leftElement}</Animated.View>
         )}
-        
+
         <View style={styles.titleContainer}>
           <Animated.Text style={[styles.title, animatedStyle]} numberOfLines={1}>
             {title}
@@ -71,11 +69,9 @@ export function NavigationHeader({
             </Animated.Text>
           )}
         </View>
-        
+
         {rightElement && (
-          <Animated.View style={[styles.rightElement, animatedStyle]}>
-            {rightElement}
-          </Animated.View>
+          <Animated.View style={[styles.rightElement, animatedStyle]}>{rightElement}</Animated.View>
         )}
       </View>
     </Animated.View>
@@ -87,11 +83,7 @@ export function NavigationHeader({
 
   return (
     <LinearGradient
-      colors={[
-        'rgba(15, 15, 15, 1)',
-        'rgba(26, 26, 26, 0.95)',
-        'rgba(15, 15, 15, 0.8)'
-      ]}
+      colors={['rgba(15, 15, 15, 1)', 'rgba(26, 26, 26, 0.95)', 'rgba(15, 15, 15, 0.8)']}
       style={getHeaderStyles()}
     >
       <HeaderContent />

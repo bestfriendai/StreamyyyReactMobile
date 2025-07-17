@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Volume2, VolumeX, X, Eye, ExternalLink } from 'lucide-react-native';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
@@ -10,14 +12,6 @@ import {
   Linking,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Volume2,
-  VolumeX,
-  X,
-  Eye,
-  ExternalLink,
-} from 'lucide-react-native';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
 
@@ -202,15 +196,18 @@ export const AutoplayTwitchPlayer: React.FC<AutoplayTwitchPlayerProps> = ({
     // Don't set loading false here - wait for the "started" message
   }, [stream.user_login]);
 
-  const handleWebViewError = useCallback((syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.error('❌ Autoplay Twitch player error:', stream.user_login, nativeEvent);
-    
-    // Even on error, try to show the player
-    setIsLoading(false);
-    setHasStarted(true);
-    setError(null); // Don't show error, let it try to play
-  }, [stream.user_login]);
+  const handleWebViewError = useCallback(
+    (syntheticEvent: any) => {
+      const { nativeEvent } = syntheticEvent;
+      console.error('❌ Autoplay Twitch player error:', stream.user_login, nativeEvent);
+
+      // Even on error, try to show the player
+      setIsLoading(false);
+      setHasStarted(true);
+      setError(null); // Don't show error, let it try to play
+    },
+    [stream.user_login]
+  );
 
   const handleWebViewLoadStart = useCallback(() => {
     console.log('🔄 Autoplay Twitch player loading:', stream.user_login);
@@ -220,26 +217,29 @@ export const AutoplayTwitchPlayer: React.FC<AutoplayTwitchPlayerProps> = ({
   }, [stream.user_login]);
 
   // Handle WebView messages
-  const handleWebViewMessage = useCallback((event: any) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      console.log('Autoplay message:', data);
-      
-      switch (data.type) {
-        case 'started':
-          console.log('✅ Stream started automatically:', data.channel);
-          setIsLoading(false);
-          setHasStarted(true);
-          setError(null);
-          break;
-        case 'touch':
-          onPress?.();
-          break;
+  const handleWebViewMessage = useCallback(
+    (event: any) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        console.log('Autoplay message:', data);
+
+        switch (data.type) {
+          case 'started':
+            console.log('✅ Stream started automatically:', data.channel);
+            setIsLoading(false);
+            setHasStarted(true);
+            setError(null);
+            break;
+          case 'touch':
+            onPress?.();
+            break;
+        }
+      } catch (error) {
+        console.log('WebView message parse error:', error);
       }
-    } catch (error) {
-      console.log('WebView message parse error:', error);
-    }
-  }, [onPress]);
+    },
+    [onPress]
+  );
 
   // Handle external link
   const handleOpenExternal = useCallback(() => {
@@ -267,11 +267,7 @@ export const AutoplayTwitchPlayer: React.FC<AutoplayTwitchPlayerProps> = ({
 
   return (
     <View style={[styles.container, { width, height }]}>
-      <TouchableOpacity
-        style={styles.touchArea}
-        onPress={onPress}
-        activeOpacity={1}
-      >
+      <TouchableOpacity style={styles.touchArea} onPress={onPress} activeOpacity={1}>
         {/* Autoplay Twitch WebView */}
         <WebView
           ref={webViewRef}
@@ -281,10 +277,10 @@ export const AutoplayTwitchPlayer: React.FC<AutoplayTwitchPlayerProps> = ({
           onError={handleWebViewError}
           onLoadStart={handleWebViewLoadStart}
           onMessage={handleWebViewMessage}
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
           scalesPageToFit={false}
           bounces={false}
@@ -292,9 +288,9 @@ export const AutoplayTwitchPlayer: React.FC<AutoplayTwitchPlayerProps> = ({
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['*']}
-          mixedContentMode={'compatibility'}
-          allowsFullscreenVideo={true}
-          allowsProtectedMedia={true}
+          mixedContentMode="compatibility"
+          allowsFullscreenVideo
+          allowsProtectedMedia
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
         />
 
@@ -308,10 +304,7 @@ export const AutoplayTwitchPlayer: React.FC<AutoplayTwitchPlayerProps> = ({
 
         {/* Stream Info Overlay */}
         <View style={styles.infoOverlay}>
-          <LinearGradient
-            colors={['rgba(0,0,0,0.8)', 'transparent']}
-            style={styles.infoGradient}
-          >
+          <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.infoGradient}>
             <View style={styles.streamInfo}>
               <View style={styles.platformBadge}>
                 <Text style={styles.platformText}>LIVE</Text>
@@ -323,10 +316,12 @@ export const AutoplayTwitchPlayer: React.FC<AutoplayTwitchPlayerProps> = ({
                 </Text>
               </View>
               {/* Status indicator */}
-              <View style={[
-                styles.statusDot,
-                { backgroundColor: hasStarted ? '#00ff00' : isLoading ? '#ffff00' : '#ff6666' }
-              ]} />
+              <View
+                style={[
+                  styles.statusDot,
+                  { backgroundColor: hasStarted ? '#00ff00' : isLoading ? '#ffff00' : '#ff6666' },
+                ]}
+              />
             </View>
             <Text style={styles.streamTitle} numberOfLines={1}>
               {stream.user_name}
@@ -346,21 +341,15 @@ export const AutoplayTwitchPlayer: React.FC<AutoplayTwitchPlayerProps> = ({
             >
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={onMuteToggle}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={onMuteToggle}>
                     {isMuted ? (
                       <VolumeX size={16} color="#fff" />
                     ) : (
                       <Volume2 size={16} color="#fff" />
                     )}
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handleOpenExternal}
-                  >
+
+                  <TouchableOpacity style={styles.controlButton} onPress={handleOpenExternal}>
                     <ExternalLink size={16} color="#fff" />
                   </TouchableOpacity>
                 </View>

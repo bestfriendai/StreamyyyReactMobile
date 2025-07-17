@@ -1,13 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  ViewStyle,
-  TextStyle,
-  Dimensions,
-} from 'react-native';
 import { BlurView } from 'expo-blur';
 import {
   Play,
@@ -29,8 +19,16 @@ import {
   ChevronDown,
   MoreHorizontal,
 } from 'lucide-react-native';
-import { ModernTheme } from '@/theme/modernTheme';
-import { HapticFeedback } from '@/utils/haptics';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  ViewStyle,
+  TextStyle,
+  Dimensions,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -48,6 +46,8 @@ import Animated, {
   ZoomIn,
   ZoomOut,
 } from 'react-native-reanimated';
+import { ModernTheme } from '@/theme/modernTheme';
+import { HapticFeedback } from '@/utils/haptics';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -92,7 +92,7 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showSecondaryControls, setShowSecondaryControls] = useState(false);
-  
+
   // Animation values
   const opacity = useSharedValue(isVisible ? 1 : 0);
   const scale = useSharedValue(1);
@@ -100,11 +100,11 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
   const expandedWidth = useSharedValue(0);
   const secondaryOpacity = useSharedValue(0);
   const pulseScale = useSharedValue(1);
-  
+
   // Auto-hide after inactivity
   useEffect(() => {
     opacity.value = withTiming(isVisible ? 1 : 0, { duration: 300 });
-    
+
     if (isVisible) {
       const timer = setTimeout(() => {
         opacity.value = withTiming(0.7, { duration: 300 });
@@ -112,7 +112,7 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
       return () => clearTimeout(timer);
     }
   }, [isVisible]);
-  
+
   // Pulse animation for active states
   useEffect(() => {
     if (isPlaying) {
@@ -122,33 +122,27 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
       );
     }
   }, [isPlaying]);
-  
+
   // Handle expand/collapse
   const toggleExpanded = () => {
     HapticFeedback.light();
     setIsExpanded(!isExpanded);
-    
-    expandedWidth.value = withSpring(
-      isExpanded ? 0 : 200,
-      { damping: 15, stiffness: 200 }
-    );
-    
-    secondaryOpacity.value = withTiming(
-      isExpanded ? 0 : 1,
-      { duration: 200 }
-    );
+
+    expandedWidth.value = withSpring(isExpanded ? 0 : 200, { damping: 15, stiffness: 200 });
+
+    secondaryOpacity.value = withTiming(isExpanded ? 0 : 1, { duration: 200 });
   };
-  
+
   // Handle button press with animation
   const handlePress = (action: () => void) => {
     scale.value = withSpring(0.9, { damping: 15 }, () => {
       scale.value = withSpring(1);
     });
-    
+
     HapticFeedback.light();
     action();
   };
-  
+
   // Get container style based on position
   const getContainerStyle = () => {
     switch (position) {
@@ -162,7 +156,7 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
         return [styles.container, styles.bottomPosition];
     }
   };
-  
+
   // Get size-specific styles
   const getSizeStyles = () => {
     switch (size) {
@@ -174,27 +168,24 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
         return { buttonSize: 48, iconSize: 20, padding: 12 };
     }
   };
-  
+
   const sizeStyles = getSizeStyles();
-  
+
   // Animated styles
   const containerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
-    transform: [
-      { scale: scale.value },
-      { translateY: translateY.value },
-    ],
+    transform: [{ scale: scale.value }, { translateY: translateY.value }],
   }));
-  
+
   const expandedStyle = useAnimatedStyle(() => ({
     width: expandedWidth.value,
     opacity: secondaryOpacity.value,
   }));
-  
+
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
   }));
-  
+
   // Render primary controls
   const renderPrimaryControls = () => (
     <View style={[styles.controlsRow, { gap: sizeStyles.padding }]}>
@@ -204,11 +195,11 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
           style={[
             styles.controlButton,
             styles.primaryButton,
-            { 
-              width: sizeStyles.buttonSize, 
+            {
+              width: sizeStyles.buttonSize,
               height: sizeStyles.buttonSize,
               borderRadius: sizeStyles.buttonSize / 2,
-            }
+            },
           ]}
           onPress={() => handlePress(onPlayPause)}
         >
@@ -219,17 +210,17 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
           )}
         </TouchableOpacity>
       </Animated.View>
-      
+
       {/* Mute Button */}
       <TouchableOpacity
         style={[
           styles.controlButton,
           isMuted && styles.activeButton,
-          { 
-            width: sizeStyles.buttonSize, 
+          {
+            width: sizeStyles.buttonSize,
             height: sizeStyles.buttonSize,
             borderRadius: sizeStyles.buttonSize / 2,
-          }
+          },
         ]}
         onPress={() => handlePress(onMuteToggle)}
       >
@@ -239,33 +230,33 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
           <Volume2 size={sizeStyles.iconSize} color={ModernTheme.colors.text.primary} />
         )}
       </TouchableOpacity>
-      
+
       {variant === 'full' && (
         <>
           {/* Add Stream Button */}
           <TouchableOpacity
             style={[
               styles.controlButton,
-              { 
-                width: sizeStyles.buttonSize, 
+              {
+                width: sizeStyles.buttonSize,
                 height: sizeStyles.buttonSize,
                 borderRadius: sizeStyles.buttonSize / 2,
-              }
+              },
             ]}
             onPress={() => handlePress(onAddStream)}
           >
             <Plus size={sizeStyles.iconSize} color={ModernTheme.colors.text.primary} />
           </TouchableOpacity>
-          
+
           {/* Layout Button */}
           <TouchableOpacity
             style={[
               styles.controlButton,
-              { 
-                width: sizeStyles.buttonSize, 
+              {
+                width: sizeStyles.buttonSize,
                 height: sizeStyles.buttonSize,
                 borderRadius: sizeStyles.buttonSize / 2,
-              }
+              },
             ]}
             onPress={() => handlePress(onLayoutChange)}
           >
@@ -273,16 +264,16 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
           </TouchableOpacity>
         </>
       )}
-      
+
       {/* More/Expand Button */}
       <TouchableOpacity
         style={[
           styles.controlButton,
-          { 
-            width: sizeStyles.buttonSize, 
+          {
+            width: sizeStyles.buttonSize,
             height: sizeStyles.buttonSize,
             borderRadius: sizeStyles.buttonSize / 2,
-          }
+          },
         ]}
         onPress={toggleExpanded}
       >
@@ -290,43 +281,34 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
       </TouchableOpacity>
     </View>
   );
-  
+
   // Render secondary controls
   const renderSecondaryControls = () => (
     <Animated.View style={[styles.secondaryControls, expandedStyle]}>
       <View style={styles.controlsColumn}>
         {/* Stats Toggle */}
         <TouchableOpacity
-          style={[
-            styles.secondaryButton,
-            showStats && styles.activeButton,
-          ]}
+          style={[styles.secondaryButton, showStats && styles.activeButton]}
           onPress={() => handlePress(onStatsToggle)}
         >
           <Activity size={16} color={ModernTheme.colors.text.primary} />
           <Text style={styles.buttonLabel}>Stats</Text>
         </TouchableOpacity>
-        
+
         {/* Settings */}
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => handlePress(onSettings)}
-        >
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => handlePress(onSettings)}>
           <Settings size={16} color={ModernTheme.colors.text.primary} />
           <Text style={styles.buttonLabel}>Settings</Text>
         </TouchableOpacity>
-        
+
         {/* Shuffle (if available) */}
         {onShuffle && (
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => handlePress(onShuffle)}
-          >
+          <TouchableOpacity style={styles.secondaryButton} onPress={() => handlePress(onShuffle)}>
             <Shuffle size={16} color={ModernTheme.colors.text.primary} />
             <Text style={styles.buttonLabel}>Shuffle</Text>
           </TouchableOpacity>
         )}
-        
+
         {/* Fullscreen (if available) */}
         {onFullscreen && (
           <TouchableOpacity
@@ -340,56 +322,56 @@ export const FloatingControls: React.FC<FloatingControlsProps> = ({
       </View>
     </Animated.View>
   );
-  
+
   // Render stream info
   const renderStreamInfo = () => (
     <View style={styles.streamInfo}>
       <View style={styles.infoRow}>
         <View style={styles.infoItem}>
           <Eye size={12} color={ModernTheme.colors.text.secondary} />
-          <Text style={styles.infoText}>
-            {totalViewers.toLocaleString()}
-          </Text>
+          <Text style={styles.infoText}>{totalViewers.toLocaleString()}</Text>
         </View>
-        
+
         <View style={styles.infoItem}>
           <Users size={12} color={ModernTheme.colors.text.secondary} />
           <Text style={styles.infoText}>
             {streamCount} stream{streamCount !== 1 ? 's' : ''}
           </Text>
         </View>
-        
+
         <View style={styles.infoItem}>
           <Zap size={12} color={ModernTheme.colors.success[500]} />
-          <Text style={[styles.infoText, { color: ModernTheme.colors.success[500] }]}>
-            LIVE
-          </Text>
+          <Text style={[styles.infoText, { color: ModernTheme.colors.success[500] }]}>LIVE</Text>
         </View>
       </View>
     </View>
   );
-  
-  if (!isVisible) return null;
-  
+
+  if (!isVisible) {
+    return null;
+  }
+
   return (
     <Animated.View
       style={[getContainerStyle(), containerStyle]}
       entering={variant === 'minimal' ? FadeIn : SlideInUp}
       exiting={variant === 'minimal' ? FadeOut : SlideOutDown}
     >
-      <BlurView 
-        intensity={80} 
+      <BlurView
+        intensity={80}
         style={[
           styles.blurContainer,
-          position === 'left' || position === 'right' ? styles.verticalContainer : styles.horizontalContainer
+          position === 'left' || position === 'right'
+            ? styles.verticalContainer
+            : styles.horizontalContainer,
         ]}
       >
         {/* Stream Info (if not minimal) */}
         {variant !== 'minimal' && renderStreamInfo()}
-        
+
         {/* Primary Controls */}
         {renderPrimaryControls()}
-        
+
         {/* Secondary Controls */}
         {variant === 'full' && renderSecondaryControls()}
       </BlurView>

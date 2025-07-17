@@ -1,20 +1,3 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  Alert,
-  Platform,
-  RefreshControl,
-  TextInput,
-  Modal,
-  Switch,
-  FlatList,
-  ActivityIndicator,
-} from 'react-native';
-import { MotiView, AnimatePresence } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Users,
@@ -43,8 +26,25 @@ import {
   Download,
   Upload,
 } from 'lucide-react-native';
-import { ModernTheme } from '@/theme/modernTheme';
+import { MotiView, AnimatePresence } from 'moti';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  Alert,
+  Platform,
+  RefreshControl,
+  TextInput,
+  Modal,
+  Switch,
+  FlatList,
+  ActivityIndicator,
+} from 'react-native';
 import { enterpriseAuthService, EnterpriseUser, Role } from '@/services/enterpriseAuthService';
+import { ModernTheme } from '@/theme/modernTheme';
 
 interface UserManagementProps {
   organizationId: string;
@@ -59,10 +59,7 @@ interface UserFilters {
   searchQuery?: string;
 }
 
-export const UserManagement: React.FC<UserManagementProps> = ({
-  organizationId,
-  currentUser,
-}) => {
+export const UserManagement: React.FC<UserManagementProps> = ({ organizationId, currentUser }) => {
   // State management
   const [users, setUsers] = useState<EnterpriseUser[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -85,7 +82,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         enterpriseAuthService.getEnterpriseUsers(organizationId),
         enterpriseAuthService.getRoles(organizationId),
       ]);
-      
+
       setUsers(usersData);
       setRoles(rolesData);
       setFilteredUsers(usersData);
@@ -110,10 +107,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
     if (filters.searchQuery) {
       const query = filters.searchQuery.toLowerCase();
-      filtered = filtered.filter(user =>
-        user.name.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query) ||
-        user.role.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        user =>
+          user.name.toLowerCase().includes(query) ||
+          user.email.toLowerCase().includes(query) ||
+          user.role.toLowerCase().includes(query)
       );
     }
 
@@ -127,8 +125,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
     if (filters.status) {
       filtered = filtered.filter(user => {
-        if (filters.status === 'active') return user.isActive;
-        if (filters.status === 'inactive') return !user.isActive;
+        if (filters.status === 'active') {
+          return user.isActive;
+        }
+        if (filters.status === 'inactive') {
+          return !user.isActive;
+        }
         return false;
       });
     }
@@ -182,8 +184,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
   const handleUpdateUser = async (userId: string, updates: Partial<EnterpriseUser>) => {
     try {
-      const updatedUser = await enterpriseAuthService.updateUserRole(userId, updates.role || '', currentUser.id);
-      setUsers(prev => prev.map(user => user.id === userId ? updatedUser : user));
+      const updatedUser = await enterpriseAuthService.updateUserRole(
+        userId,
+        updates.role || '',
+        currentUser.id
+      );
+      setUsers(prev => prev.map(user => (user.id === userId ? updatedUser : user)));
       Alert.alert('Success', 'User updated successfully');
     } catch (error) {
       console.error('❌ Failed to update user:', error);
@@ -194,9 +200,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const handleSuspendUser = async (userId: string) => {
     try {
       await enterpriseAuthService.suspendUser(userId, 'Suspended by admin', currentUser.id);
-      setUsers(prev => prev.map(user => 
-        user.id === userId ? { ...user, isActive: false } : user
-      ));
+      setUsers(prev =>
+        prev.map(user => (user.id === userId ? { ...user, isActive: false } : user))
+      );
       Alert.alert('Success', 'User suspended successfully');
     } catch (error) {
       console.error('❌ Failed to suspend user:', error);
@@ -211,8 +217,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     }
 
     const userIds = Array.from(selectedUsers);
-    const actionText = action === 'activate' ? 'activate' : action === 'deactivate' ? 'deactivate' : 'delete';
-    
+    const actionText =
+      action === 'activate' ? 'activate' : action === 'deactivate' ? 'deactivate' : 'delete';
+
     Alert.alert(
       'Confirm Action',
       `Are you sure you want to ${actionText} ${userIds.length} user(s)?`,
@@ -265,7 +272,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const getDepartments = (): string[] => {
     const departments = new Set<string>();
     users.forEach(user => {
-      if (user.department) departments.add(user.department);
+      if (user.department) {
+        departments.add(user.department);
+      }
     });
     return Array.from(departments);
   };
@@ -273,7 +282,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   // Render user item
   const renderUserItem = ({ item: user }: { item: EnterpriseUser }) => {
     const isSelected = selectedUsers.has(user.id);
-    
+
     return (
       <MotiView
         from={{ opacity: 0, translateY: 20 }}
@@ -281,10 +290,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         transition={{ type: 'timing', duration: 300 }}
         style={[styles.userItem, isSelected && styles.userItemSelected]}
       >
-        <LinearGradient
-          colors={ModernTheme.colors.gradients.card}
-          style={styles.userItemGradient}
-        >
+        <LinearGradient colors={ModernTheme.colors.gradients.card} style={styles.userItemGradient}>
           <TouchableOpacity
             style={styles.userItemContent}
             onPress={() => toggleUserSelection(user.id)}
@@ -303,9 +309,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             <View style={styles.userInfo}>
               <View style={styles.userHeader}>
                 <View style={styles.userAvatar}>
-                  <Text style={styles.userAvatarText}>
-                    {user.name.charAt(0).toUpperCase()}
-                  </Text>
+                  <Text style={styles.userAvatarText}>{user.name.charAt(0).toUpperCase()}</Text>
                 </View>
                 <View style={styles.userDetails}>
                   <Text style={styles.userName}>{user.name}</Text>
@@ -333,30 +337,28 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               </View>
 
               <View style={styles.userStatus}>
-                <View style={[
-                  styles.statusBadge,
-                  { backgroundColor: user.isActive ? ModernTheme.colors.success[500] : ModernTheme.colors.error[500] }
-                ]}>
-                  <Text style={styles.statusText}>
-                    {user.isActive ? 'Active' : 'Inactive'}
-                  </Text>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    {
+                      backgroundColor: user.isActive
+                        ? ModernTheme.colors.success[500]
+                        : ModernTheme.colors.error[500],
+                    },
+                  ]}
+                >
+                  <Text style={styles.statusText}>{user.isActive ? 'Active' : 'Inactive'}</Text>
                 </View>
-                <View style={[
-                  styles.tierBadge,
-                  { backgroundColor: ModernTheme.colors.primary[500] }
-                ]}>
-                  <Text style={styles.tierText}>
-                    {user.subscription_tier}
-                  </Text>
+                <View
+                  style={[styles.tierBadge, { backgroundColor: ModernTheme.colors.primary[500] }]}
+                >
+                  <Text style={styles.tierText}>{user.subscription_tier}</Text>
                 </View>
               </View>
             </View>
 
             {/* Actions */}
-            <TouchableOpacity
-              style={styles.userActions}
-              onPress={() => setEditingUser(user)}
-            >
+            <TouchableOpacity style={styles.userActions} onPress={() => setEditingUser(user)}>
               <MoreVertical size={16} color={ModernTheme.colors.text.secondary} />
             </TouchableOpacity>
           </TouchableOpacity>
@@ -392,14 +394,16 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                     key={role.id}
                     style={[
                       styles.filterOption,
-                      filters.role === role.id && styles.filterOptionActive
+                      filters.role === role.id && styles.filterOptionActive,
                     ]}
                     onPress={() => setFilters(prev => ({ ...prev, role: role.id }))}
                   >
-                    <Text style={[
-                      styles.filterOptionText,
-                      filters.role === role.id && styles.filterOptionTextActive
-                    ]}>
+                    <Text
+                      style={[
+                        styles.filterOptionText,
+                        filters.role === role.id && styles.filterOptionTextActive,
+                      ]}
+                    >
                       {role.name}
                     </Text>
                   </TouchableOpacity>
@@ -416,14 +420,16 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                     key={dept}
                     style={[
                       styles.filterOption,
-                      filters.department === dept && styles.filterOptionActive
+                      filters.department === dept && styles.filterOptionActive,
                     ]}
                     onPress={() => setFilters(prev => ({ ...prev, department: dept }))}
                   >
-                    <Text style={[
-                      styles.filterOptionText,
-                      filters.department === dept && styles.filterOptionTextActive
-                    ]}>
+                    <Text
+                      style={[
+                        styles.filterOptionText,
+                        filters.department === dept && styles.filterOptionTextActive,
+                      ]}
+                    >
                       {dept}
                     </Text>
                   </TouchableOpacity>
@@ -443,14 +449,16 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                     key={status.value}
                     style={[
                       styles.filterOption,
-                      filters.status === status.value && styles.filterOptionActive
+                      filters.status === status.value && styles.filterOptionActive,
                     ]}
                     onPress={() => setFilters(prev => ({ ...prev, status: status.value as any }))}
                   >
-                    <Text style={[
-                      styles.filterOptionText,
-                      filters.status === status.value && styles.filterOptionTextActive
-                    ]}>
+                    <Text
+                      style={[
+                        styles.filterOptionText,
+                        filters.status === status.value && styles.filterOptionTextActive,
+                      ]}
+                    >
                       {status.label}
                     </Text>
                   </TouchableOpacity>
@@ -460,10 +468,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           </ScrollView>
 
           <View style={styles.filterActions}>
-            <TouchableOpacity
-              style={styles.clearFiltersButton}
-              onPress={() => setFilters({})}
-            >
+            <TouchableOpacity style={styles.clearFiltersButton} onPress={() => setFilters({})}>
               <Text style={styles.clearFiltersText}>Clear All</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -506,7 +511,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               <TextInput
                 style={styles.fieldInput}
                 value={newUser.name || ''}
-                onChangeText={(text) => setNewUser(prev => ({ ...prev, name: text }))}
+                onChangeText={text => setNewUser(prev => ({ ...prev, name: text }))}
                 placeholder="Enter full name"
                 placeholderTextColor={ModernTheme.colors.text.secondary}
               />
@@ -517,7 +522,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               <TextInput
                 style={styles.fieldInput}
                 value={newUser.email || ''}
-                onChangeText={(text) => setNewUser(prev => ({ ...prev, email: text }))}
+                onChangeText={text => setNewUser(prev => ({ ...prev, email: text }))}
                 placeholder="Enter email address"
                 placeholderTextColor={ModernTheme.colors.text.secondary}
                 keyboardType="email-address"
@@ -531,16 +536,15 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 {roles.map(role => (
                   <TouchableOpacity
                     key={role.id}
-                    style={[
-                      styles.roleOption,
-                      newUser.role === role.id && styles.roleOptionActive
-                    ]}
+                    style={[styles.roleOption, newUser.role === role.id && styles.roleOptionActive]}
                     onPress={() => setNewUser(prev => ({ ...prev, role: role.id }))}
                   >
-                    <Text style={[
-                      styles.roleOptionText,
-                      newUser.role === role.id && styles.roleOptionTextActive
-                    ]}>
+                    <Text
+                      style={[
+                        styles.roleOptionText,
+                        newUser.role === role.id && styles.roleOptionTextActive,
+                      ]}
+                    >
                       {role.name}
                     </Text>
                   </TouchableOpacity>
@@ -553,7 +557,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               <TextInput
                 style={styles.fieldInput}
                 value={newUser.department || ''}
-                onChangeText={(text) => setNewUser(prev => ({ ...prev, department: text }))}
+                onChangeText={text => setNewUser(prev => ({ ...prev, department: text }))}
                 placeholder="Enter department"
                 placeholderTextColor={ModernTheme.colors.text.secondary}
               />
@@ -561,16 +565,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           </ScrollView>
 
           <View style={styles.modalActions}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setShowUserModal(false)}
-            >
+            <TouchableOpacity style={styles.cancelButton} onPress={() => setShowUserModal(false)}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.createButton}
-              onPress={handleCreateUser}
-            >
+            <TouchableOpacity style={styles.createButton} onPress={handleCreateUser}>
               <LinearGradient
                 colors={ModernTheme.colors.gradients.primary}
                 style={styles.createButtonGradient}
@@ -595,16 +593,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           </Text>
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={styles.headerAction}
-            onPress={() => setShowFilters(true)}
-          >
+          <TouchableOpacity style={styles.headerAction} onPress={() => setShowFilters(true)}>
             <Filter size={20} color={ModernTheme.colors.text.primary} />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerAction}
-            onPress={() => setShowUserModal(true)}
-          >
+          <TouchableOpacity style={styles.headerAction} onPress={() => setShowUserModal(true)}>
             <Plus size={20} color={ModernTheme.colors.text.primary} />
           </TouchableOpacity>
         </View>
@@ -619,7 +611,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             placeholder="Search users..."
             placeholderTextColor={ModernTheme.colors.text.secondary}
             value={filters.searchQuery || ''}
-            onChangeText={(text) => setFilters(prev => ({ ...prev, searchQuery: text }))}
+            onChangeText={text => setFilters(prev => ({ ...prev, searchQuery: text }))}
           />
         </View>
       </View>
@@ -638,9 +630,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               colors={ModernTheme.colors.gradients.primary}
               style={styles.bulkActionsGradient}
             >
-              <Text style={styles.bulkActionsText}>
-                {selectedUsers.size} user(s) selected
-              </Text>
+              <Text style={styles.bulkActionsText}>{selectedUsers.size} user(s) selected</Text>
               <View style={styles.bulkActionsButtons}>
                 <TouchableOpacity
                   style={styles.bulkActionButton}
@@ -670,7 +660,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       <FlatList
         data={filteredUsers}
         renderItem={renderUserItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         contentContainerStyle={styles.usersList}
         refreshControl={
           <RefreshControl

@@ -1,15 +1,3 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  ActivityIndicator,
-  ViewStyle,
-  TextStyle,
-  Animated,
-} from 'react-native';
-import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Volume2,
@@ -28,10 +16,22 @@ import {
   ThumbsUp,
   Share2,
 } from 'lucide-react-native';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle,
+  Animated,
+} from 'react-native';
+import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { UniversalStream } from '@/services/multiPlatformStreamingApi';
-import { ModernTheme } from '@/theme/modernTheme';
-import { streamQualityManager, QualityLevel } from '@/services/streamQualityManager';
 import { streamHealthMonitor } from '@/services/streamHealthMonitor';
+import { streamQualityManager, QualityLevel } from '@/services/streamQualityManager';
+import { ModernTheme } from '@/theme/modernTheme';
 
 interface EnhancedYouTubePlayerProps {
   stream: UniversalStream;
@@ -102,7 +102,7 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
     playerState: 'unstarted',
   });
   const [controlsVisible, setControlsVisible] = useState(true);
-  
+
   const webViewRef = useRef<WebView>(null);
   const loadStartTime = useRef<number>(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -111,7 +111,7 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
   // Initialize stream quality management
   useEffect(() => {
     streamQualityManager.initializeStream(stream.id, quality, quality === 'auto');
-    
+
     // Create a mock TwitchStream object for health monitoring
     const mockStream = {
       id: stream.id,
@@ -129,9 +129,9 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
       tag_ids: stream.tags,
       is_mature: stream.isMature,
     };
-    
+
     streamHealthMonitor.initializeStream(mockStream);
-    
+
     return () => {
       streamQualityManager.removeStream(stream.id);
       streamHealthMonitor.removeStream(stream.id);
@@ -141,14 +141,18 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
   // Auto-hide controls
   useEffect(() => {
     if (controlsVisible && showControls) {
-      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      if (controlsTimer.current) {
+        clearTimeout(controlsTimer.current);
+      }
       controlsTimer.current = setTimeout(() => {
         setControlsVisible(false);
       }, 3000);
     }
-    
+
     return () => {
-      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      if (controlsTimer.current) {
+        clearTimeout(controlsTimer.current);
+      }
     };
   }, [controlsVisible, showControls]);
 
@@ -156,7 +160,7 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
   const getEmbedHtml = useCallback(() => {
     const videoId = stream.id;
     const apiKey = process.env.EXPO_PUBLIC_YOUTUBE_API_KEY || '';
-    
+
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -404,7 +408,9 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
             <div id="youtube-player"></div>
         </div>
         
-        ${showSuperChat ? `
+        ${
+  showSuperChat
+    ? `
         <div class="chat-section">
             <div class="superchat-container" id="superchat-container">
                 <div style="color: #fff; font-weight: bold; margin-bottom: 10px; text-align: center;">
@@ -413,7 +419,9 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
                 <!-- Super Chat messages will be populated here -->
             </div>
         </div>
-        ` : ''}
+        `
+    : ''
+}
     </div>
     
     <!-- YouTube API Script -->
@@ -732,78 +740,84 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
   }, [stream, isMuted, isPlaying, autoplay, quality, showSuperChat, retryCount]);
 
   // WebView event handlers
-  const handleWebViewMessage = useCallback((event: WebViewMessageEvent) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      console.log(`Enhanced YouTube player message:`, data);
-      
-      switch (data.type) {
-        case 'loaded':
-          setIsLoading(false);
-          setError(null);
-          setHasLoaded(true);
-          setRetryCount(0);
-          streamHealthMonitor.recordSuccess(stream.id, data.loadTime);
-          break;
-          
-        case 'error':
-          setIsLoading(false);
-          setError(data.message || 'YouTube stream unavailable');
-          streamHealthMonitor.recordError(stream.id, data.message);
-          break;
-          
-        case 'retry':
-          setRetryCount(prev => prev + 1);
-          streamHealthMonitor.recordError(stream.id, 'Retry attempt', true);
-          break;
-          
-        case 'performance_update':
-          setStats(prev => ({ ...prev, ...data.stats }));
-          break;
-          
-        case 'state_change':
-          // Handle player state changes
-          break;
-          
-        case 'quality_change':
-          // Handle quality changes
-          break;
-          
-        case 'touch':
-          if (data.target === 'player') {
-            setControlsVisible(true);
-            onPress?.();
-          }
-          break;
-          
-        case 'mute_toggle':
-          onMuteToggle?.();
-          break;
-          
-        case 'play_toggle':
-          onPlayToggle?.();
-          break;
-          
-        case 'stats_toggle':
-          setShowStats(data.visible);
-          break;
-          
-        case 'open_external':
-          // Handle external link opening
-          break;
+  const handleWebViewMessage = useCallback(
+    (event: WebViewMessageEvent) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        console.log('Enhanced YouTube player message:', data);
+
+        switch (data.type) {
+          case 'loaded':
+            setIsLoading(false);
+            setError(null);
+            setHasLoaded(true);
+            setRetryCount(0);
+            streamHealthMonitor.recordSuccess(stream.id, data.loadTime);
+            break;
+
+          case 'error':
+            setIsLoading(false);
+            setError(data.message || 'YouTube stream unavailable');
+            streamHealthMonitor.recordError(stream.id, data.message);
+            break;
+
+          case 'retry':
+            setRetryCount(prev => prev + 1);
+            streamHealthMonitor.recordError(stream.id, 'Retry attempt', true);
+            break;
+
+          case 'performance_update':
+            setStats(prev => ({ ...prev, ...data.stats }));
+            break;
+
+          case 'state_change':
+            // Handle player state changes
+            break;
+
+          case 'quality_change':
+            // Handle quality changes
+            break;
+
+          case 'touch':
+            if (data.target === 'player') {
+              setControlsVisible(true);
+              onPress?.();
+            }
+            break;
+
+          case 'mute_toggle':
+            onMuteToggle?.();
+            break;
+
+          case 'play_toggle':
+            onPlayToggle?.();
+            break;
+
+          case 'stats_toggle':
+            setShowStats(data.visible);
+            break;
+
+          case 'open_external':
+            // Handle external link opening
+            break;
+        }
+      } catch (error) {
+        console.log('YouTube WebView message parse error:', error);
       }
-    } catch (error) {
-      console.log('YouTube WebView message parse error:', error);
-    }
-  }, [onPress, onMuteToggle, onPlayToggle, stream.id]);
+    },
+    [onPress, onMuteToggle, onPlayToggle, stream.id]
+  );
 
   // Handle quality change
-  const handleQualityChange = useCallback((newQuality: QualityLevel) => {
-    streamQualityManager.setStreamQuality(stream.id, newQuality, true);
-    onQualityChange?.(newQuality);
-    setShowQualityMenu(false);
-    webViewRef.current?.reload();
-  }, [stream.id, onQualityChange]);
+  const handleQualityChange = useCallback(
+    (newQuality: QualityLevel) => {
+      streamQualityManager.setStreamQuality(stream.id, newQuality, true);
+      onQualityChange?.(newQuality);
+      setShowQualityMenu(false);
+      webViewRef.current?.reload();
+    },
+    [stream.id, onQualityChange]
+  );
 
   const embedHtml = getEmbedHtml();
   const qualityOptions: QualityLevel[] = ['auto', 'source', '720p', '480p', '360p'];
@@ -817,10 +831,10 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
           source={{ html: embedHtml }}
           style={styles.video}
           onMessage={handleWebViewMessage}
-          allowsInlineMediaPlaybook={true}
+          allowsInlineMediaPlaybook
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
           scalesPageToFit={false}
           bounces={false}
@@ -828,10 +842,10 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['*']}
-          mixedContentMode={'compatibility'}
-          allowsFullscreenVideo={true}
-          allowsProtectedMedia={true}
-          cacheEnabled={true}
+          mixedContentMode="compatibility"
+          allowsFullscreenVideo
+          allowsProtectedMedia
+          cacheEnabled
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
         />
 
@@ -851,15 +865,17 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
             <Text style={styles.errorText}>{error}</Text>
             <Text style={styles.errorPlatform}>Platform: YouTube</Text>
             <View style={styles.errorButtons}>
-              <TouchableOpacity 
-                style={styles.retryButton} 
+              <TouchableOpacity
+                style={styles.retryButton}
                 onPress={() => webViewRef.current?.reload()}
               >
                 <Text style={styles.retryText}>Retry</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.platformButton, { backgroundColor: '#FF0000' }]} 
-                onPress={() => {/* Handle external opening */}}
+              <TouchableOpacity
+                style={[styles.platformButton, { backgroundColor: '#FF0000' }]}
+                onPress={() => {
+                  /* Handle external opening */
+                }}
               >
                 <Text style={styles.platformText}>Open YouTube</Text>
               </TouchableOpacity>
@@ -877,21 +893,25 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
                   <TouchableOpacity style={styles.controlButton} onPress={onMuteToggle}>
-                    {isMuted ? <VolumeX size={18} color="#fff" /> : <Volume2 size={18} color="#fff" />}
+                    {isMuted ? (
+                      <VolumeX size={18} color="#fff" />
+                    ) : (
+                      <Volume2 size={18} color="#fff" />
+                    )}
                   </TouchableOpacity>
-                  
+
                   <TouchableOpacity style={styles.controlButton} onPress={onPlayToggle}>
                     {isPlaying ? <Pause size={18} color="#fff" /> : <Play size={18} color="#fff" />}
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity 
+
+                  <TouchableOpacity
                     style={styles.controlButton}
                     onPress={() => setShowQualityMenu(!showQualityMenu)}
                   >
                     <Settings size={18} color="#fff" />
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity 
+
+                  <TouchableOpacity
                     style={styles.controlButton}
                     onPress={() => setShowStats(!showStats)}
                   >
@@ -912,26 +932,26 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
                   <TouchableOpacity style={styles.controlButton}>
                     <ThumbsUp size={18} color="#fff" />
                   </TouchableOpacity>
-                  
+
                   <TouchableOpacity style={styles.controlButton}>
                     <Share2 size={18} color="#fff" />
                   </TouchableOpacity>
-                  
+
                   {onPictureInPicture && (
                     <TouchableOpacity style={styles.controlButton} onPress={onPictureInPicture}>
                       <Minimize size={18} color="#fff" />
                     </TouchableOpacity>
                   )}
-                  
+
                   {onFullscreen && (
                     <TouchableOpacity style={styles.controlButton} onPress={onFullscreen}>
                       <Maximize size={18} color="#fff" />
                     </TouchableOpacity>
                   )}
-                  
+
                   {onRemove && (
-                    <TouchableOpacity 
-                      style={[styles.controlButton, styles.removeButton]} 
+                    <TouchableOpacity
+                      style={[styles.controlButton, styles.removeButton]}
                       onPress={onRemove}
                     >
                       <X size={18} color="#fff" />
@@ -947,7 +967,7 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
         {showQualityMenu && (
           <View style={styles.qualityMenu}>
             <Text style={styles.qualityTitle}>Video Quality</Text>
-            {qualityOptions.map((q) => (
+            {qualityOptions.map(q => (
               <TouchableOpacity
                 key={q}
                 style={[styles.qualityOption, quality === q && styles.qualityOptionActive]}
@@ -965,10 +985,7 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
         {/* Active Indicator */}
         {isActive && (
           <View style={styles.activeIndicator}>
-            <LinearGradient
-              colors={['#FF0000', '#CC0000']}
-              style={styles.activeGradient}
-            />
+            <LinearGradient colors={['#FF0000', '#CC0000']} style={styles.activeGradient} />
           </View>
         )}
 
@@ -979,16 +996,14 @@ export const EnhancedYouTubePlayer: React.FC<EnhancedYouTubePlayerProps> = ({
 
         {/* Health Status */}
         <View style={styles.healthIndicator}>
-          <View style={[
-            styles.healthDot,
-            { 
-              backgroundColor: hasLoaded 
-                ? '#00ff00' 
-                : isLoading 
-                  ? '#ffff00' 
-                  : '#ff0000' 
-            }
-          ]} />
+          <View
+            style={[
+              styles.healthDot,
+              {
+                backgroundColor: hasLoaded ? '#00ff00' : isLoading ? '#ffff00' : '#ff0000',
+              },
+            ]}
+          />
         </View>
       </View>
     </View>
@@ -1003,17 +1018,17 @@ const styles = StyleSheet.create({
     margin: ModernTheme.spacing.xs,
     ...ModernTheme.shadows.lg,
   } as ViewStyle,
-  
+
   playerContainer: {
     flex: 1,
     position: 'relative',
   } as ViewStyle,
-  
+
   video: {
     flex: 1,
     backgroundColor: '#000',
   } as ViewStyle,
-  
+
   loadingOverlay: {
     position: 'absolute',
     top: 0,
@@ -1024,21 +1039,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   } as ViewStyle,
-  
+
   loadingText: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     marginTop: ModernTheme.spacing.sm,
     fontWeight: ModernTheme.typography.weights.medium,
   } as TextStyle,
-  
+
   loadingSubtext: {
     color: ModernTheme.colors.text.secondary,
     fontSize: ModernTheme.typography.sizes.xs,
     marginTop: ModernTheme.spacing.xs,
     opacity: 0.7,
   } as TextStyle,
-  
+
   errorOverlay: {
     position: 'absolute',
     top: 0,
@@ -1050,7 +1065,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: ModernTheme.spacing.md,
   } as ViewStyle,
-  
+
   errorText: {
     color: '#ff6b6b',
     fontSize: ModernTheme.typography.sizes.md,
@@ -1059,79 +1074,79 @@ const styles = StyleSheet.create({
     marginBottom: ModernTheme.spacing.xs,
     fontWeight: ModernTheme.typography.weights.semibold,
   } as TextStyle,
-  
+
   errorPlatform: {
     color: ModernTheme.colors.text.secondary,
     fontSize: ModernTheme.typography.sizes.sm,
     textAlign: 'center',
     marginBottom: ModernTheme.spacing.md,
   } as TextStyle,
-  
+
   errorButtons: {
     flexDirection: 'row',
     gap: ModernTheme.spacing.sm,
   } as ViewStyle,
-  
+
   retryButton: {
     backgroundColor: ModernTheme.colors.primary[500],
     paddingHorizontal: ModernTheme.spacing.md,
     paddingVertical: ModernTheme.spacing.sm,
     borderRadius: ModernTheme.borderRadius.md,
   } as ViewStyle,
-  
+
   retryText: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
   } as TextStyle,
-  
+
   platformButton: {
     paddingHorizontal: ModernTheme.spacing.md,
     paddingVertical: ModernTheme.spacing.sm,
     borderRadius: ModernTheme.borderRadius.md,
   } as ViewStyle,
-  
+
   platformText: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
   } as TextStyle,
-  
+
   controlsOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
   } as ViewStyle,
-  
+
   controlsGradient: {
     padding: ModernTheme.spacing.md,
   } as ViewStyle,
-  
+
   controlsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   } as ViewStyle,
-  
+
   leftControls: {
     flexDirection: 'row',
     gap: ModernTheme.spacing.sm,
     flex: 1,
   } as ViewStyle,
-  
+
   centerControls: {
     flex: 2,
     alignItems: 'center',
   } as ViewStyle,
-  
+
   rightControls: {
     flexDirection: 'row',
     gap: ModernTheme.spacing.sm,
     flex: 1,
     justifyContent: 'flex-end',
   } as ViewStyle,
-  
+
   controlButton: {
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     width: 40,
@@ -1142,25 +1157,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   } as ViewStyle,
-  
+
   removeButton: {
     backgroundColor: 'rgba(239, 68, 68, 0.7)',
   } as ViewStyle,
-  
+
   streamTitle: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
     textAlign: 'center',
   } as TextStyle,
-  
+
   streamGame: {
     color: ModernTheme.colors.text.secondary,
     fontSize: ModernTheme.typography.sizes.xs,
     textAlign: 'center',
     marginTop: 2,
   } as TextStyle,
-  
+
   qualityMenu: {
     position: 'absolute',
     bottom: 80,
@@ -1172,35 +1187,35 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   } as ViewStyle,
-  
+
   qualityTitle: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
     marginBottom: ModernTheme.spacing.sm,
   } as TextStyle,
-  
+
   qualityOption: {
     paddingVertical: ModernTheme.spacing.xs,
     paddingHorizontal: ModernTheme.spacing.sm,
     borderRadius: ModernTheme.borderRadius.sm,
     marginBottom: ModernTheme.spacing.xs,
   } as ViewStyle,
-  
+
   qualityOptionActive: {
     backgroundColor: '#FF0000',
   } as ViewStyle,
-  
+
   qualityText: {
     color: ModernTheme.colors.text.secondary,
     fontSize: ModernTheme.typography.sizes.sm,
   } as TextStyle,
-  
+
   qualityTextActive: {
     color: ModernTheme.colors.text.primary,
     fontWeight: ModernTheme.typography.weights.semibold,
   } as TextStyle,
-  
+
   activeIndicator: {
     position: 'absolute',
     top: 0,
@@ -1211,12 +1226,12 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: 'transparent',
   } as ViewStyle,
-  
+
   activeGradient: {
     flex: 1,
     borderRadius: ModernTheme.borderRadius.lg,
   } as ViewStyle,
-  
+
   platformBadge: {
     position: 'absolute',
     top: ModernTheme.spacing.sm,
@@ -1226,20 +1241,20 @@ const styles = StyleSheet.create({
     paddingVertical: ModernTheme.spacing.xs,
     borderRadius: ModernTheme.borderRadius.sm,
   } as ViewStyle,
-  
+
   platformBadgeText: {
     color: ModernTheme.colors.text.primary,
     fontSize: 10,
     fontWeight: ModernTheme.typography.weights.bold,
   } as TextStyle,
-  
+
   healthIndicator: {
     position: 'absolute',
     top: ModernTheme.spacing.xs,
     right: ModernTheme.spacing.xs,
     zIndex: 1000,
   } as ViewStyle,
-  
+
   healthDot: {
     width: 10,
     height: 10,

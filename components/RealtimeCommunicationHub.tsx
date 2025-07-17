@@ -1,17 +1,3 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  TextInput,
-  Dimensions,
-  Alert,
-  Modal,
-  ScrollView,
-} from 'react-native';
-import { MotiView, MotiText, AnimatePresence } from 'moti';
 import { BlurView } from '@react-native-community/blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -40,6 +26,20 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react-native';
+import { MotiView, MotiText, AnimatePresence } from 'moti';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  TextInput,
+  Dimensions,
+  Alert,
+  Modal,
+  ScrollView,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -49,12 +49,25 @@ import Animated, {
 } from 'react-native-reanimated';
 
 // Import services
-import { webSocketService, connectToRealtime } from '@/services/webSocketService';
-import { realtimeChatService, initializeChat, ChatMessage, ChatUser } from '@/services/realtimeChatService';
-import { viewerSyncService, initializeViewerSync, ViewerSyncState } from '@/services/viewerSyncService';
-import { realtimeReactionsService, initializeReactions, ReactionData } from '@/services/realtimeReactionsService';
-import { streamRoomsService, initializeRooms, StreamRoom } from '@/services/streamRoomsService';
 import { livePollsService, initializePolls, Poll, QASession } from '@/services/livePollsService';
+import {
+  realtimeChatService,
+  initializeChat,
+  ChatMessage,
+  ChatUser,
+} from '@/services/realtimeChatService';
+import {
+  realtimeReactionsService,
+  initializeReactions,
+  ReactionData,
+} from '@/services/realtimeReactionsService';
+import { streamRoomsService, initializeRooms, StreamRoom } from '@/services/streamRoomsService';
+import {
+  viewerSyncService,
+  initializeViewerSync,
+  ViewerSyncState,
+} from '@/services/viewerSyncService';
+import { webSocketService, connectToRealtime } from '@/services/webSocketService';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -80,40 +93,44 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
   onPlaybackControl,
 }) => {
   // State management
-  const [activeTab, setActiveTab] = useState<'chat' | 'viewers' | 'reactions' | 'polls' | 'room'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'viewers' | 'reactions' | 'polls' | 'room'>(
+    'chat'
+  );
   const [isInitialized, setIsInitialized] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<
+    'disconnected' | 'connecting' | 'connected'
+  >('disconnected');
   const [currentRoom, setCurrentRoom] = useState<StreamRoom | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
-  
+
   // Chat state
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [chatUsers, setChatUsers] = useState<ChatUser[]>([]);
-  
+
   // Reactions state
   const [activeReactions, setActiveReactions] = useState<ReactionData[]>([]);
   const [reactionStats, setReactionStats] = useState<any>(null);
-  
+
   // Viewer sync state
   const [syncedViewers, setSyncedViewers] = useState<ViewerSyncState[]>([]);
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'out_of_sync'>('synced');
-  
+
   // Polls state
   const [activePolls, setActivePolls] = useState<Poll[]>([]);
   const [activeQASessions, setActiveQASessions] = useState<QASession[]>([]);
-  
+
   // UI state
   const [showCreatePoll, setShowCreatePoll] = useState(false);
   const [showRoomSettings, setShowRoomSettings] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
-  
+
   // Animation values
   const hubScale = useSharedValue(isVisible ? 1 : 0);
   const hubOpacity = useSharedValue(isVisible ? 1 : 0);
   const hubHeight = useSharedValue(isMinimized ? 80 : 500);
-  
+
   // Refs
   const chatListRef = useRef<FlatList>(null);
   const reactionTimeout = useRef<NodeJS.Timeout>();
@@ -128,10 +145,10 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
   const initializeServices = async () => {
     try {
       setConnectionStatus('connecting');
-      
+
       // Connect to WebSocket
       await connectToRealtime(userId, `stream_${streamId}`);
-      
+
       // Initialize all services
       await Promise.all([
         initializeChat({
@@ -168,10 +185,10 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
         initializeRooms(userId, username),
         initializePolls(userId, username, `stream_${streamId}`),
       ]);
-      
+
       // Set up event listeners
       setupEventListeners();
-      
+
       setIsInitialized(true);
       setConnectionStatus('connected');
     } catch (error) {
@@ -187,68 +204,70 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
       setChatMessages(prev => [...prev.slice(-99), message]);
       scrollChatToBottom();
     });
-    
-    realtimeChatService.on('typing_start', (indicator) => {
+
+    realtimeChatService.on('typing_start', indicator => {
       setTypingUsers(prev => [...prev.filter(u => u !== indicator.username), indicator.username]);
     });
-    
-    realtimeChatService.on('typing_stop', (indicator) => {
+
+    realtimeChatService.on('typing_stop', indicator => {
       setTypingUsers(prev => prev.filter(u => u !== indicator.username));
     });
-    
+
     realtimeChatService.on('user_joined', (user: ChatUser) => {
       setChatUsers(prev => [...prev.filter(u => u.id !== user.id), user]);
     });
-    
+
     realtimeChatService.on('user_left', (user: ChatUser) => {
       setChatUsers(prev => prev.filter(u => u.id !== user.id));
     });
-    
+
     // Reactions events
     realtimeReactionsService.on('reaction_received', (reaction: ReactionData) => {
       setActiveReactions(prev => [...prev.slice(-49), reaction]);
-      if (reactionTimeout.current) clearTimeout(reactionTimeout.current);
+      if (reactionTimeout.current) {
+        clearTimeout(reactionTimeout.current);
+      }
       reactionTimeout.current = setTimeout(() => {
         setActiveReactions(prev => prev.filter(r => r.id !== reaction.id));
       }, 5000);
     });
-    
-    realtimeReactionsService.on('reaction_stats_updated', (stats) => {
+
+    realtimeReactionsService.on('reaction_stats_updated', stats => {
       setReactionStats(stats);
     });
-    
+
     // Viewer sync events
-    viewerSyncService.on('room_state_updated', (roomState) => {
+    viewerSyncService.on('room_state_updated', roomState => {
       setSyncedViewers(roomState.viewers);
     });
-    
-    viewerSyncService.on('sync_applied', (syncData) => {
+
+    viewerSyncService.on('sync_applied', syncData => {
       setSyncStatus('synced');
       if (onPlaybackControl) {
         onPlaybackControl('seek', { time: syncData.masterTime });
       }
     });
-    
+
     viewerSyncService.on('sync_drift_detected', () => {
       setSyncStatus('out_of_sync');
     });
-    
+
     // Room events
     streamRoomsService.on('room_state_updated', (room: StreamRoom) => {
       setCurrentRoom(room);
     });
-    
+
     // Polls events
     livePollsService.on('poll_received', (poll: Poll) => {
       setActivePolls(prev => [...prev.filter(p => p.id !== poll.id), poll]);
     });
-    
+
     livePollsService.on('qa_session_received', (session: QASession) => {
       setActiveQASessions(prev => [...prev.filter(s => s.id !== session.id), session]);
     });
-    
+
     // Connection events
-    webSocketService.on('connection_state_changed', (state) => {
+    webSocketService.on('connection_state_changed', state => {
       setConnectionStatus(state.isConnected ? 'connected' : 'disconnected');
     });
   };
@@ -270,8 +289,10 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
 
   // Handler functions
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
-    
+    if (!newMessage.trim()) {
+      return;
+    }
+
     try {
       await realtimeChatService.sendMessage(newMessage.trim());
       setNewMessage('');
@@ -287,7 +308,7 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
         x: Math.random() * 300,
         y: Math.random() * 200,
       };
-      
+
       await realtimeReactionsService.sendReaction('emoji', emoji, position);
       setShowReactionPicker(false);
     } catch (error) {
@@ -301,7 +322,7 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
         text: opt,
         description: '',
       }));
-      
+
       await livePollsService.createPoll('single_choice', question, pollOptions);
       setShowCreatePoll(false);
     } catch (error) {
@@ -339,12 +360,8 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
       style={styles.messageContainer}
     >
       <View style={styles.messageHeader}>
-        <Text style={[styles.username, { color: '#8B5CF6' }]}>
-          {item.username}
-        </Text>
-        <Text style={styles.timestamp}>
-          {new Date(item.timestamp).toLocaleTimeString()}
-        </Text>
+        <Text style={[styles.username, { color: '#8B5CF6' }]}>{item.username}</Text>
+        <Text style={styles.timestamp}>{new Date(item.timestamp).toLocaleTimeString()}</Text>
       </View>
       <Text style={styles.messageText}>{item.message}</Text>
       {item.reactions && item.reactions.length > 0 && (
@@ -371,7 +388,7 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
         {
           left: item.position.x,
           top: item.position.y,
-        }
+        },
       ]}
     >
       <Text style={styles.reactionEmoji}>{item.emoji}</Text>
@@ -391,7 +408,7 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
               style={styles.messagesList}
               showsVerticalScrollIndicator={false}
             />
-            
+
             {typingUsers.length > 0 && (
               <MotiView
                 from={{ opacity: 0 }}
@@ -403,12 +420,12 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
                 </Text>
               </MotiView>
             )}
-            
+
             <View style={styles.chatInput}>
               <TextInput
                 style={styles.textInput}
                 value={newMessage}
-                onChangeText={(text) => {
+                onChangeText={text => {
                   setNewMessage(text);
                   if (text.length > 0) {
                     realtimeChatService.startTyping();
@@ -431,14 +448,18 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
             </View>
           </View>
         );
-        
+
       case 'viewers':
         return (
           <View style={styles.viewersContainer}>
             <View style={styles.syncStatus}>
               <View style={[styles.syncIndicator, { backgroundColor: getSyncColor() }]} />
               <Text style={styles.syncText}>
-                {syncStatus === 'synced' ? 'Synced' : syncStatus === 'syncing' ? 'Syncing...' : 'Out of sync'}
+                {syncStatus === 'synced'
+                  ? 'Synced'
+                  : syncStatus === 'syncing'
+                    ? 'Syncing...'
+                    : 'Out of sync'}
               </Text>
               {syncStatus !== 'synced' && (
                 <TouchableOpacity style={styles.syncButton} onPress={handleSyncRequest}>
@@ -446,7 +467,7 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
                 </TouchableOpacity>
               )}
             </View>
-            
+
             <FlatList
               data={syncedViewers}
               renderItem={({ item }) => (
@@ -457,7 +478,12 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
                   </View>
                   <View style={styles.viewerStats}>
                     <Text style={styles.viewerLatency}>{item.latency}ms</Text>
-                    <View style={[styles.connectionQuality, { backgroundColor: getConnectionColor(item.connectionQuality) }]} />
+                    <View
+                      style={[
+                        styles.connectionQuality,
+                        { backgroundColor: getConnectionColor(item.connectionQuality) },
+                      ]}
+                    />
                   </View>
                 </View>
               )}
@@ -466,7 +492,7 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
             />
           </View>
         );
-        
+
       case 'reactions':
         return (
           <View style={styles.reactionsContainer}>
@@ -478,14 +504,14 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
                 <Smile size={20} color="#8B5CF6" />
                 <Text style={styles.reactionButtonText}>React</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={styles.reactionButton}
                 onPress={() => handleSendReaction('❤️')}
               >
                 <Heart size={20} color="#FF6B6B" />
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={styles.reactionButton}
                 onPress={() => handleSendReaction('👍')}
@@ -493,7 +519,7 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
                 <ThumbsUp size={20} color="#10B981" />
               </TouchableOpacity>
             </View>
-            
+
             {reactionStats && (
               <View style={styles.reactionStats}>
                 <Text style={styles.statsTitle}>Live Reactions</Text>
@@ -503,7 +529,7 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
             )}
           </View>
         );
-        
+
       case 'polls':
         return (
           <View style={styles.pollsContainer}>
@@ -516,7 +542,7 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
                 <Text style={styles.createPollText}>Create Poll</Text>
               </TouchableOpacity>
             </View>
-            
+
             <FlatList
               data={activePolls}
               renderItem={({ item }) => (
@@ -542,16 +568,14 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
             />
           </View>
         );
-        
+
       case 'room':
         return (
           <View style={styles.roomContainer}>
             {currentRoom ? (
               <View>
                 <Text style={styles.roomName}>{currentRoom.name}</Text>
-                <Text style={styles.roomMembers}>
-                  {currentRoom.currentMemberCount} members
-                </Text>
+                <Text style={styles.roomMembers}>{currentRoom.currentMemberCount} members</Text>
                 <TouchableOpacity
                   style={styles.roomSettingsButton}
                   onPress={() => setShowRoomSettings(true)}
@@ -565,7 +589,7 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
             )}
           </View>
         );
-        
+
       default:
         return null;
     }
@@ -573,20 +597,29 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
 
   const getSyncColor = () => {
     switch (syncStatus) {
-      case 'synced': return '#10B981';
-      case 'syncing': return '#F59E0B';
-      case 'out_of_sync': return '#EF4444';
-      default: return '#666';
+      case 'synced':
+        return '#10B981';
+      case 'syncing':
+        return '#F59E0B';
+      case 'out_of_sync':
+        return '#EF4444';
+      default:
+        return '#666';
     }
   };
 
   const getConnectionColor = (quality: string) => {
     switch (quality) {
-      case 'excellent': return '#10B981';
-      case 'good': return '#10B981';
-      case 'fair': return '#F59E0B';
-      case 'poor': return '#EF4444';
-      default: return '#666';
+      case 'excellent':
+        return '#10B981';
+      case 'good':
+        return '#10B981';
+      case 'fair':
+        return '#F59E0B';
+      case 'poor':
+        return '#EF4444';
+      default:
+        return '#666';
     }
   };
 
@@ -596,7 +629,9 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
     height: hubHeight.value,
   }));
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return null;
+  }
 
   return (
     <>
@@ -618,10 +653,15 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
             {/* Header */}
             <View style={styles.hubHeader}>
               <View style={styles.headerLeft}>
-                <View style={[styles.connectionIndicator, { backgroundColor: connectionStatus === 'connected' ? '#10B981' : '#EF4444' }]} />
+                <View
+                  style={[
+                    styles.connectionIndicator,
+                    { backgroundColor: connectionStatus === 'connected' ? '#10B981' : '#EF4444' },
+                  ]}
+                />
                 <Text style={styles.hubTitle}>Live Hub</Text>
               </View>
-              
+
               <View style={styles.headerControls}>
                 <TouchableOpacity
                   style={styles.headerButton}
@@ -629,11 +669,8 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
                 >
                   <Text style={styles.headerButtonText}>{isMinimized ? '▲' : '▼'}</Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={styles.headerButton}
-                  onPress={onToggleVisibility}
-                >
+
+                <TouchableOpacity style={styles.headerButton} onPress={onToggleVisibility}>
                   <X size={16} color="#666" />
                 </TouchableOpacity>
               </View>
@@ -664,9 +701,7 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
                 </View>
 
                 {/* Tab Content */}
-                <View style={styles.tabContent}>
-                  {renderTabContent()}
-                </View>
+                <View style={styles.tabContent}>{renderTabContent()}</View>
               </>
             )}
           </LinearGradient>
@@ -688,7 +723,7 @@ export const RealtimeCommunicationHub: React.FC<RealtimeCommunicationHubProps> =
                 {
                   left: reaction.position.x,
                   top: reaction.position.y,
-                }
+                },
               ]}
             >
               <Text style={styles.floatingReactionEmoji}>{reaction.emoji}</Text>

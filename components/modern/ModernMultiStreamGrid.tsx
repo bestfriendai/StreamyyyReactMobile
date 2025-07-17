@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
@@ -12,7 +13,6 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import {
   Grid3X3,
@@ -42,8 +42,8 @@ import {
 } from 'lucide-react-native';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
-import { ModernStreamCard, StreamLayoutMode, StreamQuality } from './ModernStreamCard';
 import { LayoutManager, LayoutMode, StreamPosition, LayoutUtils } from './LayoutManager';
+import { ModernStreamCard, StreamLayoutMode, StreamQuality } from './ModernStreamCard';
 import { HapticFeedback } from '@/utils/haptics';
 import Animated, {
   useSharedValue,
@@ -112,7 +112,7 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
   const [selectedStreams, setSelectedStreams] = useState<string[]>([]);
   const [customPositions, setCustomPositions] = useState<StreamPosition[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  
+
   // Animation values
   const controlsOpacity = useSharedValue(1);
   const headerOffset = useSharedValue(0);
@@ -120,10 +120,10 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
   const statsOpacity = useSharedValue(showStats ? 1 : 0);
   const layoutTransition = useSharedValue(1);
   const pulseScale = useSharedValue(1);
-  
+
   // Auto-hide controls
   const controlsTimeout = useRef<NodeJS.Timeout>();
-  
+
   // Initialize stream states
   useEffect(() => {
     const newStates: { [key: string]: StreamState } = {};
@@ -147,7 +147,7 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
     });
     setStreamStates(newStates);
   }, [streams, isFavorite]);
-  
+
   // Auto-layout based on stream count
   useEffect(() => {
     if (autoLayout && streams.length > 0) {
@@ -159,105 +159,106 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
       setLayoutMode(optimalLayout);
     }
   }, [streams.length, autoLayout]);
-  
+
   // Pulse animation for active streams
   useEffect(() => {
     pulseScale.value = withRepeat(
-      withSequence(
-        withTiming(1.05, { duration: 2000 }),
-        withTiming(1, { duration: 2000 })
-      ),
+      withSequence(withTiming(1.05, { duration: 2000 }), withTiming(1, { duration: 2000 })),
       -1
     );
   }, []);
-  
+
   // Auto-hide controls
   const resetControlsTimeout = useCallback(() => {
     if (controlsTimeout.current) {
       clearTimeout(controlsTimeout.current);
     }
-    
+
     controlsOpacity.value = withTiming(1, { duration: 300 });
-    
+
     controlsTimeout.current = setTimeout(() => {
       if (!showLayoutSelector && !showSettings) {
         controlsOpacity.value = withTiming(0, { duration: 300 });
       }
     }, 4000);
   }, [showLayoutSelector, showSettings]);
-  
+
   // Show controls on interaction
   const showControlsTemporarily = useCallback(() => {
     setShowControls(true);
     resetControlsTimeout();
   }, [resetControlsTimeout]);
-  
+
   useEffect(() => {
     showControlsTemporarily();
   }, []);
-  
+
   // Handle layout change
-  const handleLayoutChange = useCallback((mode: LayoutMode) => {
-    HapticFeedback.medium();
-    layoutTransition.value = withTiming(0, { duration: 200 }, () => {
-      runOnJS(setLayoutMode)(mode);
-      layoutTransition.value = withTiming(1, { duration: 300 });
-    });
-    setShowLayoutSelector(false);
-    showControlsTemporarily();
-  }, [showControlsTemporarily]);
-  
+  const handleLayoutChange = useCallback(
+    (mode: LayoutMode) => {
+      HapticFeedback.medium();
+      layoutTransition.value = withTiming(0, { duration: 200 }, () => {
+        runOnJS(setLayoutMode)(mode);
+        layoutTransition.value = withTiming(1, { duration: 300 });
+      });
+      setShowLayoutSelector(false);
+      showControlsTemporarily();
+    },
+    [showControlsTemporarily]
+  );
+
   // Handle stream actions
   const handleStreamPlay = useCallback((streamId: string) => {
     setStreamStates(prev => ({
       ...prev,
-      [streamId]: { ...prev[streamId], isPlaying: !prev[streamId].isPlaying }
+      [streamId]: { ...prev[streamId], isPlaying: !prev[streamId].isPlaying },
     }));
     HapticFeedback.light();
   }, []);
-  
+
   const handleStreamMute = useCallback((streamId: string) => {
     setStreamStates(prev => ({
       ...prev,
-      [streamId]: { ...prev[streamId], isMuted: !prev[streamId].isMuted }
+      [streamId]: { ...prev[streamId], isMuted: !prev[streamId].isMuted },
     }));
     HapticFeedback.light();
   }, []);
-  
-  const handleStreamFavorite = useCallback((streamId: string) => {
-    onStreamToggleFavorite?.(streamId);
-    HapticFeedback.medium();
-  }, [onStreamToggleFavorite]);
-  
-  const handleStreamRemove = useCallback((streamId: string) => {
-    HapticFeedback.medium();
-    Alert.alert(
-      'Remove Stream',
-      'Are you sure you want to remove this stream?',
-      [
+
+  const handleStreamFavorite = useCallback(
+    (streamId: string) => {
+      onStreamToggleFavorite?.(streamId);
+      HapticFeedback.medium();
+    },
+    [onStreamToggleFavorite]
+
+  const handleStreamRemove = useCallback(
+    (streamId: string) => {
+      HapticFeedback.medium();
+      Alert.alert('Remove Stream', 'Are you sure you want to remove this stream?', [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Remove', 
+        {
+          text: 'Remove',
           style: 'destructive',
-          onPress: () => onStreamRemove(streamId)
-        }
-      ]
-    );
-  }, [onStreamRemove]);
-  
+          onPress: () => onStreamRemove(streamId),
+        },
+      ]);
+    },
+    [onStreamRemove]
+  );
+
   const handleStreamQualityChange = useCallback((streamId: string, quality: StreamQuality) => {
     setStreamStates(prev => ({
       ...prev,
-      [streamId]: { ...prev[streamId], quality }
+      [streamId]: { ...prev[streamId], quality },
     }));
     HapticFeedback.light();
   }, []);
-  
+
   // Global controls
   const handleGlobalMute = useCallback(() => {
     const newMuted = !globalMuted;
     setGlobalMuted(newMuted);
-    
+
     setStreamStates(prev => {
       const updated = { ...prev };
       Object.keys(updated).forEach(id => {
@@ -265,14 +266,14 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
       });
       return updated;
     });
-    
+
     HapticFeedback.medium();
   }, [globalMuted]);
-  
+
   const handleGlobalPlay = useCallback(() => {
     const newPlaying = !globalPlaying;
     setGlobalPlaying(newPlaying);
-    
+
     setStreamStates(prev => {
       const updated = { ...prev };
       Object.keys(updated).forEach(id => {
@@ -280,10 +281,10 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
       });
       return updated;
     });
-    
+
     HapticFeedback.medium();
   }, [globalPlaying]);
-  
+
   const handleAddStream = useCallback(() => {
     if (streams.length >= maxStreams) {
       Alert.alert(
@@ -292,22 +293,22 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
       );
       return;
     }
-    
+
     fabScale.value = withSpring(0.9, { damping: 15 }, () => {
       fabScale.value = withSpring(1);
     });
-    
+
     onStreamAdd?.();
     HapticFeedback.medium();
   }, [streams.length, maxStreams, onStreamAdd]);
-  
+
   // Calculate stream statistics
   const streamStats = React.useMemo(() => {
     const totalViewers = streams.reduce((sum, stream) => sum + (stream.viewer_count || 0), 0);
     const averageViewers = streams.length > 0 ? Math.floor(totalViewers / streams.length) : 0;
     const activeStreams = Object.values(streamStates).filter(state => state.isPlaying).length;
     const mutedStreams = Object.values(streamStates).filter(state => state.isMuted).length;
-    
+
     return {
       totalViewers,
       averageViewers,
@@ -316,58 +317,49 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
       totalStreams: streams.length,
     };
   }, [streams, streamStates]);
-  
+
   // Available layouts for current stream count
   const availableLayouts = LayoutUtils.getAvailableLayouts(streams.length);
-  
+
   // Animated styles
   const controlsStyle = useAnimatedStyle(() => ({
     opacity: controlsOpacity.value,
-    transform: [{
-      translateY: interpolate(
-        controlsOpacity.value,
-        [0, 1],
-        [-50, 0],
-        Extrapolate.CLAMP
-      )
-    }]
+    transform: [
+      {
+        translateY: interpolate(controlsOpacity.value, [0, 1], [-50, 0], Extrapolate.CLAMP),
+      },
+    ],
   }));
-  
+
   const headerStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: headerOffset.value }]
+    transform: [{ translateY: headerOffset.value }],
   }));
-  
+
   const fabStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: fabScale.value }]
+    transform: [{ scale: fabScale.value }],
   }));
-  
+
   const statsStyle = useAnimatedStyle(() => ({
     opacity: statsOpacity.value,
-    transform: [{
-      translateY: interpolate(
-        statsOpacity.value,
-        [0, 1],
-        [20, 0],
-        Extrapolate.CLAMP
-      )
-    }]
+    transform: [
+      {
+        translateY: interpolate(statsOpacity.value, [0, 1], [20, 0], Extrapolate.CLAMP),
+      },
+    ],
   }));
-  
+
   const layoutTransitionStyle = useAnimatedStyle(() => ({
     opacity: layoutTransition.value,
-    transform: [{
-      scale: interpolate(
-        layoutTransition.value,
-        [0, 1],
-        [0.95, 1],
-        Extrapolate.CLAMP
-      )
-    }]
+    transform: [
+      {
+        scale: interpolate(layoutTransition.value, [0, 1], [0.95, 1], Extrapolate.CLAMP),
+      },
+    ],
   }));
-  
+
   // Render layout selector
   const renderLayoutSelector = () => (
-    <Animated.View 
+    <Animated.View
       entering={SlideInDown.delay(100)}
       exiting={SlideOutUp}
       style={styles.layoutSelector}
@@ -382,41 +374,37 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
             <Text style={styles.selectorCloseText}>Done</Text>
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.layoutOptions}>
           {availableLayouts.map(mode => (
             <TouchableOpacity
               key={mode}
-              style={[
-                styles.layoutOption,
-                layoutMode === mode && styles.layoutOptionActive
-              ]}
+              style={[styles.layoutOption, layoutMode === mode && styles.layoutOptionActive]}
               onPress={() => handleLayoutChange(mode)}
             >
-              <View style={styles.layoutIcon}>
-                {getLayoutIcon(mode)}
-              </View>
-              <Text style={[
-                styles.layoutOptionText,
-                layoutMode === mode && styles.layoutOptionTextActive
-              ]}>
+              <View style={styles.layoutIcon}>{getLayoutIcon(mode)}</View>
+              <Text
+                style={[
+                  styles.layoutOptionText,
+                  layoutMode === mode && styles.layoutOptionTextActive,
+                ]}
+              >
                 {LayoutUtils.getLayoutName(mode)}
               </Text>
-              {layoutMode === mode && (
-                <View style={styles.activeIndicator} />
-              )}
+              {layoutMode === mode && <View style={styles.activeIndicator} />}
             </TouchableOpacity>
           ))}
         </View>
       </BlurView>
     </Animated.View>
   );
-  
+
   // Get layout icon component
   const getLayoutIcon = (mode: LayoutMode) => {
     const iconSize = 20;
-    const iconColor = layoutMode === mode ? ModernTheme.colors.accent[500] : ModernTheme.colors.text.secondary;
-    
+    const iconColor =
+      layoutMode === mode ? ModernTheme.colors.accent[500] : ModernTheme.colors.text.secondary;
+
     switch (mode) {
       case 'grid-2x2':
         return <Grid3X3 size={iconSize} color={iconColor} />;
@@ -436,21 +424,23 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
         return <Grid3X3 size={iconSize} color={iconColor} />;
     }
   };
-  
+
   // Render stream cards
   const renderStreamCards = () => {
     return streams.map((stream, index) => {
       const streamState = streamStates[stream.id];
-      if (!streamState) return null;
-      
+      if (!streamState) {return null;}
+
       return (
         <ModernStreamCard
           key={stream.id}
           stream={stream}
           width={200} // Will be overridden by LayoutManager
           height={150} // Will be overridden by LayoutManager
-          layoutMode={layoutMode === 'fullscreen' && index === 0 ? 'fullscreen' : 
-                     layoutMode === 'pip' && index > 0 ? 'pip' : 'grid'}
+          layoutMode={
+            layoutMode === 'fullscreen' && index === 0
+              ? 'fullscreen'
+            layoutMode === 'pip' && index > 0 ? 'pip' : 'grid'}
           isPlaying={streamState.isPlaying}
           isMuted={streamState.isMuted}
           isFavorite={streamState.isFavorite}
@@ -462,7 +452,7 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
           onTogglePlay={() => handleStreamPlay(stream.id)}
           onToggleMute={() => handleStreamMute(stream.id)}
           onToggleFavorite={() => handleStreamFavorite(stream.id)}
-          onQualityChange={(quality) => handleStreamQualityChange(stream.id, quality)}
+          onQualityChange={quality => handleStreamQualityChange(stream.id, quality)}
           onLayoutChange={handleLayoutChange}
           position={streamState.position}
           isDraggable={enableGestures && layoutMode === 'custom'}
@@ -472,35 +462,31 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
       );
     });
   };
-  
+
   // Render stats panel
   const renderStatsPanel = () => (
     <Animated.View style={[styles.statsPanel, statsStyle]}>
       <View style={styles.statRow}>
         <View style={styles.statItem}>
           <Users size={14} color={ModernTheme.colors.text.secondary} />
-          <Text style={styles.statText}>
-            {streamStats.totalViewers.toLocaleString()} viewers
-          </Text>
+          <Text style={styles.statText}>{streamStats.totalViewers.toLocaleString()} viewers</Text>
         </View>
-        
+
         <View style={styles.statItem}>
           <Activity size={14} color={ModernTheme.colors.success[500]} />
           <Text style={styles.statText}>
             {streamStats.activeStreams}/{streamStats.totalStreams} active
           </Text>
         </View>
-        
+
         <View style={styles.statItem}>
           <Eye size={14} color={ModernTheme.colors.text.secondary} />
-          <Text style={styles.statText}>
-            {streamStats.averageViewers.toLocaleString()} avg
-          </Text>
+          <Text style={styles.statText}>{streamStats.averageViewers.toLocaleString()} avg</Text>
         </View>
       </View>
     </Animated.View>
   );
-  
+
   if (streams.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
@@ -516,10 +502,7 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
             <Text style={styles.emptySubtitle}>
               Add streams from the Discover tab to start your multi-stream experience
             </Text>
-            <TouchableOpacity
-              style={styles.emptyButton}
-              onPress={onStreamAdd}
-            >
+            <TouchableOpacity style={styles.emptyButton} onPress={onStreamAdd}>
               <Plus size={20} color="#000" />
               <Text style={styles.emptyButtonText}>Add Your First Stream</Text>
             </TouchableOpacity>
@@ -528,23 +511,21 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
       </SafeAreaView>
     );
   }
-  
+
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={ModernTheme.colors.gradients.background}
-        style={styles.gradient}
-      >
+      <LinearGradient colors={ModernTheme.colors.gradients.background} style={styles.gradient}>
         {/* Header */}
         <Animated.View style={[styles.header, headerStyle, controlsStyle]}>
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
               <Text style={styles.headerTitle}>Multi-Stream</Text>
               <Text style={styles.headerSubtitle}>
-                {streams.length} stream{streams.length !== 1 ? 's' : ''} • {LayoutUtils.getLayoutName(layoutMode)}
+                {streams.length} stream{streams.length !== 1 ? 's' : ''} •{' '}
+                {LayoutUtils.getLayoutName(layoutMode)}
               </Text>
             </View>
-            
+
             <View style={styles.headerRight}>
               <TouchableOpacity
                 style={styles.headerButton}
@@ -552,20 +533,17 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
               >
                 {getLayoutIcon(layoutMode)}
               </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={() => setShowSettings(true)}
-              >
+
+              <TouchableOpacity style={styles.headerButton} onPress={() => setShowSettings(true)}>
                 <Settings size={20} color={ModernTheme.colors.text.primary} />
               </TouchableOpacity>
             </View>
           </View>
         </Animated.View>
-        
+
         {/* Stats Panel */}
         {showStats && renderStatsPanel()}
-        
+
         {/* Main Content */}
         <Animated.View style={[styles.content, layoutTransitionStyle]}>
           <LayoutManager
@@ -579,7 +557,7 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
             {renderStreamCards()}
           </LayoutManager>
         </Animated.View>
-        
+
         {/* Global Controls */}
         <Animated.View style={[styles.globalControls, controlsStyle]}>
           <View style={styles.controlsRow}>
@@ -593,9 +571,12 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
                 <Volume2 size={20} color={ModernTheme.colors.text.primary} />
               )}
             </TouchableOpacity>
-            
+
             <TouchableOpacity
-              style={[styles.globalControlButton, !globalPlaying && styles.globalControlButtonActive]}
+              style={[
+                styles.globalControlButton,
+                !globalPlaying && styles.globalControlButtonActive,
+              ]}
               onPress={handleGlobalPlay}
             >
               {globalPlaying ? (
@@ -604,31 +585,25 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
                 <Play size={20} color={ModernTheme.colors.text.primary} />
               )}
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={styles.globalControlButton}
-              onPress={() => statsOpacity.value = withTiming(showStats ? 0 : 1)}
+              onPress={() => (statsOpacity.value = withTiming(showStats ? 0 : 1))}
             >
               <Activity size={20} color={ModernTheme.colors.text.primary} />
             </TouchableOpacity>
           </View>
         </Animated.View>
-        
+
         {/* Floating Action Button */}
         <Animated.View style={[styles.fab, fabStyle]}>
-          <TouchableOpacity
-            style={styles.fabButton}
-            onPress={handleAddStream}
-          >
-            <LinearGradient
-              colors={ModernTheme.colors.gradients.accent}
-              style={styles.fabGradient}
-            >
+          <TouchableOpacity style={styles.fabButton} onPress={handleAddStream}>
+            <LinearGradient colors={ModernTheme.colors.gradients.accent} style={styles.fabGradient}>
               <Plus size={24} color="#ffffff" />
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
-        
+
         {/* Layout Selector */}
         {showLayoutSelector && renderLayoutSelector()}
       </LinearGradient>

@@ -1,13 +1,3 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  Dimensions,
-  Text,
-  TouchableOpacity,
-  Alert,
-  Platform,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Grid,
@@ -22,6 +12,16 @@ import {
   Maximize,
   MoreVertical,
 } from 'lucide-react-native';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  Text,
+  TouchableOpacity,
+  Alert,
+  Platform,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -32,20 +32,20 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Import our new components
-import { AdvancedLayoutManager, LayoutType, LayoutConfiguration } from './AdvancedLayoutManager';
-import { GestureEnabledStreamCard } from './GestureEnabledStreamCard';
-import { SynchronizedPlaybackController } from './SynchronizedPlaybackController';
-import { FloatingStreamControls } from './FloatingStreamControls';
-import { CustomLayoutBuilder } from './CustomLayoutBuilder';
-
-// Import services
+import { useStreamManagerContext } from '@/contexts/StreamManagerContext';
+import { TwitchStream } from '@/services/twitchApi';
+import { HapticFeedback } from '@/utils/haptics';
 import { audioMixingService } from '../services/audioMixingService';
 import { gestureManager } from '../services/gestureManager';
+import { AdvancedLayoutManager, LayoutType, LayoutConfiguration } from './AdvancedLayoutManager';
+import { CustomLayoutBuilder } from './CustomLayoutBuilder';
+import { FloatingStreamControls } from './FloatingStreamControls';
+import { GestureEnabledStreamCard } from './GestureEnabledStreamCard';
+import { SynchronizedPlaybackController } from './SynchronizedPlaybackController';
+
+// Import services
 
 // Import existing components and hooks
-import { TwitchStream } from '@/services/twitchApi';
-import { useStreamManagerContext } from '@/contexts/StreamManagerContext';
-import { HapticFeedback } from '@/utils/haptics';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -85,7 +85,9 @@ export function EnhancedMultiStreamExperience({
   const [showCustomBuilder, setShowCustomBuilder] = useState(false);
   const [floatingControlsVisible, setFloatingControlsVisible] = useState(false);
   const [floatingControlsPosition, setFloatingControlsPosition] = useState({ x: 0, y: 0 });
-  const [selectedStreamForControls, setSelectedStreamForControls] = useState<TwitchStream | null>(null);
+  const [selectedStreamForControls, setSelectedStreamForControls] = useState<TwitchStream | null>(
+    null
+  );
   const [customLayouts, setCustomLayouts] = useState<LayoutConfiguration[]>([]);
 
   // Audio state
@@ -147,14 +149,22 @@ export function EnhancedMultiStreamExperience({
 
   // Initialize stream positions based on layout
   useEffect(() => {
-    if (activeStreams.length === 0) return;
+    if (activeStreams.length === 0) {
+      return;
+    }
 
     const newPositions = new Map<string, StreamPosition>();
     const containerWidth = screenWidth - 40;
     const containerHeight = screenHeight - 200;
 
     activeStreams.forEach((stream, index) => {
-      const position = calculateStreamPosition(currentLayout, index, activeStreams.length, containerWidth, containerHeight);
+      const position = calculateStreamPosition(
+        currentLayout,
+        index,
+        activeStreams.length,
+        containerWidth,
+        containerHeight
+      );
       newPositions.set(stream.id, {
         streamId: stream.id,
         ...position,
@@ -178,13 +188,13 @@ export function EnhancedMultiStreamExperience({
     // For simplicity, I'll implement a basic 2x2 grid
     const cols = Math.min(2, Math.ceil(Math.sqrt(totalStreams)));
     const rows = Math.ceil(totalStreams / cols);
-    
+
     const cellWidth = (containerWidth - 20) / cols;
     const cellHeight = cellWidth * (9 / 16);
-    
+
     const row = Math.floor(index / cols);
     const col = index % cols;
-    
+
     return {
       x: col * (cellWidth + 10) + 20,
       y: row * (cellHeight + 10) + 20,
@@ -194,42 +204,54 @@ export function EnhancedMultiStreamExperience({
   };
 
   // Gesture handlers
-  const handleStreamReorder = useCallback((streamId: string, newPosition: { x: number; y: number }) => {
-    setStreamPositions(prev => {
-      const newMap = new Map(prev);
-      const currentPosition = newMap.get(streamId);
-      if (currentPosition) {
-        newMap.set(streamId, {
-          ...currentPosition,
-          x: newPosition.x,
-          y: newPosition.y,
-        });
+  const handleStreamReorder = useCallback(
+    (streamId: string, newPosition: { x: number; y: number }) => {
+      setStreamPositions(prev => {
+        const newMap = new Map(prev);
+        const currentPosition = newMap.get(streamId);
+        if (currentPosition) {
+          newMap.set(streamId, {
+            ...currentPosition,
+            x: newPosition.x,
+            y: newPosition.y,
+          });
+        }
+        return newMap;
+      });
+    },
+    []
+  );
+
+  const handleStreamFocus = useCallback(
+    (streamId: string) => {
+      setFocusedStreamId(streamId);
+      if (enableAudioMixing) {
+        audioMixingService.setStreamActive(streamId, true);
       }
-      return newMap;
-    });
-  }, []);
+      HapticFeedback.medium();
+    },
+    [enableAudioMixing]
+  );
 
-  const handleStreamFocus = useCallback((streamId: string) => {
-    setFocusedStreamId(streamId);
-    if (enableAudioMixing) {
-      audioMixingService.setStreamActive(streamId, true);
-    }
-    HapticFeedback.medium();
-  }, [enableAudioMixing]);
+  const handleStreamVolumeToggle = useCallback(
+    (streamId: string, muted: boolean) => {
+      setAudioStreams(prev => new Map(prev.set(streamId, !muted)));
+      if (enableAudioMixing) {
+        audioMixingService.setStreamMuted(streamId, muted);
+      }
+      HapticFeedback.light();
+    },
+    [enableAudioMixing]
+  );
 
-  const handleStreamVolumeToggle = useCallback((streamId: string, muted: boolean) => {
-    setAudioStreams(prev => new Map(prev.set(streamId, !muted)));
-    if (enableAudioMixing) {
-      audioMixingService.setStreamMuted(streamId, muted);
-    }
-    HapticFeedback.light();
-  }, [enableAudioMixing]);
-
-  const handleStreamQualityChange = useCallback((streamId: string, quality: string) => {
-    if (enableAudioMixing) {
-      audioMixingService.setStreamQuality(streamId, quality as any);
-    }
-  }, [enableAudioMixing]);
+  const handleStreamQualityChange = useCallback(
+    (streamId: string, quality: string) => {
+      if (enableAudioMixing) {
+        audioMixingService.setStreamQuality(streamId, quality as any);
+      }
+    },
+    [enableAudioMixing]
+  );
 
   // Layout management
   const handleLayoutChange = useCallback((layout: LayoutType) => {
@@ -273,12 +295,15 @@ export function EnhancedMultiStreamExperience({
   }, [enableAudioMixing]);
 
   // Floating controls
-  const handleStreamLongPress = useCallback((stream: TwitchStream, position: { x: number; y: number }) => {
-    setSelectedStreamForControls(stream);
-    setFloatingControlsPosition(position);
-    setFloatingControlsVisible(true);
-    HapticFeedback.heavy();
-  }, []);
+  const handleStreamLongPress = useCallback(
+    (stream: TwitchStream, position: { x: number; y: number }) => {
+      setSelectedStreamForControls(stream);
+      setFloatingControlsPosition(position);
+      setFloatingControlsVisible(true);
+      HapticFeedback.heavy();
+    },
+    []
+  );
 
   const handleFloatingControlsClose = useCallback(() => {
     setFloatingControlsVisible(false);
@@ -305,7 +330,9 @@ export function EnhancedMultiStreamExperience({
 
   const renderStreamCard = (stream: TwitchStream) => {
     const position = streamPositions.get(stream.id);
-    if (!position) return null;
+    if (!position) {
+      return null;
+    }
 
     if (enableAdvancedGestures) {
       return (
@@ -353,10 +380,7 @@ export function EnhancedMultiStreamExperience({
           onLongPress={() => handleStreamLongPress(stream, { x: position.x, y: position.y })}
           style={styles.basicStreamCardContent}
         >
-          <LinearGradient
-            colors={['#8B5CF6', '#7C3AED']}
-            style={styles.basicStreamGradient}
-          >
+          <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.basicStreamGradient}>
             <Text style={styles.basicStreamText} numberOfLines={1}>
               {stream.user_name}
             </Text>
@@ -379,7 +403,7 @@ export function EnhancedMultiStreamExperience({
             >
               <LayoutIcon size={20} color="#8B5CF6" />
             </TouchableOpacity>
-            
+
             {enableCustomLayouts && (
               <TouchableOpacity
                 style={styles.headerButton}
@@ -388,7 +412,7 @@ export function EnhancedMultiStreamExperience({
                 <Grid size={20} color="#8B5CF6" />
               </TouchableOpacity>
             )}
-            
+
             {enableAudioMixing && (
               <TouchableOpacity
                 style={styles.headerButton}
@@ -401,11 +425,8 @@ export function EnhancedMultiStreamExperience({
                 )}
               </TouchableOpacity>
             )}
-            
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={handleControlsToggle}
-            >
+
+            <TouchableOpacity style={styles.headerButton} onPress={handleControlsToggle}>
               {showAdvancedControls ? (
                 <EyeOff size={20} color="#8B5CF6" />
               ) : (
@@ -458,14 +479,13 @@ export function EnhancedMultiStreamExperience({
               <Layers size={64} color="#8B5CF6" />
               <Text style={styles.emptyStateTitle}>Enhanced Multi-Stream Experience</Text>
               <Text style={styles.emptyStateSubtitle}>
-                Add streams to experience advanced layouts, gesture controls, and synchronized playback
+                Add streams to experience advanced layouts, gesture controls, and synchronized
+                playback
               </Text>
             </LinearGradient>
           </View>
         ) : (
-          <View style={styles.streamContainer}>
-            {activeStreams.map(renderStreamCard)}
-          </View>
+          <View style={styles.streamContainer}>{activeStreams.map(renderStreamCard)}</View>
         )}
       </Animated.View>
 
@@ -488,27 +508,29 @@ export function EnhancedMultiStreamExperience({
           isVisible={floatingControlsVisible}
           position={floatingControlsPosition}
           onClose={handleFloatingControlsClose}
-          onVolumeToggle={(muted) => handleStreamVolumeToggle(selectedStreamForControls.id, muted)}
-          onQualityChange={(quality) => handleStreamQualityChange(selectedStreamForControls.id, quality)}
+          onVolumeToggle={muted => handleStreamVolumeToggle(selectedStreamForControls.id, muted)}
+          onQualityChange={quality =>
+            handleStreamQualityChange(selectedStreamForControls.id, quality)
+          }
           onScreenshot={() => {
             Alert.alert('Screenshot', `Screenshot taken of ${selectedStreamForControls.user_name}`);
             handleFloatingControlsClose();
           }}
-          onRecord={(recording) => {
+          onRecord={recording => {
             Alert.alert(
               recording ? 'Recording Started' : 'Recording Stopped',
-              recording 
-                ? `Started recording ${selectedStreamForControls.user_name}` 
+              recording
+                ? `Started recording ${selectedStreamForControls.user_name}`
                 : 'Recording saved'
             );
           }}
           onShare={() => {
             handleFloatingControlsClose();
           }}
-          onFavorite={(favorited) => {
+          onFavorite={favorited => {
             console.log('Favorite toggled:', favorited);
           }}
-          onBookmark={(bookmarked) => {
+          onBookmark={bookmarked => {
             console.log('Bookmark toggled:', bookmarked);
           }}
           onFullscreen={() => {

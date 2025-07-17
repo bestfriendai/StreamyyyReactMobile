@@ -1,3 +1,4 @@
+import { MotiView, MotiText } from 'moti';
 import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
@@ -35,7 +36,6 @@ import Animated, {
   withDelay,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { MotiView, MotiText } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import {
@@ -185,27 +185,13 @@ class MobileGestureSystem {
   }
 
   private initializeHapticPatterns(): void {
-    this.hapticPatterns.set('light', [
-      { type: 'impact', style: 'light' },
-    ]);
-    this.hapticPatterns.set('medium', [
-      { type: 'impact', style: 'medium' },
-    ]);
-    this.hapticPatterns.set('heavy', [
-      { type: 'impact', style: 'heavy' },
-    ]);
-    this.hapticPatterns.set('success', [
-      { type: 'notification', style: 'success' },
-    ]);
-    this.hapticPatterns.set('error', [
-      { type: 'notification', style: 'error' },
-    ]);
-    this.hapticPatterns.set('warning', [
-      { type: 'notification', style: 'warning' },
-    ]);
-    this.hapticPatterns.set('selection', [
-      { type: 'selection' },
-    ]);
+    this.hapticPatterns.set('light', [{ type: 'impact', style: 'light' }]);
+    this.hapticPatterns.set('medium', [{ type: 'impact', style: 'medium' }]);
+    this.hapticPatterns.set('heavy', [{ type: 'impact', style: 'heavy' }]);
+    this.hapticPatterns.set('success', [{ type: 'notification', style: 'success' }]);
+    this.hapticPatterns.set('error', [{ type: 'notification', style: 'error' }]);
+    this.hapticPatterns.set('warning', [{ type: 'notification', style: 'warning' }]);
+    this.hapticPatterns.set('selection', [{ type: 'selection' }]);
     this.hapticPatterns.set('double_tap', [
       { type: 'impact', style: 'light' },
       { delay: 100, type: 'impact', style: 'light' },
@@ -219,24 +205,16 @@ class MobileGestureSystem {
       { type: 'impact', style: 'medium' },
       { delay: 500, type: 'impact', style: 'heavy' },
     ]);
-    this.hapticPatterns.set('gesture_start', [
-      { type: 'impact', style: 'light' },
-    ]);
-    this.hapticPatterns.set('gesture_end', [
-      { type: 'impact', style: 'medium' },
-    ]);
-    this.hapticPatterns.set('boundary', [
-      { type: 'impact', style: 'heavy' },
-    ]);
-    this.hapticPatterns.set('reaction', [
-      { type: 'notification', style: 'success' },
-    ]);
+    this.hapticPatterns.set('gesture_start', [{ type: 'impact', style: 'light' }]);
+    this.hapticPatterns.set('gesture_end', [{ type: 'impact', style: 'medium' }]);
+    this.hapticPatterns.set('boundary', [{ type: 'impact', style: 'heavy' }]);
+    this.hapticPatterns.set('reaction', [{ type: 'notification', style: 'success' }]);
   }
 
   private setupSystemListeners(): void {
     // Battery level monitoring
     if (Platform.OS === 'ios') {
-      DeviceEventEmitter.addListener('batteryLevel', (level) => {
+      DeviceEventEmitter.addListener('batteryLevel', level => {
         this.batteryLevel = level.level;
         this.isLowPowerMode = level.lowPowerMode;
         this.optimizeForBattery();
@@ -244,26 +222,26 @@ class MobileGestureSystem {
     }
 
     // Network connectivity
-    DeviceEventEmitter.addListener('networkStatus', (status) => {
+    DeviceEventEmitter.addListener('networkStatus', status => {
       this.networkConnected = status.isConnected;
       this.optimizeForNetwork();
     });
 
     // Device orientation
-    DeviceEventEmitter.addListener('orientation', (orientation) => {
+    DeviceEventEmitter.addListener('orientation', orientation => {
       this.deviceOrientation = orientation.isLandscape ? 'landscape' : 'portrait';
     });
 
     // Proximity sensor
     if (this.deviceCapabilities.hasProximitySensor) {
-      DeviceEventEmitter.addListener('proximity', (data) => {
+      DeviceEventEmitter.addListener('proximity', data => {
         this.triggerEvent('proximity', data.isNear);
       });
     }
 
     // Ambient light sensor
     if (this.deviceCapabilities.hasAmbientLightSensor) {
-      DeviceEventEmitter.addListener('ambientLight', (data) => {
+      DeviceEventEmitter.addListener('ambientLight', data => {
         this.triggerEvent('ambientLight', data.lightLevel);
       });
     }
@@ -274,7 +252,7 @@ class MobileGestureSystem {
     });
 
     // Device tilt
-    DeviceEventEmitter.addListener('tilt', (data) => {
+    DeviceEventEmitter.addListener('tilt', data => {
       this.triggerEvent('tilt', data.angle);
     });
   }
@@ -283,15 +261,18 @@ class MobileGestureSystem {
     if (this.batteryLevel < 0.2 || this.isLowPowerMode) {
       // Reduce haptic feedback intensity
       this.hapticPatterns.forEach((pattern, key) => {
-        this.hapticPatterns.set(key, pattern.map(p => ({
-          ...p,
-          style: p.style === 'heavy' ? 'medium' : p.style === 'medium' ? 'light' : p.style
-        })));
+        this.hapticPatterns.set(
+          key,
+          pattern.map(p => ({
+            ...p,
+            style: p.style === 'heavy' ? 'medium' : p.style === 'medium' ? 'light' : p.style,
+          }))
+        );
       });
-      
+
       // Disable some visual effects
       this.visualFeedbackEnabled = false;
-      
+
       // Reduce gesture sensitivity
       console.log('🔋 Battery optimization: Reduced gesture sensitivity');
     }
@@ -305,10 +286,10 @@ class MobileGestureSystem {
   }
 
   async triggerHaptic(pattern: string, intensity: number = 1): Promise<void> {
-    if (!this.deviceCapabilities.hasHapticEngine) return;
-    
+    if (!this.deviceCapabilities.hasHapticEngine) {return;}
+
     const hapticPattern = this.hapticPatterns.get(pattern);
-    if (!hapticPattern) return;
+    if (!hapticPattern) {return;}
 
     try {
       for (const haptic of hapticPattern) {
@@ -319,16 +300,18 @@ class MobileGestureSystem {
         switch (haptic.type) {
           case 'impact':
             await Haptics.impactAsync(
-              haptic.style === 'light' ? Haptics.ImpactFeedbackStyle.Light :
-              haptic.style === 'medium' ? Haptics.ImpactFeedbackStyle.Medium :
-              Haptics.ImpactFeedbackStyle.Heavy
+              haptic.style === 'light'
+                ? Haptics.ImpactFeedbackStyle.Light
+                haptic.style === 'medium' ? Haptics.ImpactFeedbackStyle.Medium :
+                  Haptics.ImpactFeedbackStyle.Heavy
             );
             break;
           case 'notification':
             await Haptics.notificationAsync(
-              haptic.style === 'success' ? Haptics.NotificationFeedbackType.Success :
-              haptic.style === 'error' ? Haptics.NotificationFeedbackType.Error :
-              Haptics.NotificationFeedbackType.Warning
+              haptic.style === 'success'
+                ? Haptics.NotificationFeedbackType.Success
+                haptic.style === 'error' ? Haptics.NotificationFeedbackType.Error :
+                  Haptics.NotificationFeedbackType.Warning
             );
             break;
           case 'selection':
@@ -390,7 +373,7 @@ class MobileGestureSystem {
     networkConnected: boolean;
     deviceOrientation: string;
     capabilities: DeviceCapabilities;
-  } {
+    } {
     return {
       batteryLevel: this.batteryLevel,
       isLowPowerMode: this.isLowPowerMode,
@@ -440,7 +423,7 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
   const [currentGesture, setCurrentGesture] = useState<GestureState | null>(null);
   const [gestureIndicators, setGestureIndicators] = useState<GestureState[]>([]);
   const [deviceInfo, setDeviceInfo] = useState(gestureSystem.getDeviceInfo());
-  
+
   // Gesture refs
   const panRef = useRef<PanGestureHandler>(null);
   const pinchRef = useRef<PinchGestureHandler>(null);
@@ -506,11 +489,11 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
   };
 
   const showGestureIndicator = (gesture: GestureState) => {
-    if (!enableVisualFeedback) return;
-    
+    if (!enableVisualFeedback) {return;}
+
     setCurrentGesture(gesture);
     gestureSystem.addGestureToHistory(gesture);
-    
+
     indicatorOpacity.value = withSequence(
       withTiming(1, { duration: 200 }),
       withDelay(1000, withTiming(0, { duration: 300 }))
@@ -522,8 +505,8 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
   };
 
   const showFeedbackEffect = (type: 'success' | 'error' | 'warning' | 'info') => {
-    if (!enableVisualFeedback) return;
-    
+    if (!enableVisualFeedback) {return;}
+
     feedbackOpacity.value = withSequence(
       withTiming(1, { duration: 150 }),
       withDelay(500, withTiming(0, { duration: 300 }))
@@ -535,7 +518,7 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
   };
 
   const triggerHapticFeedback = (pattern: string, intensity: number = 1) => {
-    if (!enableHapticFeedback) return;
+    if (!enableHapticFeedback) {return;}
     gestureSystem.triggerHaptic(pattern, intensity);
   };
 
@@ -544,26 +527,31 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
     onStart: (event, context) => {
       runOnJS(setIsGestureActive)(true);
       runOnJS(triggerHapticFeedback)('gesture_start');
-      
+
       context.startX = containerX.value;
       context.startY = containerY.value;
       context.startTime = Date.now();
     },
     onActive: (event, context) => {
       const { translationX, translationY, velocityX, velocityY } = event;
-      
+
       // Determine gesture type based on movement
       const isHorizontal = Math.abs(translationX) > Math.abs(translationY);
       const isVertical = Math.abs(translationY) > Math.abs(translationX);
       const threshold = gestureThreshold;
-      
+
       if (isHorizontal && Math.abs(translationX) > threshold) {
         // Horizontal swipe for seeking
         const seekAmount = (translationX / SCREEN_WIDTH) * 60; // 60 seconds max
         const gesture: GestureState = {
           type: 'seek',
           value: seekAmount,
-          icon: seekAmount > 0 ? <SkipForward size={24} color="#fff" /> : <SkipBack size={24} color="#fff" />,
+          icon:
+            seekAmount > 0 ? (
+              <SkipForward size={24} color="#fff" />
+            ) : (
+              <SkipBack size={24} color="#fff" />
+            ),
           color: ['#8B5CF6', '#7C3AED'],
           position: { x: event.x, y: event.y },
           timestamp: Date.now(),
@@ -573,13 +561,18 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
         // Vertical swipe for volume/brightness
         const isLeftSide = event.x < SCREEN_WIDTH / 2;
         const changeAmount = -translationY / SCREEN_HEIGHT;
-        
+
         if (isLeftSide) {
           // Left side: brightness
           const gesture: GestureState = {
             type: 'brightness',
             value: changeAmount,
-            icon: changeAmount > 0 ? <Brightness size={24} color="#fff" /> : <BrightnessDown size={24} color="#fff" />,
+            icon:
+              changeAmount > 0 ? (
+                <Brightness size={24} color="#fff" />
+              ) : (
+                <BrightnessDown size={24} color="#fff" />
+              ),
             color: ['#F59E0B', '#D97706'],
             position: { x: event.x, y: event.y },
             timestamp: Date.now(),
@@ -590,7 +583,12 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
           const gesture: GestureState = {
             type: 'volume',
             value: changeAmount,
-            icon: changeAmount > 0 ? <Volume2 size={24} color="#fff" /> : <VolumeX size={24} color="#fff" />,
+            icon:
+              changeAmount > 0 ? (
+                <Volume2 size={24} color="#fff" />
+              ) : (
+                <VolumeX size={24} color="#fff" />
+              ),
             color: ['#10B981', '#059669'],
             position: { x: event.x, y: event.y },
             timestamp: Date.now(),
@@ -602,16 +600,16 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
     onEnd: (event, context) => {
       runOnJS(setIsGestureActive)(false);
       runOnJS(triggerHapticFeedback)('gesture_end');
-      
+
       const { translationX, translationY, velocityX, velocityY } = event;
       const isHorizontal = Math.abs(translationX) > Math.abs(translationY);
       const isVertical = Math.abs(translationY) > Math.abs(translationX);
       const threshold = gestureThreshold;
-      
+
       if (isHorizontal && Math.abs(translationX) > threshold) {
         const seekAmount = (translationX / SCREEN_WIDTH) * 60;
         runOnJS(onSeek)?.(seekAmount);
-        
+
         if (translationX > 0) {
           runOnJS(onSwipeRight)?.();
         } else {
@@ -620,20 +618,20 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
       } else if (isVertical && Math.abs(translationY) > threshold) {
         const isLeftSide = event.x < SCREEN_WIDTH / 2;
         const changeAmount = -translationY / SCREEN_HEIGHT;
-        
+
         if (isLeftSide) {
           runOnJS(onBrightnessChange)?.(Math.max(0, Math.min(1, changeAmount)));
         } else {
           runOnJS(onVolumeChange)?.(Math.max(0, Math.min(1, changeAmount)));
         }
-        
+
         if (translationY > 0) {
           runOnJS(onSwipeDown)?.();
         } else {
           runOnJS(onSwipeUp)?.();
         }
       }
-      
+
       // Reset position
       containerX.value = withSpring(0);
       containerY.value = withSpring(0);
@@ -650,11 +648,12 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
       const newScale = context.startScale * event.scale;
       const clampedScale = Math.max(0.5, Math.min(3, newScale));
       containerScale.value = clampedScale;
-      
+
       const gesture: GestureState = {
         type: 'zoom',
         value: clampedScale,
-        icon: clampedScale > 1 ? <ZoomIn size={24} color="#fff" /> : <ZoomOut size={24} color="#fff" />,
+        icon:
+          clampedScale > 1 ? <ZoomIn size={24} color="#fff" /> : <ZoomOut size={24} color="#fff" />,
         color: ['#6366F1', '#4F46E5'],
         position: { x: event.focalX, y: event.focalY },
         timestamp: Date.now(),
@@ -665,7 +664,7 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
       runOnJS(triggerHapticFeedback)('gesture_end');
       const finalScale = context.startScale * event.scale;
       runOnJS(onZoom)?.(finalScale);
-      
+
       // Reset scale with spring animation
       containerScale.value = withSpring(1);
     },
@@ -680,7 +679,7 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
     onActive: (event, context) => {
       const newRotation = context.startRotation + event.rotation;
       containerRotation.value = newRotation;
-      
+
       const gesture: GestureState = {
         type: 'rotate',
         value: newRotation,
@@ -695,7 +694,7 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
       runOnJS(triggerHapticFeedback)('gesture_end');
       const finalRotation = context.startRotation + event.rotation;
       runOnJS(onRotate)?.(finalRotation);
-      
+
       // Reset rotation
       containerRotation.value = withSpring(0);
     },
@@ -715,15 +714,15 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
   const handleTap = () => {
     const now = Date.now();
     const timeSinceLastTap = now - lastTapTime;
-    
+
     if (timeSinceLastTap < 300) {
       setTapCount(prev => prev + 1);
     } else {
       setTapCount(1);
     }
-    
+
     setLastTapTime(now);
-    
+
     // Handle different tap counts
     setTimeout(() => {
       if (tapCount === 1) {
@@ -762,7 +761,7 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
         runOnJS(triggerHapticFeedback)('medium');
       }
     },
-    onActive: (event) => {
+    onActive: event => {
       if (Platform.OS === 'ios' && event.force) {
         runOnJS(setCurrentForce)(event.force);
         runOnJS(onForceTouch)?.(event.force);
@@ -795,8 +794,8 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
 
   // Get gesture indicator content
   const getGestureIndicatorContent = () => {
-    if (!currentGesture) return null;
-    
+    if (!currentGesture) {return null;}
+
     return {
       icon: currentGesture.icon,
       text: `${currentGesture.type}: ${Math.round(currentGesture.value)}`,
@@ -817,7 +816,7 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
           onGestureEvent={forceTouchGestureHandler}
           minForce={0.2}
           maxForce={1.0}
-          feedbackOnActivation={true}
+          feedbackOnActivation
         >
           <Animated.View style={StyleSheet.absoluteFill} />
         </ForceTouchGestureHandler>
@@ -926,10 +925,7 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
       {/* Gesture Indicator */}
       {indicatorContent && (
         <Animated.View style={[styles.gestureIndicator, indicatorAnimatedStyle]}>
-          <LinearGradient
-            colors={indicatorContent.color}
-            style={styles.indicatorGradient}
-          >
+          <LinearGradient colors={indicatorContent.color} style={styles.indicatorGradient}>
             <View style={styles.indicatorContent}>
               {indicatorContent.icon}
               <Text style={styles.indicatorText}>{indicatorContent.text}</Text>
@@ -947,9 +943,7 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
           <Text style={styles.deviceInfoText}>
             Network: {deviceInfo.networkConnected ? 'Connected' : 'Offline'}
           </Text>
-          <Text style={styles.deviceInfoText}>
-            Orientation: {deviceInfo.deviceOrientation}
-          </Text>
+          <Text style={styles.deviceInfoText}>Orientation: {deviceInfo.deviceOrientation}</Text>
           <Text style={styles.deviceInfoText}>
             Power Save: {deviceInfo.isLowPowerMode ? 'On' : 'Off'}
           </Text>
@@ -958,7 +952,7 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
 
       {/* Gesture Trail Effect */}
       {enableVisualFeedback && (
-        <Animated.View style={[styles.gestureTrail, { opacity: gestureTrailOpacity.value }]}>
+        <Animated.View style={[styles.gestureTrail, { opacity: gestureTrailOpacity }]}>
           {gestureIndicators.map((indicator, index) => (
             <MotiView
               key={index}
@@ -971,7 +965,7 @@ export const MobileGestureHandler: React.FC<MobileGestureProps> = ({
                 {
                   left: indicator.position.x - 5,
                   top: indicator.position.y - 5,
-                }
+                },
               ]}
             />
           ))}

@@ -2,18 +2,10 @@
  * Rewarded Ad Component
  * Handles rewarded video ads for premium features and benefits
  */
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Gift, Play, Clock, Star } from 'lucide-react-native';
-
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, Text, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { adMobService } from '@/services/adMobService';
 import { logDebug, logError } from '@/utils/errorHandler';
 
@@ -80,17 +72,17 @@ export const RewardedAdButton: React.FC<RewardedAdButtonProps> = ({
           logDebug('Rewarded ad loaded');
         });
 
-        rewardedAdRef.current.addAdEventListener(RewardedAdEventType.EARNED_REWARD, (reward) => {
+        rewardedAdRef.current.addAdEventListener(RewardedAdEventType.EARNED_REWARD, reward => {
           logDebug('Rewarded ad reward earned', { reward });
           onRewardEarned();
         });
 
-        rewardedAdRef.current.addAdEventListener(AdEventType.ERROR, (error) => {
+        rewardedAdRef.current.addAdEventListener(AdEventType.ERROR, error => {
           setIsAdLoaded(false);
           logError('Rewarded ad error', { error: error.message });
           onAdFailed?.(error.message);
         });
-        
+
         rewardedAdRef.current.addAdEventListener(AdEventType.CLOSED, () => {
           setIsLoading(false);
           // Preload next ad
@@ -131,15 +123,11 @@ export const RewardedAdButton: React.FC<RewardedAdButtonProps> = ({
       if (rewardedAdRef.current) {
         await rewardedAdRef.current.show();
       }
-
     } catch (error) {
       setIsLoading(false);
       logError('Failed to show rewarded ad', { error: error.message });
       onAdFailed?.(error.message);
-      Alert.alert(
-        'Error',
-        'Failed to show the rewarded ad. Please try again.'
-      );
+      Alert.alert('Error', 'Failed to show the rewarded ad. Please try again.');
     }
   };
 
@@ -175,22 +163,16 @@ export const RewardedAdButton: React.FC<RewardedAdButtonProps> = ({
           </View>
 
           <View style={styles.textContainer}>
-            <Text style={[
-              styles.title,
-              { color: disabled || !isAdLoaded ? '#9CA3AF' : '#fff' }
-            ]}>
+            <Text style={[styles.title, { color: disabled || !isAdLoaded ? '#9CA3AF' : '#fff' }]}>
               {title}
             </Text>
-            <Text style={[
-              styles.description,
-              { color: disabled || !isAdLoaded ? '#6B7280' : '#E5E7EB' }
-            ]}>
-              {isLoading
-                ? 'Loading ad...'
-                : !isAdLoaded
-                ? 'Ad loading...'
-                : description
-              }
+            <Text
+              style={[
+                styles.description,
+                { color: disabled || !isAdLoaded ? '#6B7280' : '#E5E7EB' },
+              ]}
+            >
+              {isLoading ? 'Loading ad...' : !isAdLoaded ? 'Ad loading...' : description}
             </Text>
           </View>
 

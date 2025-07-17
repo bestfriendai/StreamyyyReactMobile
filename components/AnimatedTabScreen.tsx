@@ -16,11 +16,11 @@ interface AnimatedTabScreenProps {
   duration?: number;
 }
 
-export function AnimatedTabScreen({ 
-  children, 
-  isActive, 
+export function AnimatedTabScreen({
+  children,
+  isActive,
   animationType = 'fade',
-  duration = 300 
+  duration = 300,
 }: AnimatedTabScreenProps) {
   const opacity = useSharedValue(isActive ? 1 : 0);
   const translateY = useSharedValue(isActive ? 0 : 20);
@@ -61,11 +61,7 @@ export function AnimatedTabScreen({
     }
   });
 
-  return (
-    <Animated.View style={animatedStyle}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
 }
 
 // Hook for tab animations

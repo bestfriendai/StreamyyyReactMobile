@@ -1,15 +1,3 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import {
-  View,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
-  Text,
-  FlatList,
-  Keyboard,
-  Dimensions,
-} from 'react-native';
 import {
   Search,
   X,
@@ -22,6 +10,18 @@ import {
   Camera,
   Settings,
 } from 'lucide-react-native';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  Text,
+  FlatList,
+  Keyboard,
+  Dimensions,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -99,7 +99,7 @@ export const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({
   const [searchHistory, setSearchHistory] = useState<SearchSuggestion[]>([]);
   const [trendingSearches, setTrendingSearches] = useState<SearchSuggestion[]>([]);
   const [showSuggestionsPanel, setShowSuggestionsPanel] = useState(false);
-  
+
   // Refs
   const inputRef = useRef<TextInput>(null);
   const debounceTimer = useRef<NodeJS.Timeout>();
@@ -167,111 +167,126 @@ export const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({
   }, []);
 
   // Save search to history
-  const saveToHistory = useCallback(async (searchQuery: string) => {
-    if (!enableHistory || searchQuery.trim().length < 2) return;
+  const saveToHistory = useCallback(
+    async (searchQuery: string) => {
+      if (!enableHistory || searchQuery.trim().length < 2) {return;}
 
-    try {
-      const newHistoryItem: SearchSuggestion = {
-        id: Date.now().toString(),
-        text: searchQuery.trim(),
-        type: 'history',
-        metadata: { timestamp: Date.now() },
-      };
+      try {
+        const newHistoryItem: SearchSuggestion = {
+          id: Date.now().toString(),
+          text: searchQuery.trim(),
+          type: 'history',
+          metadata: { timestamp: Date.now() },
+        };
 
-      const updatedHistory = [
-        newHistoryItem,
-        ...searchHistory.filter(item => item.text !== searchQuery.trim()),
-      ].slice(0, MAX_HISTORY_ITEMS);
+        const updatedHistory = [
+          newHistoryItem,
+          ...searchHistory.filter(item => item.text !== searchQuery.trim()),
+        ].slice(0, MAX_HISTORY_ITEMS);
 
-      setSearchHistory(updatedHistory);
-      await AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updatedHistory));
-    } catch (error) {
-      console.error('Failed to save search history:', error);
-    }
-  }, [searchHistory, enableHistory]);
+        setSearchHistory(updatedHistory);
+        await AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updatedHistory));
+      } catch (error) {
+        console.error('Failed to save search history:', error);
+      }
+    },
+    [searchHistory, enableHistory]
+  );
 
   // Generate suggestions based on query
-  const generateSuggestions = useCallback((searchQuery: string) => {
-    const query_lower = searchQuery.toLowerCase();
-    let generated: SearchSuggestion[] = [];
+  const generateSuggestions = useCallback(
+    (searchQuery: string) => {
+      const query_lower = searchQuery.toLowerCase();
+      let generated: SearchSuggestion[] = [];
 
-    // Add custom suggestions
-    const customMatches = customSuggestions.filter(suggestion =>
-      suggestion.text.toLowerCase().includes(query_lower)
-    );
-    generated.push(...customMatches);
+      // Add custom suggestions
+      const customMatches = customSuggestions.filter(suggestion =>
+        suggestion.text.toLowerCase().includes(query_lower)
+      );
+      generated.push(...customMatches);
 
-    // Add history matches
-    const historyMatches = searchHistory.filter(item =>
-      item.text.toLowerCase().includes(query_lower)
-    );
-    generated.push(...historyMatches);
+      // Add history matches
+      const historyMatches = searchHistory.filter(item =>
+        item.text.toLowerCase().includes(query_lower)
+      );
+      generated.push(...historyMatches);
 
-    // Add trending matches
-    const trendingMatches = trendingSearches.filter(item =>
-      item.text.toLowerCase().includes(query_lower)
-    );
-    generated.push(...trendingMatches);
+      // Add trending matches
+      const trendingMatches = trendingSearches.filter(item =>
+        item.text.toLowerCase().includes(query_lower)
+      );
+      generated.push(...trendingMatches);
 
-    // Remove duplicates and limit
-    const uniqueSuggestions = generated
-      .filter((suggestion, index, self) =>
-        index === self.findIndex(s => s.text === suggestion.text)
-      )
-      .slice(0, maxSuggestions);
+      // Remove duplicates and limit
+      const uniqueSuggestions = generated
+        .filter(
+          (suggestion, index, self) => index === self.findIndex(s => s.text === suggestion.text)
+        )
+        .slice(0, maxSuggestions);
 
-    setSuggestions(uniqueSuggestions);
-  }, [customSuggestions, searchHistory, trendingSearches, maxSuggestions]);
+      setSuggestions(uniqueSuggestions);
+    },
+    [customSuggestions, searchHistory, trendingSearches, maxSuggestions]
+  );
 
   // Handle text input changes with debouncing
-  const handleChangeText = useCallback((text: string) => {
-    setQuery(text);
-    onValueChange?.(text);
+  const handleChangeText = useCallback(
+    (text: string) => {
+      setQuery(text);
+      onValueChange?.(text);
 
-    if (text.length === 0) {
-      onClear();
-      setSuggestions([]);
-    }
+      if (text.length === 0) {
+        onClear();
+        setSuggestions([]);
+      }
 
-    // Debounced search suggestions
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
+      // Debounced search suggestions
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
 
-    if (text.length > 0) {
-      debounceTimer.current = setTimeout(() => {
-        // Trigger auto-search or suggestion update
-      }, debounceMs);
-    }
-  }, [onValueChange, onClear, debounceMs]);
+      if (text.length > 0) {
+        debounceTimer.current = setTimeout(() => {
+          // Trigger auto-search or suggestion update
+        }, debounceMs);
+      }
+    },
+    [onValueChange, onClear, debounceMs]
+  );
 
   // Handle search submission
-  const handleSearch = useCallback((searchQuery?: string) => {
-    const finalQuery = searchQuery || query;
-    if (finalQuery.trim()) {
-      hapticFeedbackService.quickFeedback('light');
-      onSearch(finalQuery.trim());
-      saveToHistory(finalQuery.trim());
-      setShowSuggestionsPanel(false);
-      Keyboard.dismiss();
+  const handleSearch = useCallback(
+    (searchQuery?: string) => {
+      const finalQuery = searchQuery || query;
+      if (finalQuery.trim()) {
+        hapticFeedbackService.quickFeedback('light');
+        onSearch(finalQuery.trim());
+        saveToHistory(finalQuery.trim());
+        setShowSuggestionsPanel(false);
+        Keyboard.dismiss();
 
-      if (enableAnalytics) {
-        searchAnalytics.current.searches++;
+        if (enableAnalytics) {
+          searchAnalytics.current.searches++;
+        }
       }
-    }
-  }, [query, onSearch, saveToHistory, enableAnalytics]);
+    },
+    [query, onSearch, saveToHistory, enableAnalytics]
+  );
 
   // Handle suggestion selection
-  const handleSuggestionPress = useCallback((suggestion: SearchSuggestion) => {
-    hapticFeedbackService.quickFeedback('medium');
-    setQuery(suggestion.text);
-    onValueChange?.(suggestion.text);
-    handleSearch(suggestion.text);
+  const handleSuggestionPress = useCallback(
+    (suggestion: SearchSuggestion) => {
+      hapticFeedbackService.quickFeedback('medium');
+      setQuery(suggestion.text);
+      onValueChange?.(suggestion.text);
+      handleSearch(suggestion.text);
 
-    if (enableAnalytics) {
-      searchAnalytics.current.suggestions_clicked++;
-    }
-  }, [handleSearch, onValueChange, enableAnalytics]);
+      if (enableAnalytics) {
+        searchAnalytics.current.suggestions_clicked++;
+      }
+    },
+    [handleSearch, onValueChange, enableAnalytics]
+  );
 
   // Handle clear button
   const handleClear = useCallback(() => {
@@ -289,7 +304,7 @@ export const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({
     focusScale.value = withSpring(1.02, { damping: 15 });
     borderOpacity.value = withTiming(1);
     glowOpacity.value = withTiming(0.6);
-    
+
     if (showSuggestions && (suggestions.length > 0 || query.length === 0)) {
       setShowSuggestionsPanel(true);
       suggestionsOpacity.value = withTiming(1, { duration: 200 });
@@ -304,7 +319,7 @@ export const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({
     focusScale.value = withSpring(1, { damping: 15 });
     borderOpacity.value = withTiming(0.3);
     glowOpacity.value = withTiming(0);
-    
+
     // Delay hiding suggestions to allow for suggestion selection
     setTimeout(() => {
       setShowSuggestionsPanel(false);
@@ -380,18 +395,12 @@ export const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({
       onPress={() => handleSuggestionPress(item)}
       activeOpacity={0.7}
     >
-      <View style={styles.suggestionIcon}>
-        {getSuggestionIcon(item)}
-      </View>
+      <View style={styles.suggestionIcon}>{getSuggestionIcon(item)}</View>
       <View style={styles.suggestionContent}>
         <Text style={styles.suggestionText} numberOfLines={1}>
           {item.text}
         </Text>
-        {item.category && (
-          <Text style={styles.suggestionCategory}>
-            {item.category}
-          </Text>
-        )}
+        {item.category && <Text style={styles.suggestionCategory}>{item.category}</Text>}
       </View>
       <ArrowUpRight size={14} color={Theme.colors.text.tertiary} />
     </TouchableOpacity>
@@ -401,14 +410,14 @@ export const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({
     <View style={styles.container}>
       <Animated.View style={[styles.searchWrapper, animatedContainerStyle]}>
         <Animated.View style={[styles.glowEffect, animatedGlowStyle]} />
-        
-        <LinearGradient
-          colors={Theme.gradients.card}
-          style={styles.searchContainer}
-        >
+
+        <LinearGradient colors={Theme.gradients.card} style={styles.searchContainer}>
           {/* Search Icon */}
           <View style={styles.searchIconContainer}>
-            <Search size={20} color={isFocused ? Theme.colors.accent.primary : Theme.colors.text.tertiary} />
+            <Search
+              size={20}
+              color={isFocused ? Theme.colors.accent.primary : Theme.colors.text.tertiary}
+            />
           </View>
 
           {/* Text Input */}
@@ -478,10 +487,7 @@ export const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({
                   onPress={handleFilterPress}
                   activeOpacity={0.7}
                 >
-                  <LinearGradient
-                    colors={Theme.gradients.primary}
-                    style={styles.filterGradient}
-                  >
+                  <LinearGradient colors={Theme.gradients.primary} style={styles.filterGradient}>
                     <Filter size={18} color={Theme.colors.text.primary} />
                   </LinearGradient>
                 </TouchableOpacity>
@@ -498,10 +504,7 @@ export const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({
           exiting={SlideOutDown.duration(200)}
           style={[styles.suggestionsContainer, animatedSuggestionsStyle]}
         >
-          <LinearGradient
-            colors={Theme.gradients.card}
-            style={styles.suggestionsGradient}
-          >
+          <LinearGradient colors={Theme.gradients.card} style={styles.suggestionsGradient}>
             {/* Suggestions Header */}
             <View style={styles.suggestionsHeader}>
               <Text style={styles.suggestionsTitle}>
@@ -522,10 +525,12 @@ export const EnhancedSearchBar: React.FC<EnhancedSearchBarProps> = ({
 
             {/* Suggestions List */}
             <FlatList
-              data={suggestions.length > 0 ? suggestions : 
-                    query.length === 0 ? [...searchHistory.slice(0, 3), ...trendingSearches.slice(0, 5)] : []}
+              data={
+                suggestions.length > 0
+                  ? suggestions
+                query.length === 0 ? [...searchHistory.slice(0, 3), ...trendingSearches.slice(0, 5)] : []}
               renderItem={renderSuggestion}
-              keyExtractor={(item) => item.id}
+              keyExtractor={item => item.id}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               style={styles.suggestionsList}
@@ -622,7 +627,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  
+
   // Suggestions styles
   suggestionsContainer: {
     position: 'absolute',

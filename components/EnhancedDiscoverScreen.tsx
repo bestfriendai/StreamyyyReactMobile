@@ -1,3 +1,6 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Search, TrendingUp, Filter, Grid, Sparkles, Zap, Users, Star } from 'lucide-react-native';
+import { MotiView, MotiText } from 'moti';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -8,20 +11,7 @@ import {
   RefreshControl,
   Dimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MotiView, MotiText } from 'moti';
-import { BlurViewFallback as BlurView } from './BlurViewFallback';
-import {
-  Search,
-  TrendingUp,
-  Filter,
-  Grid,
-  Sparkles,
-  Zap,
-  Users,
-  Star,
-} from 'lucide-react-native';
+import { TouchableOpacity } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -30,11 +20,12 @@ import Animated, {
   interpolate,
   runOnJS,
 } from 'react-native-reanimated';
-import { TouchableOpacity } from 'react-native';
-import { EnhancedStreamCard } from './EnhancedStreamCard';
-import { useTwitchStreams } from '@/hooks/useTwitchStreams';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStreamManager } from '@/hooks/useStreamManager';
+import { useTwitchStreams } from '@/hooks/useTwitchStreams';
 import { twitchApi } from '@/services/twitchApi';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
+import { EnhancedStreamCard } from './EnhancedStreamCard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -92,13 +83,13 @@ export const EnhancedDiscoverScreen: React.FC = () => {
   } = useTwitchStreams();
 
   const { addStream, toggleFavorite, isFavorite, isStreamActive } = useStreamManager();
-  
+
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [totalStreamers, setTotalStreamers] = useState<number | null>(null);
   const flatListRef = useRef<FlatList>(null);
-  
+
   // Animation values
   const headerScale = useSharedValue(1);
   const searchBarOpacity = useSharedValue(0);
@@ -124,7 +115,7 @@ export const EnhancedDiscoverScreen: React.FC = () => {
     });
 
     setSelectedCategory(categoryId);
-    
+
     if (categoryId === 'all') {
       clearSearch();
     } else {
@@ -142,7 +133,7 @@ export const EnhancedDiscoverScreen: React.FC = () => {
     const newState = !showSearchBar;
     setShowSearchBar(newState);
     searchBarOpacity.value = withTiming(newState ? 1 : 0, { duration: 300 });
-    
+
     if (!newState) {
       clearSearch();
     }
@@ -156,9 +147,9 @@ export const EnhancedDiscoverScreen: React.FC = () => {
   const animatedSearchStyle = useAnimatedStyle(() => ({
     opacity: searchBarOpacity.value,
     transform: [
-      { 
-        translateY: interpolate(searchBarOpacity.value, [0, 1], [-20, 0]) 
-      }
+      {
+        translateY: interpolate(searchBarOpacity.value, [0, 1], [-20, 0]),
+      },
     ],
   }));
 
@@ -191,7 +182,7 @@ export const EnhancedDiscoverScreen: React.FC = () => {
             >
               <Sparkles size={28} color="#8B5CF6" />
             </MotiView>
-            
+
             <View style={styles.titleTextContainer}>
               <MotiText
                 from={{ opacity: 0, translateX: -20 }}
@@ -207,16 +198,13 @@ export const EnhancedDiscoverScreen: React.FC = () => {
                 transition={{ delay: 400 }}
                 style={styles.subtitle}
               >
-                {totalStreamers 
-                  ? `${totalStreamers.toLocaleString()} people are streaming on Twitch right now` 
+                {totalStreamers
+                  ? `${totalStreamers.toLocaleString()} people are streaming on Twitch right now`
                   : `${streams.length} live streams`}
               </MotiText>
             </View>
 
-            <TouchableOpacity
-              style={styles.searchButton}
-              onPress={toggleSearchBar}
-            >
+            <TouchableOpacity style={styles.searchButton} onPress={toggleSearchBar}>
               <BlurView style={styles.searchButtonBlur} blurType="dark" blurAmount={10}>
                 <Search size={20} color="#8B5CF6" />
               </BlurView>
@@ -239,7 +227,7 @@ export const EnhancedDiscoverScreen: React.FC = () => {
               horizontal
               showsHorizontalScrollIndicator={false}
               data={categories}
-              keyExtractor={(item) => item.id}
+              keyExtractor={item => item.id}
               contentContainerStyle={styles.categoriesList}
               renderItem={({ item, index }) => (
                 <MotiView
@@ -267,7 +255,11 @@ export const EnhancedDiscoverScreen: React.FC = () => {
                     onPress={() => handleCategoryPress(item.id)}
                   >
                     <LinearGradient
-                      colors={selectedCategory === item.id ? item.gradient : ['rgba(42, 42, 42, 0.8)', 'rgba(58, 58, 58, 0.8)']}
+                      colors={
+                        selectedCategory === item.id
+                          ? item.gradient
+                          : ['rgba(42, 42, 42, 0.8)', 'rgba(58, 58, 58, 0.8)']
+                      }
                       style={styles.categoryGradient}
                     >
                       {item.icon}
@@ -371,16 +363,13 @@ export const EnhancedDiscoverScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      
+
       {/* Animated background */}
-      <LinearGradient
-        colors={['#0a0a0a', '#1a1a1a', '#0f0f0f']}
-        style={styles.background}
-      />
-      
+      <LinearGradient colors={['#0a0a0a', '#1a1a1a', '#0f0f0f']} style={styles.background} />
+
       <SafeAreaView style={styles.safeArea}>
         {renderHeader()}
-        
+
         {loading ? (
           renderLoadingState()
         ) : streams.length === 0 ? (
@@ -390,7 +379,7 @@ export const EnhancedDiscoverScreen: React.FC = () => {
             ref={flatListRef}
             data={streams}
             renderItem={renderStreamCard}
-            keyExtractor={(item) => item.id}
+            keyExtractor={item => item.id}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
             refreshControl={
@@ -401,7 +390,7 @@ export const EnhancedDiscoverScreen: React.FC = () => {
                 colors={['#8B5CF6']}
               />
             }
-            onScroll={(event) => {
+            onScroll={event => {
               scrollY.value = event.nativeEvent.contentOffset.y;
             }}
           />

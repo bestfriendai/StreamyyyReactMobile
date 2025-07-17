@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { platformDetection } from '@/utils/crossPlatformStorage';
 import { useCrossPlatformStore } from '@/store/useCrossPlatformStore';
+import { platformDetection } from '@/utils/crossPlatformStorage';
 import { pwaService } from '@/services/pwaService';
 import { notificationService } from '@/services/notificationService';
 import { deviceSyncService } from '@/services/deviceSyncService';
@@ -16,7 +16,7 @@ const CrossPlatformIntegrationGuide: React.FC<CrossPlatformIntegrationGuideProps
   const [pwaFeatures, setPWAFeatures] = useState<any>({});
   const [syncStatus, setSyncStatus] = useState<any>({});
   const [notificationSettings, setNotificationSettings] = useState<any>({});
-  
+
   const { platform, deviceId } = useCrossPlatformStore();
 
   useEffect(() => {
@@ -40,23 +40,23 @@ const CrossPlatformIntegrationGuide: React.FC<CrossPlatformIntegrationGuideProps
           🚀 Cross-Platform Integration Complete
         </h3>
         <p className="text-gray-300 mb-4">
-          Streamyyy now works seamlessly across web, desktop, and mobile platforms with advanced 
+          Streamyyy now works seamlessly across web, desktop, and mobile platforms with advanced
           synchronization and integration features.
         </p>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           <div className="bg-gray-800 rounded-lg p-4">
             <div className="text-green-400 text-2xl mb-2">🌐</div>
             <h4 className="font-semibold text-white">Web (PWA)</h4>
             <p className="text-sm text-gray-400">Responsive web app with offline support</p>
           </div>
-          
+
           <div className="bg-gray-800 rounded-lg p-4">
             <div className="text-blue-400 text-2xl mb-2">🖥️</div>
             <h4 className="font-semibold text-white">Desktop (Electron)</h4>
             <p className="text-sm text-gray-400">Native desktop app with system integration</p>
           </div>
-          
+
           <div className="bg-gray-800 rounded-lg p-4">
             <div className="text-purple-400 text-2xl mb-2">🔌</div>
             <h4 className="font-semibold text-white">Browser Extension</h4>
@@ -68,11 +68,14 @@ const CrossPlatformIntegrationGuide: React.FC<CrossPlatformIntegrationGuideProps
       <div className="bg-gray-800 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Current Platform</h3>
         <div className="flex items-center space-x-4">
-          <div className="bg-blue-600 rounded-full w-3 h-3"></div>
+          <div className="bg-blue-600 rounded-full w-3 h-3" />
           <div>
             <p className="text-white font-medium">
-              {platform === 'web' ? '🌐 Web Browser' : 
-               platform === 'desktop' ? '🖥️ Desktop App' : '📱 Mobile App'}
+              {platform === 'web'
+                ? '🌐 Web Browser'
+                : platform === 'desktop'
+                  ? '🖥️ Desktop App'
+                  : '📱 Mobile App'}
             </p>
             <p className="text-sm text-gray-400">Device ID: {deviceId}</p>
           </div>
@@ -92,8 +95,9 @@ const CrossPlatformIntegrationGuide: React.FC<CrossPlatformIntegrationGuideProps
             <div className="flex justify-between">
               <span className="text-gray-400">Last Sync:</span>
               <span className="text-gray-300">
-                {syncStatus.lastSyncTime ? 
-                  new Date(syncStatus.lastSyncTime).toLocaleString() : 'Never'}
+                {syncStatus.lastSyncTime
+                  ? new Date(syncStatus.lastSyncTime).toLocaleString()
+                  : 'Never'}
               </span>
             </div>
             <div className="flex justify-between">
@@ -134,7 +138,7 @@ const CrossPlatformIntegrationGuide: React.FC<CrossPlatformIntegrationGuideProps
     <div className="space-y-6">
       <div className="bg-gray-800 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-white mb-4">🌟 Available Features</h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FeatureCard
             title="Cross-Platform Storage"
@@ -142,39 +146,39 @@ const CrossPlatformIntegrationGuide: React.FC<CrossPlatformIntegrationGuideProps
             status="enabled"
             icon="💾"
           />
-          
+
           <FeatureCard
             title="Device Synchronization"
             description="Sync layouts and settings across devices"
-            status={syncStatus.isEnabled ? "enabled" : "disabled"}
+            status={syncStatus.isEnabled ? 'enabled' : 'disabled'}
             icon="🔄"
           />
-          
+
           <FeatureCard
             title="Progressive Web App"
             description="Install as native app on any platform"
-            status={pwaFeatures.installable ? "available" : "not-available"}
+            status={pwaFeatures.installable ? 'available' : 'not-available'}
             icon="📱"
           />
-          
+
           <FeatureCard
             title="Push Notifications"
             description="Real-time notifications across platforms"
-            status={notificationSettings.enabled ? "enabled" : "disabled"}
+            status={notificationSettings.enabled ? 'enabled' : 'disabled'}
             icon="🔔"
           />
-          
+
           <FeatureCard
             title="Browser Extension"
             description="Collect streams from any website"
             status="available"
             icon="🔌"
           />
-          
+
           <FeatureCard
             title="Desktop Integration"
             description="System tray, shortcuts, and native features"
-            status={platform === 'desktop' ? "enabled" : "not-applicable"}
+            status={platform === 'desktop' ? 'enabled' : 'not-applicable'}
             icon="🖥️"
           />
         </div>
@@ -182,7 +186,7 @@ const CrossPlatformIntegrationGuide: React.FC<CrossPlatformIntegrationGuideProps
 
       <div className="bg-gray-800 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-white mb-4">🎯 Platform-Specific Features</h3>
-        
+
         {platform === 'web' && (
           <div className="space-y-4">
             <h4 className="text-md font-medium text-blue-300">Web Features</h4>
@@ -230,7 +234,7 @@ const CrossPlatformIntegrationGuide: React.FC<CrossPlatformIntegrationGuideProps
     <div className="space-y-6">
       <div className="bg-gray-800 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-white mb-4">⚙️ Setup Guide</h3>
-        
+
         <div className="space-y-6">
           <SetupStep
             number={1}
@@ -240,8 +244,8 @@ const CrossPlatformIntegrationGuide: React.FC<CrossPlatformIntegrationGuideProps
               <button
                 onClick={() => deviceSyncService.enableSync()}
                 className={`px-4 py-2 rounded ${
-                  syncStatus.isEnabled 
-                    ? 'bg-green-600 text-white' 
+                  syncStatus.isEnabled
+                    ? 'bg-green-600 text-white'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
                 disabled={syncStatus.isEnabled}
@@ -259,8 +263,8 @@ const CrossPlatformIntegrationGuide: React.FC<CrossPlatformIntegrationGuideProps
               <button
                 onClick={() => notificationService.requestPermission()}
                 className={`px-4 py-2 rounded ${
-                  notificationSettings.enabled 
-                    ? 'bg-green-600 text-white' 
+                  notificationSettings.enabled
+                    ? 'bg-green-600 text-white'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
               >
@@ -310,19 +314,15 @@ const CrossPlatformIntegrationGuide: React.FC<CrossPlatformIntegrationGuideProps
                 <h4 className="font-medium text-white">System Tray</h4>
                 <p className="text-sm text-gray-400">Show app in system tray</p>
               </div>
-              <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm">
-                Enable
-              </button>
+              <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Enable</button>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-medium text-white">Auto Start</h4>
                 <p className="text-sm text-gray-400">Start app when computer boots</p>
               </div>
-              <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm">
-                Enable
-              </button>
+              <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Enable</button>
             </div>
           </div>
         </div>
@@ -343,18 +343,23 @@ const CrossPlatformIntegrationGuide: React.FC<CrossPlatformIntegrationGuideProps
           <h4 className="font-medium text-white">{title}</h4>
           <p className="text-sm text-gray-400 mt-1">{description}</p>
           <div className="mt-2">
-            <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-              status === 'enabled' ? 'bg-green-600 text-white' :
-              status === 'available' ? 'bg-blue-600 text-white' :
-              status === 'disabled' ? 'bg-red-600 text-white' :
-              status === 'not-available' ? 'bg-gray-600 text-white' :
-              'bg-gray-500 text-white'
-            }`}>
-              {status === 'enabled' ? 'Enabled' :
-               status === 'available' ? 'Available' :
-               status === 'disabled' ? 'Disabled' :
-               status === 'not-available' ? 'Not Available' :
-               'N/A'}
+            <span
+              className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                status === 'enabled'
+                  ? 'bg-green-600 text-white'
+                  : status === 'available'
+                    ? 'bg-blue-600 text-white'
+                  status === 'disabled' ? 'bg-red-600 text-white' :
+                    status === 'not-available' ? 'bg-gray-600 text-white' :
+                      'bg-gray-500 text-white'
+              }`}
+            >
+              {status === 'enabled'
+                ? 'Enabled'
+                status === 'available' ? 'Available' :
+                  status === 'disabled' ? 'Disabled' :
+                    status === 'not-available' ? 'Not Available' :
+                      'N/A'}
             </span>
           </div>
         </div>
@@ -376,9 +381,7 @@ const CrossPlatformIntegrationGuide: React.FC<CrossPlatformIntegrationGuideProps
         <h4 className="font-medium text-white">{title}</h4>
         <p className="text-sm text-gray-400">{description}</p>
       </div>
-      <div className="flex-shrink-0">
-        {action}
-      </div>
+      <div className="flex-shrink-0">{action}</div>
     </div>
   );
 
@@ -392,18 +395,14 @@ const CrossPlatformIntegrationGuide: React.FC<CrossPlatformIntegrationGuideProps
     <div className={`bg-gray-900 text-white ${className}`}>
       {/* Header */}
       <div className="bg-gray-800 border-b border-gray-700 p-6">
-        <h2 className="text-2xl font-bold text-white mb-2">
-          Cross-Platform Integration
-        </h2>
-        <p className="text-gray-400">
-          Manage your multi-streaming experience across all platforms
-        </p>
+        <h2 className="text-2xl font-bold text-white mb-2">Cross-Platform Integration</h2>
+        <p className="text-gray-400">Manage your multi-streaming experience across all platforms</p>
       </div>
 
       {/* Tab Navigation */}
       <div className="bg-gray-800 border-b border-gray-700">
         <div className="flex space-x-0">
-          {tabs.map((tab) => (
+          {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}

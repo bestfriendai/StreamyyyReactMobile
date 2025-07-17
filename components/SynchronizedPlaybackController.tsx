@@ -1,14 +1,3 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Slider,
-  Alert,
-  Platform,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Play,
@@ -28,6 +17,17 @@ import {
   BarChart3,
   Equalizer,
 } from 'lucide-react-native';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Slider,
+  Alert,
+  Platform,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -126,122 +126,139 @@ export function SynchronizedPlaybackController({
     volumeBarsOpacity.value = withTiming(showAdvanced ? 1 : 0, { duration: 300 });
   }, [showAdvanced]);
 
-  const handleAudioStreamSwitch = useCallback((streamId: string) => {
-    if (syncMode === 'single') {
-      // Switch to single stream audio
-      setAudioStreams(prev => prev.map(stream => ({
-        ...stream,
-        isMuted: stream.streamId !== streamId,
-        isActive: stream.streamId === streamId,
-      })));
-      setActiveAudioStreamId(streamId);
-      
-      // Notify parent component
-      streams.forEach(stream => {
-        onStreamAudioToggle(stream.id, stream.id === streamId);
-      });
+  const handleAudioStreamSwitch = useCallback(
+    (streamId: string) => {
+      if (syncMode === 'single') {
+        // Switch to single stream audio
+        setAudioStreams(prev =>
+          prev.map(stream => ({
+            ...stream,
+            isMuted: stream.streamId !== streamId,
+            isActive: stream.streamId === streamId,
+          }))
+        );
+        setActiveAudioStreamId(streamId);
 
-      // Haptic feedback
-      syncIndicatorScale.value = withSpring(1.2, {}, () => {
-        syncIndicatorScale.value = withSpring(1);
-      });
-    } else if (syncMode === 'crossfade') {
-      // Implement crossfade logic
-      handleCrossfade(activeAudioStreamId, streamId);
-    }
-  }, [syncMode, activeAudioStreamId, streams, onStreamAudioToggle]);
+        // Notify parent component
+        streams.forEach(stream => {
+          onStreamAudioToggle(stream.id, stream.id === streamId);
+        });
 
-  const handleCrossfade = useCallback((fromStreamId: string | null, toStreamId: string) => {
-    if (!fromStreamId || fromStreamId === toStreamId) return;
+        // Haptic feedback
+        syncIndicatorScale.value = withSpring(1.2, {}, () => {
+          syncIndicatorScale.value = withSpring(1);
+        });
+      } else if (syncMode === 'crossfade') {
+        // Implement crossfade logic
+        handleCrossfade(activeAudioStreamId, streamId);
+      }
+    },
+    [syncMode, activeAudioStreamId, streams, onStreamAudioToggle]
+  );
 
-    const duration = crossfadeDuration * 1000;
-    const steps = 20;
-    const stepDuration = duration / steps;
+  const handleCrossfade = useCallback(
+    (fromStreamId: string | null, toStreamId: string) => {
+      if (!fromStreamId || fromStreamId === toStreamId) {
+        return;
+      }
 
-    let currentStep = 0;
+      const duration = crossfadeDuration * 1000;
+      const steps = 20;
+      const stepDuration = duration / steps;
 
-    const crossfade = () => {
-      const progress = currentStep / steps;
-      const fromVolume = Math.max(0, 1 - progress);
-      const toVolume = Math.min(1, progress);
+      let currentStep = 0;
 
-      setAudioStreams(prev => prev.map(stream => {
-        if (stream.streamId === fromStreamId) {
-          return { ...stream, volume: fromVolume * masterVolume };
-        } else if (stream.streamId === toStreamId) {
-          return { ...stream, volume: toVolume * masterVolume, isMuted: false, isActive: true };
+      const crossfade = () => {
+        const progress = currentStep / steps;
+        const fromVolume = Math.max(0, 1 - progress);
+        const toVolume = Math.min(1, progress);
+
+        setAudioStreams(prev =>
+          prev.map(stream => {
+            if (stream.streamId === fromStreamId) {
+              return { ...stream, volume: fromVolume * masterVolume };
+            } else if (stream.streamId === toStreamId) {
+              return { ...stream, volume: toVolume * masterVolume, isMuted: false, isActive: true };
+            }
+            return stream;
+          })
+        );
+
+        // Notify parent component
+        onStreamVolumeChange(fromStreamId, fromVolume * masterVolume);
+        onStreamVolumeChange(toStreamId, toVolume * masterVolume);
+
+        currentStep++;
+
+        if (currentStep <= steps) {
+          crossfadeTimerRef.current = setTimeout(crossfade, stepDuration);
+        } else {
+          // Crossfade complete
+          setAudioStreams(prev =>
+            prev.map(stream => ({
+              ...stream,
+              isMuted: stream.streamId !== toStreamId,
+              isActive: stream.streamId === toStreamId,
+              volume: stream.streamId === toStreamId ? masterVolume : 0,
+            }))
+          );
+          setActiveAudioStreamId(toStreamId);
         }
-        return stream;
-      }));
+      };
 
-      // Notify parent component
-      onStreamVolumeChange(fromStreamId, fromVolume * masterVolume);
-      onStreamVolumeChange(toStreamId, toVolume * masterVolume);
+      crossfade();
+    },
+    [crossfadeDuration, masterVolume, onStreamVolumeChange]
+  );
 
-      currentStep++;
+  const handleMasterVolumeChange = useCallback(
+    (volume: number) => {
+      setMasterVolume(volume);
 
-      if (currentStep <= steps) {
-        crossfadeTimerRef.current = setTimeout(crossfade, stepDuration);
-      } else {
-        // Crossfade complete
-        setAudioStreams(prev => prev.map(stream => ({
-          ...stream,
-          isMuted: stream.streamId !== toStreamId,
-          isActive: stream.streamId === toStreamId,
-          volume: stream.streamId === toStreamId ? masterVolume : 0,
-        })));
-        setActiveAudioStreamId(toStreamId);
+      // Apply to all active streams
+      audioStreams.forEach(stream => {
+        if (!stream.isMuted) {
+          onStreamVolumeChange(stream.streamId, volume * stream.volume);
+        }
+      });
+    },
+    [audioStreams, onStreamVolumeChange]
+  );
+
+  const handleStreamVolumeChange = useCallback(
+    (streamId: string, volume: number) => {
+      setAudioStreams(prev =>
+        prev.map(stream => (stream.streamId === streamId ? { ...stream, volume } : stream))
+      );
+
+      onStreamVolumeChange(streamId, volume * masterVolume);
+    },
+    [masterVolume, onStreamVolumeChange]
+  );
+
+  const handleToggleStreamMute = useCallback(
+    (streamId: string) => {
+      setAudioStreams(prev =>
+        prev.map(stream =>
+          stream.streamId === streamId ? { ...stream, isMuted: !stream.isMuted } : stream
+        )
+      );
+
+      const stream = audioStreams.find(s => s.streamId === streamId);
+      if (stream) {
+        onStreamAudioToggle(streamId, stream.isMuted);
       }
-    };
-
-    crossfade();
-  }, [crossfadeDuration, masterVolume, onStreamVolumeChange]);
-
-  const handleMasterVolumeChange = useCallback((volume: number) => {
-    setMasterVolume(volume);
-    
-    // Apply to all active streams
-    audioStreams.forEach(stream => {
-      if (!stream.isMuted) {
-        onStreamVolumeChange(stream.streamId, volume * stream.volume);
-      }
-    });
-  }, [audioStreams, onStreamVolumeChange]);
-
-  const handleStreamVolumeChange = useCallback((streamId: string, volume: number) => {
-    setAudioStreams(prev => prev.map(stream =>
-      stream.streamId === streamId
-        ? { ...stream, volume }
-        : stream
-    ));
-
-    onStreamVolumeChange(streamId, volume * masterVolume);
-  }, [masterVolume, onStreamVolumeChange]);
-
-  const handleToggleStreamMute = useCallback((streamId: string) => {
-    setAudioStreams(prev => prev.map(stream =>
-      stream.streamId === streamId
-        ? { ...stream, isMuted: !stream.isMuted }
-        : stream
-    ));
-
-    const stream = audioStreams.find(s => s.streamId === streamId);
-    if (stream) {
-      onStreamAudioToggle(streamId, stream.isMuted);
-    }
-  }, [audioStreams, onStreamAudioToggle]);
+    },
+    [audioStreams, onStreamAudioToggle]
+  );
 
   const handleSyncModeChange = useCallback(() => {
-    const modes: typeof syncMode[] = ['single', 'mixed', 'crossfade'];
+    const modes: (typeof syncMode)[] = ['single', 'mixed', 'crossfade'];
     const currentIndex = modes.indexOf(syncMode);
     const nextMode = modes[(currentIndex + 1) % modes.length];
     setSyncMode(nextMode);
 
-    Alert.alert(
-      'Audio Mode Changed',
-      `Switched to ${nextMode} audio mode`,
-      [{ text: 'OK' }]
-    );
+    Alert.alert('Audio Mode Changed', `Switched to ${nextMode} audio mode`, [{ text: 'OK' }]);
   }, [syncMode]);
 
   const handleSyncAll = useCallback(() => {
@@ -295,10 +312,7 @@ export function SynchronizedPlaybackController({
   const renderStreamAudioControl = (stream: AudioStreamState) => (
     <View key={stream.streamId} style={styles.streamAudioControl}>
       <TouchableOpacity
-        style={[
-          styles.streamAudioButton,
-          stream.isActive && styles.activeStreamAudioButton,
-        ]}
+        style={[styles.streamAudioButton, stream.isActive && styles.activeStreamAudioButton]}
         onPress={() => handleAudioStreamSwitch(stream.streamId)}
       >
         <LinearGradient
@@ -306,8 +320,8 @@ export function SynchronizedPlaybackController({
             stream.isActive
               ? ['#22C55E', '#16A34A']
               : stream.isMuted
-              ? ['#6B7280', '#4B5563']
-              : ['#8B5CF6', '#7C3AED']
+                ? ['#6B7280', '#4B5563']
+                : ['#8B5CF6', '#7C3AED']
           }
           style={styles.streamAudioGradient}
         >
@@ -320,7 +334,7 @@ export function SynchronizedPlaybackController({
           )}
         </LinearGradient>
       </TouchableOpacity>
-      
+
       <View style={styles.streamAudioInfo}>
         <Text style={styles.streamAudioName} numberOfLines={1}>
           {stream.streamName}
@@ -342,14 +356,14 @@ export function SynchronizedPlaybackController({
               <Volume2 size={12} color="#8B5CF6" />
             )}
           </TouchableOpacity>
-          
+
           <View style={styles.volumeSliderContainer}>
             <Slider
               style={styles.volumeSlider}
               minimumValue={0}
               maximumValue={1}
               value={stream.volume}
-              onValueChange={(value) => handleStreamVolumeChange(stream.streamId, value)}
+              onValueChange={value => handleStreamVolumeChange(stream.streamId, value)}
               minimumTrackTintColor="#8B5CF6"
               maximumTrackTintColor="#333"
               thumbTintColor="#8B5CF6"
@@ -373,15 +387,8 @@ export function SynchronizedPlaybackController({
               style={styles.controlButton}
               onPress={isAllPaused ? handlePlayAll : handlePauseAll}
             >
-              <LinearGradient
-                colors={['#22C55E', '#16A34A']}
-                style={styles.controlGradient}
-              >
-                {isAllPaused ? (
-                  <Play size={20} color="#fff" />
-                ) : (
-                  <Pause size={20} color="#fff" />
-                )}
+              <LinearGradient colors={['#22C55E', '#16A34A']} style={styles.controlGradient}>
+                {isAllPaused ? <Play size={20} color="#fff" /> : <Pause size={20} color="#fff" />}
               </LinearGradient>
             </TouchableOpacity>
 
@@ -389,22 +396,13 @@ export function SynchronizedPlaybackController({
               style={[styles.controlButton, animatedSyncIndicatorStyle]}
               onPress={handleSyncAll}
             >
-              <LinearGradient
-                colors={['#8B5CF6', '#7C3AED']}
-                style={styles.controlGradient}
-              >
+              <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.controlGradient}>
                 <Shuffle size={20} color="#fff" />
               </LinearGradient>
             </AnimatedTouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.controlButton}
-              onPress={handleSyncModeChange}
-            >
-              <LinearGradient
-                colors={['#F59E0B', '#D97706']}
-                style={styles.controlGradient}
-              >
+            <TouchableOpacity style={styles.controlButton} onPress={handleSyncModeChange}>
+              <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.controlGradient}>
                 {syncMode === 'single' && <Headphones size={20} color="#fff" />}
                 {syncMode === 'mixed' && <Speaker size={20} color="#fff" />}
                 {syncMode === 'crossfade' && <Music size={20} color="#fff" />}
@@ -414,9 +412,7 @@ export function SynchronizedPlaybackController({
 
           <View style={styles.audioInfo}>
             {renderAudioVisualization()}
-            <Text style={styles.audioModeText}>
-              {syncMode.toUpperCase()} MODE
-            </Text>
+            <Text style={styles.audioModeText}>{syncMode.toUpperCase()} MODE</Text>
           </View>
 
           <View style={styles.masterControls}>
@@ -444,9 +440,7 @@ export function SynchronizedPlaybackController({
                 maximumTrackTintColor="#333"
                 thumbTintColor="#8B5CF6"
               />
-              <Text style={styles.volumeText}>
-                {Math.round(masterVolume * 100)}%
-              </Text>
+              <Text style={styles.volumeText}>{Math.round(masterVolume * 100)}%</Text>
             </View>
           </View>
         </View>
@@ -486,11 +480,13 @@ export function SynchronizedPlaybackController({
                 <Text style={styles.statItem}>
                   Active: {audioStreams.filter(s => s.isActive).length}
                 </Text>
+                <Text style={styles.statItem}>Total: {audioStreams.length}</Text>
                 <Text style={styles.statItem}>
-                  Total: {audioStreams.length}
-                </Text>
-                <Text style={styles.statItem}>
-                  Avg Latency: {Math.round(audioStreams.reduce((acc, s) => acc + s.latency, 0) / audioStreams.length)}ms
+                  Avg Latency:{' '}
+                  {Math.round(
+                    audioStreams.reduce((acc, s) => acc + s.latency, 0) / audioStreams.length
+                  )}
+                  ms
                 </Text>
               </View>
             </View>

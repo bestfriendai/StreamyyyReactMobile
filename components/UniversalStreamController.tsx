@@ -1,14 +1,3 @@
-import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import {
-  View,
-  StyleSheet,
-  Dimensions,
-  ViewStyle,
-  Text,
-  TouchableOpacity,
-  Alert,
-  ScrollView,
-} from 'react-native';
 import { 
   Grid3X3, 
   Maximize2, 
@@ -26,6 +15,17 @@ import {
   Wifi,
   Battery,
 } from 'lucide-react-native';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  ViewStyle,
+  Text,
+  TouchableOpacity,
+  Alert,
+  ScrollView,
+} from 'react-native';
 import { TwitchStream } from '@/services/twitchApi';
 import { UniversalStream } from '@/services/multiPlatformStreamingApi';
 import { ModernTheme } from '@/theme/modernTheme';
@@ -35,9 +35,9 @@ import { performanceOptimizer } from '@/services/performanceOptimizer';
 import { bandwidthMonitor } from '@/services/bandwidthMonitor';
 
 // Import enhanced players
+import EnhancedKickPlayer from './EnhancedKickPlayer';
 import EnhancedTwitchPlayer from './EnhancedTwitchPlayer';
 import EnhancedYouTubePlayer from './EnhancedYouTubePlayer';
-import EnhancedKickPlayer from './EnhancedKickPlayer';
 
 interface StreamInstance {
   id: string;
@@ -91,11 +91,11 @@ export const UniversalStreamController: React.FC<UniversalStreamControllerProps>
   // Initialize streams as instances
   useEffect(() => {
     const newInstances = new Map<string, StreamInstance>();
-    
+
     streams.forEach((stream, index) => {
       const streamId = 'id' in stream ? stream.id : stream.id;
       const platform = 'platform' in stream ? stream.platform : 'twitch';
-      
+
       if (!streamInstances.has(streamId)) {
         const instance: StreamInstance = {
           id: streamId,
@@ -121,7 +121,7 @@ export const UniversalStreamController: React.FC<UniversalStreamControllerProps>
     });
 
     setStreamInstances(newInstances);
-    
+
     // Auto-focus first stream in focus mode
     if (layoutMode === 'focus' && streams.length > 0) {
       const firstStreamId = 'id' in streams[0] ? streams[0].id : streams[0].id;
@@ -142,10 +142,10 @@ export const UniversalStreamController: React.FC<UniversalStreamControllerProps>
           network: bandwidth?.downloadSpeed || 0,
           streamCount: streamInstances.size,
         };
-        
+
         setPerformanceMetrics(metrics);
         setSystemHealth(health);
-        
+
         // Auto-adjust quality based on performance
         if (enableQualityManagement) {
           adjustQualityBasedOnPerformance(health);
@@ -159,138 +159,145 @@ export const UniversalStreamController: React.FC<UniversalStreamControllerProps>
   // Auto-hide controls
   useEffect(() => {
     if (showControls) {
-      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      if (controlsTimer.current) {clearTimeout(controlsTimer.current);}
       controlsTimer.current = setTimeout(() => {
         setShowControls(false);
       }, 4000);
     }
-    
+
     return () => {
-      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      if (controlsTimer.current) {clearTimeout(controlsTimer.current);}
     };
   }, [showControls]);
 
   // Calculate stream positions based on layout
-  const calculateStreamPosition = useCallback((
-    index: number, 
-    totalStreams: number, 
-    layout: LayoutMode
-  ): { x: number; y: number; width: number; height: number } => {
-    const { width: screenWidth, height: screenHeight } = screenDimensions;
-    const controlsHeight = 60;
-    const availableHeight = screenHeight - controlsHeight;
+  const calculateStreamPosition = useCallback(
+    (
+      index: number,
+      totalStreams: number,
+      layout: LayoutMode
+    ): { x: number; y: number; width: number; height: number } => {
+      const { width: screenWidth, height: screenHeight } = screenDimensions;
+      const controlsHeight = 60;
+      const availableHeight = screenHeight - controlsHeight;
 
-    switch (layout) {
-      case 'grid': {
-        const cols = Math.ceil(Math.sqrt(totalStreams));
-        const rows = Math.ceil(totalStreams / cols);
-        const streamWidth = screenWidth / cols;
-        const streamHeight = availableHeight / rows;
-        const col = index % cols;
-        const row = Math.floor(index / cols);
-        
+      switch (layout) {
+        case 'grid': {
+          const cols = Math.ceil(Math.sqrt(totalStreams));
+          const rows = Math.ceil(totalStreams / cols);
+          const streamWidth = screenWidth / cols;
+          const streamHeight = availableHeight / rows;
+          const col = index % cols;
+          const row = Math.floor(index / cols);
+
         return {
-          x: col * streamWidth,
-          y: row * streamHeight,
-          width: streamWidth,
-          height: streamHeight,
-        };
-      }
-      
+            x: col * streamWidth,
+            y: row * streamHeight,
+            width: streamWidth,
+            height: streamHeight,
+          };
+        }
+
       case 'focus': {
-        if (index === 0) {
-          // Main stream takes 75% of screen
-          return {
-            x: 0,
-            y: 0,
-            width: screenWidth * 0.75,
-            height: availableHeight,
-          };
-        } else {
-          // Secondary streams on the side
-          const sideWidth = screenWidth * 0.25;
-          const sideHeight = availableHeight / (totalStreams - 1);
-          return {
-            x: screenWidth * 0.75,
-            y: (index - 1) * sideHeight,
-            width: sideWidth,
-            height: sideHeight,
-          };
+          if (index === 0) {
+            // Main stream takes 75% of screen
+            return {
+              x: 0,
+              y: 0,
+              width: screenWidth * 0.75,
+              height: availableHeight,
+            };
+          } else {
+            // Secondary streams on the side
+            const sideWidth = screenWidth * 0.25;
+            const sideHeight = availableHeight / (totalStreams - 1);
+            return {
+              x: screenWidth * 0.75,
+              y: (index - 1) * sideHeight,
+              width: sideWidth,
+              height: sideHeight,
+            };
+          }
+
+
+        case 'theater': {
+          if (index === 0) {
+            // Main stream takes full width, 70% height
+            return {
+              x: 0,
+              y: 0,
+              width: screenWidth,
+              height: availableHeight * 0.7,
+            };
+          } else {
+            // Secondary streams at bottom
+            const bottomHeight = availableHeight * 0.3;
+            const bottomWidth = screenWidth / (totalStreams - 1);
+            return {
+              x: (index - 1) * bottomWidth,
+              y: availableHeight * 0.7,
+              width: bottomWidth,
+              height: bottomHeight,
+            };
+          }
         }
-      }
-      
-      case 'theater': {
-        if (index === 0) {
-          // Main stream takes full width, 70% height
+
+        case 'pip': {
+          if (index === 0) {
+            // Main stream takes most of screen
+            return {
+              x: 0,
+              y: 0,
+              width: screenWidth,
+              height: availableHeight,
+            };
+          } else {
+            // PiP streams in corners
+            const pipSize = Math.min(screenWidth * 0.3, 200);
+            const margin = 20;
+            const pipRow = Math.floor((index - 1) / 2);
+            const pipCol = (index - 1) % 2;
+
           return {
-            x: 0,
-            y: 0,
-            width: screenWidth,
-            height: availableHeight * 0.7,
-          };
-        } else {
-          // Secondary streams at bottom
-          const bottomHeight = availableHeight * 0.3;
-          const bottomWidth = screenWidth / (totalStreams - 1);
-          return {
-            x: (index - 1) * bottomWidth,
-            y: availableHeight * 0.7,
-            width: bottomWidth,
-            height: bottomHeight,
-          };
+              x: pipCol === 0 ? margin : screenWidth - pipSize - margin,
+              y: pipRow * (pipSize + margin) + margin,
+              width: pipSize,
+              height: pipSize * 0.56, // 16:9 aspect ratio
+            };
+          }
         }
-      }
-      
-      case 'pip': {
-        if (index === 0) {
-          // Main stream takes most of screen
-          return {
-            x: 0,
-            y: 0,
-            width: screenWidth,
-            height: availableHeight,
-          };
-        } else {
-          // PiP streams in corners
-          const pipSize = Math.min(screenWidth * 0.3, 200);
-          const margin = 20;
-          const pipRow = Math.floor((index - 1) / 2);
-          const pipCol = (index - 1) % 2;
-          
-          return {
-            x: pipCol === 0 ? margin : screenWidth - pipSize - margin,
-            y: pipRow * (pipSize + margin) + margin,
-            width: pipSize,
-            height: pipSize * 0.56, // 16:9 aspect ratio
-          };
-        }
-      }
-      
+
+
       default:
-        return { x: 0, y: 0, width: screenWidth, height: availableHeight };
-    }
-  }, [screenDimensions]);
+          return { x: 0, y: 0, width: screenWidth, height: availableHeight };
+      }
+    },
+    [screenDimensions]
+  );
 
   // Quality adjustment based on performance
-  const adjustQualityBasedOnPerformance = useCallback((health: any) => {
-    const instances = Array.from(streamInstances.values());
-    
+  const adjustQualityBasedOnPerformance = useCallback(
+    (health: any) => {
+      const instances = Array.from(streamInstances.values());
+
     if (health.cpu > 80 || health.memory > 85) {
-      // High system load - reduce quality
-      instances.forEach(instance => {
-        if (instance.quality !== '360p') {
-          updateStreamInstance(instance.id, { quality: '360p' });
-        }
-      });
-    } else if (health.cpu < 50 && health.memory < 60 && health.network > 10) {
-      // Good performance - can increase quality
-      instances.forEach(instance => {
-        if (instance.priority === 'high' && instance.quality !== 'auto') {
-          updateStreamInstance(instance.id, { quality: 'auto' });
-        }
-      });
-    }
-  }, [streamInstances]);
+        // High system load - reduce quality
+        instances.forEach(instance => {
+          if (instance.quality !== '360p') {
+            updateStreamInstance(instance.id, { quality: '360p' });
+          }
+        });
+      } else if (health.cpu < 50 && health.memory < 60 && health.network > 10) {
+        // Good performance - can increase quality
+        instances.forEach(instance => {
+          if (instance.priority === 'high' && instance.quality !== 'auto') {
+            updateStreamInstance(instance.id, { quality: 'auto' });
+          }
+        });
+      }
+    },
+    [streamInstances]
+  );
 
   // Update stream instance
   const updateStreamInstance = useCallback((streamId: string, updates: Partial<StreamInstance>) => {
@@ -305,64 +312,85 @@ export const UniversalStreamController: React.FC<UniversalStreamControllerProps>
   }, []);
 
   // Stream event handlers
-  const handleStreamPress = useCallback((streamId: string) => {
-    setShowControls(true);
-    
+  const handleStreamPress = useCallback(
+    (streamId: string) => {
+      setShowControls(true);
+
     if (layoutMode === 'focus') {
-      setFocusedStreamId(streamId);
-      // Unmute focused stream, mute others
-      streamInstances.forEach((instance, id) => {
-        updateStreamInstance(id, { 
-          isMuted: id !== streamId,
-          isActive: id === streamId,
-          priority: id === streamId ? 'high' : 'medium',
+        setFocusedStreamId(streamId);
+        // Unmute focused stream, mute others
+        streamInstances.forEach((instance, id) => {
+          updateStreamInstance(id, {
+            isMuted: id !== streamId,
+            isActive: id === streamId,
+            priority: id === streamId ? 'high' : 'medium',
+          });
         });
+      } else {
+        // Toggle active state
+        const instance = streamInstances.get(streamId);
+        if (instance) {
+          updateStreamInstance(streamId, { isActive: !instance.isActive });
+        }
+      }
+    },
+    [layoutMode, streamInstances, updateStreamInstance]
+  );
+
+  const handleStreamRemove = useCallback(
+    (streamId: string) => {
+      const updatedStreams = streams.filter(stream => {
+        const id = 'id' in stream ? stream.id : stream.id;
+        return id !== streamId;
       });
-    } else {
-      // Toggle active state
+      onStreamsChange?.(updatedStreams);
+    },
+    [streams, onStreamsChange]
+  );
+
+  const handleMuteToggle = useCallback(
+    (streamId: string) => {
       const instance = streamInstances.get(streamId);
       if (instance) {
-        updateStreamInstance(streamId, { isActive: !instance.isActive });
+        updateStreamInstance(streamId, { isMuted: !instance.isMuted });
       }
-    }
-  }, [layoutMode, streamInstances, updateStreamInstance]);
+    },
+    [streamInstances, updateStreamInstance]
+  );
 
-  const handleStreamRemove = useCallback((streamId: string) => {
-    const updatedStreams = streams.filter(stream => {
-      const id = 'id' in stream ? stream.id : stream.id;
-      return id !== streamId;
-    });
-    onStreamsChange?.(updatedStreams);
-  }, [streams, onStreamsChange]);
+  const handlePlayToggle = useCallback(
+    (streamId: string) => {
+      const instance = streamInstances.get(streamId);
+      if (instance) {
+        updateStreamInstance(streamId, { isPlaying: !instance.isPlaying });
+      }
+    },
+    [streamInstances, updateStreamInstance]
+  );
 
-  const handleMuteToggle = useCallback((streamId: string) => {
-    const instance = streamInstances.get(streamId);
-    if (instance) {
-      updateStreamInstance(streamId, { isMuted: !instance.isMuted });
-    }
-  }, [streamInstances, updateStreamInstance]);
+  const handleQualityChange = useCallback(
+    (streamId: string, quality: QualityLevel) => {
+      updateStreamInstance(streamId, { quality });
+    },
+    [updateStreamInstance]
+  );
 
-  const handlePlayToggle = useCallback((streamId: string) => {
-    const instance = streamInstances.get(streamId);
-    if (instance) {
-      updateStreamInstance(streamId, { isPlaying: !instance.isPlaying });
-    }
-  }, [streamInstances, updateStreamInstance]);
+  const handleFullscreen = useCallback(
+    (streamId: string) => {
+      updateStreamInstance(streamId, { fullscreen: true });
+      setLayoutMode('theater');
+      setFocusedStreamId(streamId);
+    },
+    [updateStreamInstance]
+  );
 
-  const handleQualityChange = useCallback((streamId: string, quality: QualityLevel) => {
-    updateStreamInstance(streamId, { quality });
-  }, [updateStreamInstance]);
-
-  const handleFullscreen = useCallback((streamId: string) => {
-    updateStreamInstance(streamId, { fullscreen: true });
-    setLayoutMode('theater');
-    setFocusedStreamId(streamId);
-  }, [updateStreamInstance]);
-
-  const handlePictureInPicture = useCallback((streamId: string) => {
-    updateStreamInstance(streamId, { pictureInPicture: true });
-    setLayoutMode('pip');
-  }, [updateStreamInstance]);
+  const handlePictureInPicture = useCallback(
+    (streamId: string) => {
+      updateStreamInstance(streamId, { pictureInPicture: true });
+      setLayoutMode('pip');
+    },
+    [updateStreamInstance]
+  );
 
   // Global controls
   const handleGlobalMute = useCallback(() => {
@@ -387,87 +415,91 @@ export const UniversalStreamController: React.FC<UniversalStreamControllerProps>
   }, [layoutMode]);
 
   // Render stream player based on platform
-  const renderStreamPlayer = useCallback((instance: StreamInstance) => {
-    const commonProps = {
-      stream: instance.stream,
-      width: instance.position.width,
-      height: instance.position.height,
-      isActive: instance.isActive,
-      isMuted: instance.isMuted,
-      isPlaying: instance.isPlaying,
-      quality: instance.quality,
-      onPress: () => handleStreamPress(instance.id),
-      onRemove: () => handleStreamRemove(instance.id),
-      onMuteToggle: () => handleMuteToggle(instance.id),
-      onPlayToggle: () => handlePlayToggle(instance.id),
-      onQualityChange: (quality: QualityLevel) => handleQualityChange(instance.id, quality),
-      onFullscreen: () => handleFullscreen(instance.id),
-      onPictureInPicture: () => handlePictureInPicture(instance.id),
-      showControls: showControls,
-      autoplay: true,
-    };
+  const renderStreamPlayer = useCallback(
+    (instance: StreamInstance) => {
+      const commonProps = {
+        stream: instance.stream,
+        width: instance.position.width,
+        height: instance.position.height,
+        isActive: instance.isActive,
+        isMuted: instance.isMuted,
+        isPlaying: instance.isPlaying,
+        quality: instance.quality,
+        onPress: () => handleStreamPress(instance.id),
+        onRemove: () => handleStreamRemove(instance.id),
+        onMuteToggle: () => handleMuteToggle(instance.id),
+        onPlayToggle: () => handlePlayToggle(instance.id),
+        onQualityChange: (quality: QualityLevel) => handleQualityChange(instance.id, quality),
+        onFullscreen: () => handleFullscreen(instance.id),
+        onPictureInPicture: () => handlePictureInPicture(instance.id),
+        showControls: showControls,
+        autoplay: true,
+      };
 
-    const containerStyle = {
-      position: 'absolute' as const,
-      left: instance.position.x,
-      top: instance.position.y,
-      width: instance.position.width,
-      height: instance.position.height,
-      zIndex: instance.isActive ? 10 : 1,
-    };
+      const containerStyle = {
+        position: 'absolute' as const,
+        left: instance.position.x,
+        top: instance.position.y,
+        width: instance.position.width,
+        height: instance.position.height,
+        zIndex: instance.isActive ? 10 : 1,
+      };
 
-    switch (instance.platform) {
-      case 'twitch':
-        return (
-          <View key={instance.id} style={containerStyle}>
-            <EnhancedTwitchPlayer 
-              {...commonProps} 
-              stream={instance.stream as TwitchStream}
-              priority={instance.priority}
-              showChat={instance.showChat}
-            />
-          </View>
-        );
-        
+      switch (instance.platform) {
+        case 'twitch':
+          return (
+            <View key={instance.id} style={containerStyle}>
+              <EnhancedTwitchPlayer
+                {...commonProps}
+                stream={instance.stream as TwitchStream}
+                priority={instance.priority}
+                showChat={instance.showChat}
+              />
+            </View>
+          );
+
+
       case 'youtube':
-        return (
-          <View key={instance.id} style={containerStyle}>
-            <EnhancedYouTubePlayer 
-              {...commonProps} 
-              stream={instance.stream as UniversalStream}
-              showSuperChat={instance.showChat}
-            />
-          </View>
-        );
-        
+          return (
+            <View key={instance.id} style={containerStyle}>
+              <EnhancedYouTubePlayer
+                {...commonProps}
+                stream={instance.stream as UniversalStream}
+                showSuperChat={instance.showChat}
+              />
+            </View>
+          );
+
       case 'kick':
-        return (
-          <View key={instance.id} style={containerStyle}>
-            <EnhancedKickPlayer 
-              {...commonProps} 
-              stream={instance.stream as UniversalStream}
-              showChat={instance.showChat}
-            />
-          </View>
-        );
-        
+          return (
+            <View key={instance.id} style={containerStyle}>
+              <EnhancedKickPlayer
+                {...commonProps}
+                stream={instance.stream as UniversalStream}
+                showChat={instance.showChat}
+              />
+            </View>
+          );
+
       default:
-        return null;
-    }
-  }, [
-    showControls,
-    handleStreamPress,
-    handleStreamRemove,
-    handleMuteToggle,
-    handlePlayToggle,
-    handleQualityChange,
-    handleFullscreen,
-    handlePictureInPicture,
-  ]);
+          return null;
+      }
+    },
+    [
+      showControls,
+      handleStreamPress,
+      handleStreamRemove,
+      handleMuteToggle,
+      handlePlayToggle,
+      handleQualityChange,
+      handleFullscreen,
+      handlePictureInPicture,
+    ]
+  );
 
   // Performance panel
   const renderPerformancePanel = useCallback(() => {
-    if (!showPerformancePanel || !systemHealth) return null;
+    if (!showPerformancePanel || !systemHealth) {return null;}
 
     return (
       <View style={styles.performancePanel}>
@@ -475,13 +507,20 @@ export const UniversalStreamController: React.FC<UniversalStreamControllerProps>
         <View style={styles.performanceMetrics}>
           <View style={styles.performanceMetric}>
             <Text style={styles.metricLabel}>CPU</Text>
-            <Text style={[styles.metricValue, { color: systemHealth.cpu > 80 ? '#ff6b6b' : '#53FC18' }]}>
+            <Text
+              style={[styles.metricValue, { color: systemHealth.cpu > 80 ? '#ff6b6b' : '#53FC18' }]}
+            >
               {systemHealth.cpu.toFixed(0)}%
             </Text>
           </View>
           <View style={styles.performanceMetric}>
             <Text style={styles.metricLabel}>Memory</Text>
-            <Text style={[styles.metricValue, { color: systemHealth.memory > 85 ? '#ff6b6b' : '#53FC18' }]}>
+            <Text
+              style={[
+                styles.metricValue,
+                { color: systemHealth.memory > 85 ? '#ff6b6b' : '#53FC18' },
+              ]}
+            >
               {systemHealth.memory.toFixed(0)}%
             </Text>
           </View>
@@ -511,45 +550,55 @@ export const UniversalStreamController: React.FC<UniversalStreamControllerProps>
       {/* Global Controls */}
       {showControls && (
         <View style={styles.globalControls}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.controlsScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.controlsScroll}
+          >
             <TouchableOpacity style={styles.controlButton} onPress={handleGlobalMute}>
-              {globalMuted ? <VolumeX size={20} color="#fff" /> : <Volume2 size={20} color="#fff" />}
+              {globalMuted ? (
+                <VolumeX size={20} color="#fff" />
+              ) : (
+                <Volume2 size={20} color="#fff" />
+              )}
             </TouchableOpacity>
-            
+
             <TouchableOpacity style={styles.controlButton} onPress={handleGlobalPause}>
               {globalPaused ? <Play size={20} color="#fff" /> : <Pause size={20} color="#fff" />}
             </TouchableOpacity>
-            
+
             <TouchableOpacity style={styles.controlButton} onPress={handleLayoutChange}>
               <Grid3X3 size={20} color="#fff" />
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.controlButton} 
+
+            <TouchableOpacity
+              style={styles.controlButton}
               onPress={() => setShowPerformancePanel(!showPerformancePanel)}
             >
               <Monitor size={20} color="#fff" />
             </TouchableOpacity>
-            
+
             <TouchableOpacity style={styles.controlButton}>
               <Settings size={20} color="#fff" />
             </TouchableOpacity>
-            
+
             <View style={styles.layoutIndicator}>
               <Text style={styles.layoutText}>{layoutMode.toUpperCase()}</Text>
             </View>
-            
+
             <View style={styles.streamCounter}>
               <Layers size={16} color="#fff" />
-              <Text style={styles.counterText}>{streamInstances.size}/{maxStreams}</Text>
+              <Text style={styles.counterText}>
+                {streamInstances.size}/{maxStreams}
+              </Text>
             </View>
           </ScrollView>
         </View>
       )}
 
       {/* Touch area to show controls */}
-      <TouchableOpacity 
-        style={styles.touchArea} 
+      <TouchableOpacity
+        style={styles.touchArea}
         onPress={() => setShowControls(true)}
         activeOpacity={1}
       />
@@ -562,12 +611,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: ModernTheme.colors.background.primary,
   } as ViewStyle,
-  
+
   streamContainer: {
     flex: 1,
     position: 'relative',
   } as ViewStyle,
-  
+
   globalControls: {
     position: 'absolute',
     bottom: 0,
@@ -577,11 +626,11 @@ const styles = StyleSheet.create({
     paddingVertical: ModernTheme.spacing.sm,
     paddingHorizontal: ModernTheme.spacing.md,
   } as ViewStyle,
-  
+
   controlsScroll: {
     flexDirection: 'row',
   } as ViewStyle,
-  
+
   controlButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     width: 44,
@@ -593,7 +642,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   } as ViewStyle,
-  
+
   layoutIndicator: {
     backgroundColor: ModernTheme.colors.primary[500],
     paddingHorizontal: ModernTheme.spacing.sm,
@@ -602,13 +651,13 @@ const styles = StyleSheet.create({
     marginRight: ModernTheme.spacing.sm,
     alignSelf: 'center',
   } as ViewStyle,
-  
+
   layoutText: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.xs,
     fontWeight: ModernTheme.typography.weights.bold,
   },
-  
+
   streamCounter: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -619,13 +668,13 @@ const styles = StyleSheet.create({
     gap: ModernTheme.spacing.xs,
     alignSelf: 'center',
   } as ViewStyle,
-  
+
   counterText: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.xs,
     fontWeight: ModernTheme.typography.weights.semibold,
   },
-  
+
   performancePanel: {
     position: 'absolute',
     top: ModernTheme.spacing.md,
@@ -637,38 +686,38 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   } as ViewStyle,
-  
+
   performancePanelTitle: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
     marginBottom: ModernTheme.spacing.sm,
   },
-  
+
   performanceMetrics: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: ModernTheme.spacing.sm,
   } as ViewStyle,
-  
+
   performanceMetric: {
     width: '48%',
     alignItems: 'center',
   } as ViewStyle,
-  
+
   metricLabel: {
     color: ModernTheme.colors.text.secondary,
     fontSize: ModernTheme.typography.sizes.xs,
     marginBottom: 2,
   },
-  
+
   metricValue: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
     fontFamily: 'monospace',
   },
-  
+
   touchArea: {
     position: 'absolute',
     top: 0,

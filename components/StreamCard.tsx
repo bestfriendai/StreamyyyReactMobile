@@ -1,6 +1,6 @@
+import { Heart, Users, Play, X, Eye } from 'lucide-react-native';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Dimensions } from 'react-native';
-import { Heart, Users, Play, X, Eye } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import Animated, {
@@ -87,8 +87,8 @@ export function StreamCard({
 
   const thumbnailUrl = twitchApi.getThumbnailUrl(stream.thumbnail_url, 400, 225);
   const formatViewerCount = (count: number) => {
-    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+    if (count >= 1000000) {return `${(count / 1000000).toFixed(1)}M`;}
+    if (count >= 1000) {return `${(count / 1000).toFixed(1)}K`;}
     return count.toString();
   };
 
@@ -100,9 +100,9 @@ export function StreamCard({
     }
   };
 
-  const profileImageUrl = stream.user_login 
+  const profileImageUrl = stream.user_login
     ? twitchApi.getProfileImageUrl(stream.user_login)
-    : `https://static-cdn.jtvnw.net/jtv_user_pictures/default-profile_image-70x70.png`;
+    : 'https://static-cdn.jtvnw.net/jtv_user_pictures/default-profile_image-70x70.png';
 
   return (
     <AnimatedTouchableOpacity
@@ -118,29 +118,24 @@ export function StreamCard({
           colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.9)']}
           style={styles.thumbnailOverlay}
         />
-        
+
         <View style={styles.liveIndicator}>
-          <LinearGradient
-            colors={['#FF4444', '#FF0000', '#CC0000']}
-            style={styles.liveGradient}
-          >
+          <LinearGradient colors={['#FF4444', '#FF0000', '#CC0000']} style={styles.liveGradient}>
             <Animated.View style={[styles.shimmerOverlay, animatedShimmerStyle]} />
             <Text style={styles.liveText}>LIVE</Text>
           </LinearGradient>
         </View>
-        
+
         <View style={styles.viewerBadge}>
           <LinearGradient
             colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0.6)']}
             style={styles.viewerBadgeGradient}
           >
             <Eye size={12} color="#fff" />
-            <Text style={styles.viewerBadgeText}>
-              {formatViewerCount(stream.viewer_count)}
-            </Text>
+            <Text style={styles.viewerBadgeText}>{formatViewerCount(stream.viewer_count)}</Text>
           </LinearGradient>
         </View>
-        
+
         {/* Floating category badge */}
         <View style={styles.categoryBadge}>
           <LinearGradient
@@ -153,7 +148,7 @@ export function StreamCard({
           </LinearGradient>
         </View>
       </View>
-      
+
       <View style={styles.content}>
         <LinearGradient
           colors={['rgba(42, 42, 42, 0.95)', 'rgba(26, 26, 26, 0.95)']}
@@ -161,16 +156,15 @@ export function StreamCard({
         >
           <View style={styles.header}>
             <View style={styles.avatarContainer}>
-              <Image 
+              <Image
                 source={{ uri: profileImageUrl }}
-                style={styles.avatar} 
-                defaultSource={{ uri: 'https://static-cdn.jtvnw.net/jtv_user_pictures/default-profile_image-70x70.png' }}
+                style={styles.avatar}
+                defaultSource={{
+                  uri: 'https://static-cdn.jtvnw.net/jtv_user_pictures/default-profile_image-70x70.png',
+                }}
               />
               <View style={styles.onlineIndicator}>
-                <LinearGradient
-                  colors={['#00FF88', '#00CC66']}
-                  style={styles.onlineGradient}
-                />
+                <LinearGradient colors={['#00FF88', '#00CC66']} style={styles.onlineGradient} />
               </View>
             </View>
             <View style={styles.info}>
@@ -180,7 +174,7 @@ export function StreamCard({
                 <Text style={styles.platform}>TWITCH</Text>
               </View>
             </View>
-            
+
             <View style={styles.actions}>
               {onToggleFavorite && (
                 <Animated.View style={animatedHeartStyle}>
@@ -189,9 +183,10 @@ export function StreamCard({
                     onPress={handleFavoritePress}
                   >
                     <LinearGradient
-                      colors={isFavorite 
-                        ? ['#FF4444', '#CC0000'] 
-                        : ['rgba(58, 58, 58, 0.8)', 'rgba(42, 42, 42, 0.8)']
+                      colors={
+                        isFavorite
+                          ? ['#FF4444', '#CC0000']
+                          : ['rgba(58, 58, 58, 0.8)', 'rgba(42, 42, 42, 0.8)']
                       }
                       style={styles.actionGradient}
                     >
@@ -204,50 +199,41 @@ export function StreamCard({
                   </TouchableOpacity>
                 </Animated.View>
               )}
-              
+
               {showAddButton && onAdd && (
                 <TouchableOpacity
-                  style={[
-                    styles.actionButton, 
-                    isActive ? styles.activeButton : styles.addButton
-                  ]}
+                  style={[styles.actionButton, isActive ? styles.activeButton : styles.addButton]}
                   onPress={() => onAdd(stream)}
                   disabled={isActive}
                 >
                   <LinearGradient
-                    colors={isActive 
-                      ? ['#22C55E', '#16A34A'] 
+                    colors={isActive
+                      ? ['#22C55E', '#16A34A']
                       : ['#8B5CF6', '#7C3AED']
                     }
                     style={styles.actionGradient}
                   >
-                    {isActive ? (
-                      <Eye size={16} color="#fff" />
-                    ) : (
-                      <Play size={16} color="#fff" />
-                    )}
+                    {isActive ? <Eye size={16} color="#fff" /> : <Play size={16} color="#fff" />}
                   </LinearGradient>
                 </TouchableOpacity>
               )}
-              
+
               {showRemoveButton && onRemove && (
                 <TouchableOpacity
                   style={[styles.actionButton, styles.removeButton]}
                   onPress={() => onRemove(stream.id)}
                 >
-                  <LinearGradient
-                    colors={['#EF4444', '#DC2626']}
-                    style={styles.actionGradient}
-                  >
+                  <LinearGradient colors={['#EF4444', '#DC2626']} style={styles.actionGradient}>
                     <X size={16} color="#fff" />
                   </LinearGradient>
                 </TouchableOpacity>
               )}
             </View>
           </View>
-          
-          <Text style={styles.title} numberOfLines={2}>{stream.title}</Text>
-          
+
+          <Text style={styles.title} numberOfLines={2}>
+            {stream.title}
+
           <View style={styles.stats}>
             <View style={styles.viewerCount}>
               <Users size={14} color="#8B5CF6" />
@@ -255,7 +241,7 @@ export function StreamCard({
                 {formatViewerCount(stream.viewer_count)} viewers
               </Text>
             </View>
-            
+
             <View style={styles.qualityBadge}>
               <Text style={styles.qualityText}>HD</Text>
             </View>

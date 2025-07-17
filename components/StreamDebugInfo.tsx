@@ -18,7 +18,8 @@ export const StreamDebugInfo: React.FC<StreamDebugInfoProps> = ({ stream }) => {
       <Text style={styles.info}>Viewers: {stream.viewer_count}</Text>
       <Text style={styles.info}>Type: {stream.type}</Text>
       <Text style={styles.url}>
-        URL: https://player.twitch.tv/?channel={stream.user_login}&parent=localhost&autoplay=true&muted=true&controls=false
+        URL: https://player.twitch.tv/?channel={stream.user_login}
+        &parent=localhost&autoplay=true&muted=true&controls=false
       </Text>
     </View>
   );

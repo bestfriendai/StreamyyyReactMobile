@@ -1,16 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Dimensions,
-  Platform,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MotiView, MotiText } from 'moti';
-import { BlurViewFallback as BlurView } from './BlurViewFallback';
 import {
   Play,
   Heart,
@@ -27,6 +15,17 @@ import {
   Award,
   Zap,
 } from 'lucide-react-native';
+import { MotiView, MotiText } from 'moti';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+  Platform,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -35,10 +34,11 @@ import Animated, {
   interpolate,
   runOnJS,
 } from 'react-native-reanimated';
+import { discordService } from '@/services/discordService';
+import { notificationService } from '@/services/notificationService';
 import { UnifiedStream } from '@/services/platformService';
 import { socialService } from '@/services/socialService';
-import { notificationService } from '@/services/notificationService';
-import { discordService } from '@/services/discordService';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 32;
@@ -93,7 +93,7 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [shareCount, setShareCount] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   // Animation values
   const scale = useSharedValue(1);
   const favoriteScale = useSharedValue(1);
@@ -129,7 +129,7 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
     favoriteScale.value = withSpring(0.8, { damping: 15 }, () => {
       favoriteScale.value = withSpring(1);
     });
-    
+
     if (onToggleFavorite) {
       onToggleFavorite(stream);
     }
@@ -149,9 +149,9 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
     likeScale.value = withSpring(0.8, { damping: 15 }, () => {
       likeScale.value = withSpring(1);
     });
-    
+
     setIsLiked(!isLiked);
-    
+
     if (userId) {
       try {
         // Track like activity
@@ -175,11 +175,11 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
 
   const handleShare = async () => {
     setShareCount(prev => prev + 1);
-    
+
     if (userId) {
       try {
         await socialService.shareStream(stream, 'native');
-        
+
         // Create social post
         await socialService.createPost({
           authorId: userId,
@@ -191,16 +191,18 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
           },
           content: `Check out this amazing stream by ${stream.streamerDisplayName}!`,
           type: 'stream_share',
-          attachments: [{
-            type: 'stream',
-            url: stream.embedUrl,
-            metadata: {
-              title: stream.title,
-              platform: stream.platform,
-              thumbnailUrl: stream.thumbnailUrl,
-              viewerCount: stream.viewerCount,
+          attachments: [
+            {
+              type: 'stream',
+              url: stream.embedUrl,
+              metadata: {
+                title: stream.title,
+                platform: stream.platform,
+                thumbnailUrl: stream.thumbnailUrl,
+                viewerCount: stream.viewerCount,
+              },
             },
-          }],
+          ],
           visibility: 'public',
           tags: [stream.platform, stream.category],
           mentions: [],
@@ -258,7 +260,7 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
     const diffMs = now.getTime() - start.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (diffHours > 0) {
       return `${diffHours}h ${diffMinutes}m`;
     } else {
@@ -279,32 +281,21 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
 
   return (
     <Animated.View style={[styles.container, animatedCardStyle]}>
-      <TouchableOpacity
-        onPress={handlePress}
-        style={styles.touchable}
-        activeOpacity={0.9}
-      >
+      <TouchableOpacity onPress={handlePress} style={styles.touchable} activeOpacity={0.9}>
         <BlurView style={styles.card} blurType="dark" blurAmount={10}>
           <LinearGradient
-            colors={[
-              'rgba(255, 255, 255, 0.05)',
-              'rgba(255, 255, 255, 0.02)',
-              'transparent',
-            ]}
+            colors={['rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
             style={styles.cardGradient}
           >
             {/* Header */}
             <View style={styles.header}>
               <View style={styles.platformBadge}>
-                <LinearGradient
-                  colors={platform.gradient}
-                  style={styles.platformGradient}
-                >
+                <LinearGradient colors={platform.gradient} style={styles.platformGradient}>
                   <Text style={styles.platformEmoji}>{platform.icon}</Text>
                   <Text style={styles.platformText}>{platform.name}</Text>
                 </LinearGradient>
               </View>
-              
+
               <View style={styles.headerIcons}>
                 {isHighViewerCount && (
                   <View style={styles.badge}>
@@ -312,14 +303,14 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
                     <Text style={styles.badgeText}>Hot</Text>
                   </View>
                 )}
-                
+
                 {isNewStream && (
                   <View style={[styles.badge, { backgroundColor: 'rgba(34, 197, 94, 0.2)' }]}>
                     <Zap size={12} color="#22C55E" />
                     <Text style={styles.badgeText}>New</Text>
                   </View>
                 )}
-                
+
                 <Animated.View style={animatedFavoriteStyle}>
                   <TouchableOpacity onPress={handleToggleFavorite} style={styles.iconButton}>
                     <Heart
@@ -340,19 +331,19 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
                   style={styles.thumbnail}
                   resizeMode="cover"
                 />
-                
+
                 {/* Live Indicator */}
                 <View style={styles.liveIndicator}>
                   <View style={styles.liveDot} />
                   <Text style={styles.liveText}>LIVE</Text>
                 </View>
-                
+
                 {/* Viewer Count */}
                 <View style={styles.viewerBadge}>
                   <Eye size={12} color="#fff" />
                   <Text style={styles.viewerText}>{formatViewerCount(stream.viewerCount)}</Text>
                 </View>
-                
+
                 {/* Duration */}
                 <View style={styles.durationBadge}>
                   <Clock size={12} color="#fff" />
@@ -394,7 +385,7 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
                         <Text style={styles.socialText}>Like</Text>
                       </TouchableOpacity>
                     </Animated.View>
-                    
+
                     <TouchableOpacity onPress={handleShare} style={styles.socialButton}>
                       <Share2 size={16} color="#666" />
                       <Text style={styles.socialText}>Share</Text>
@@ -404,12 +395,12 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
                         </View>
                       )}
                     </TouchableOpacity>
-                    
+
                     <TouchableOpacity onPress={handleDiscordShare} style={styles.socialButton}>
                       <MessageCircle size={16} color="#7289DA" />
                       <Text style={styles.socialText}>Discord</Text>
                     </TouchableOpacity>
-                    
+
                     <TouchableOpacity onPress={handleExpand} style={styles.socialButton}>
                       <ExternalLink size={16} color="#666" />
                       <Text style={styles.socialText}>More</Text>
@@ -428,7 +419,7 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
                 <Play size={18} color="#fff" />
                 <Text style={styles.playText}>Watch</Text>
               </TouchableOpacity>
-              
+
               {showAddButton && (
                 <TouchableOpacity
                   onPress={handleAdd}
@@ -448,7 +439,9 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
                 <View style={styles.statsRow}>
                   <View style={styles.statItem}>
                     <Users size={16} color="#666" />
-                    <Text style={styles.statText}>{formatViewerCount(stream.viewerCount)} viewers</Text>
+                    <Text style={styles.statText}>
+                      {formatViewerCount(stream.viewerCount)} viewers
+                    </Text>
                   </View>
                   <View style={styles.statItem}>
                     <Clock size={16} color="#666" />
@@ -459,7 +452,7 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
                     <Text style={styles.statText}>Trend: {trendingScore}</Text>
                   </View>
                 </View>
-                
+
                 {stream.tags && stream.tags.length > 0 && (
                   <View style={styles.tagsContainer}>
                     {stream.tags.slice(0, 3).map((tag, index) => (
@@ -469,18 +462,18 @@ export const MultiPlatformStreamCard: React.FC<MultiPlatformStreamCardProps> = (
                     ))}
                   </View>
                 )}
-                
+
                 <View style={styles.expandedActions}>
                   <TouchableOpacity style={styles.expandedButton}>
                     <BookmarkPlus size={16} color="#666" />
                     <Text style={styles.expandedButtonText}>Bookmark</Text>
                   </TouchableOpacity>
-                  
+
                   <TouchableOpacity style={styles.expandedButton}>
                     <Star size={16} color="#666" />
                     <Text style={styles.expandedButtonText}>Rate</Text>
                   </TouchableOpacity>
-                  
+
                   <TouchableOpacity style={styles.expandedButton}>
                     <ExternalLink size={16} color="#666" />
                     <Text style={styles.expandedButtonText}>Open</Text>

@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -37,10 +36,11 @@ import {
   Search,
   MoreHorizontal,
 } from 'lucide-react-native';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ModernTheme } from '@/theme/modernTheme';
-import { enterpriseAuthService, EnterpriseUser } from '@/services/enterpriseAuthService';
 import { contentModerationService, ModerationDashboard } from '@/services/contentModerationService';
 import { enterpriseAnalyticsService, BusinessIntelligenceReport } from '@/services/enterpriseAnalyticsService';
+import { enterpriseAuthService, EnterpriseUser } from '@/services/enterpriseAuthService';
 import { streamManagementService } from '@/services/streamManagementService';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -83,14 +83,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       // Load system stats
       const systemStats = await enterpriseAuthService.getSystemStats();
-      
+
       // Load moderation dashboard
-      const moderationDashboard = await contentModerationService.getModerationDashboard(organizationId, selectedTimeRange);
-      
+      const moderationDashboard = await contentModerationService.getModerationDashboard(
+        organizationId,
+        selectedTimeRange
+
       // Load recent reports
-      const reports = await enterpriseAnalyticsService.getBusinessIntelligenceReports(organizationId, {
-        startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      });
+      const reports = await enterpriseAnalyticsService.getBusinessIntelligenceReports(
+        organizationId,
+        {
+          startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        }
+      );
 
       // Mock system health check
       const healthCheck = await enterpriseAuthService.healthCheck();
@@ -108,7 +113,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       setModerationData(moderationDashboard);
       setRecentReports(reports.slice(0, 5));
-      
+
       // Mock alerts
       setAlerts([
         {
@@ -124,7 +129,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
         },
       ]);
-
     } catch (error) {
       console.error('❌ Failed to load dashboard data:', error);
       Alert.alert('Error', 'Failed to load dashboard data. Please try again.');
@@ -163,17 +167,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   }
 
   // Render stat card
-  const renderStatCard = (title: string, value: string | number, icon: React.ComponentType<any>, color: string, change?: string) => (
+  const renderStatCard = (
+    title: string,
+    value: string | number,
+    icon: React.ComponentType<any>,
+    color: string,
+    change?: string
+  ) => (
     <MotiView
       from={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: 'timing', duration: 300 }}
       style={styles.statCard}
     >
-      <LinearGradient
-        colors={ModernTheme.colors.gradients.card}
-        style={styles.statCardGradient}
-      >
+      <LinearGradient colors={ModernTheme.colors.gradients.card} style={styles.statCardGradient}>
         <View style={styles.statCardContent}>
           <View style={styles.statCardHeader}>
             <View style={[styles.statIcon, { backgroundColor: color }]}>
@@ -183,7 +190,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </View>
           <Text style={styles.statValue}>{value}</Text>
           {change && (
-            <Text style={[styles.statChange, { color: change.startsWith('+') ? ModernTheme.colors.success[500] : ModernTheme.colors.error[500] }]}>
+            <Text
+              style={[
+                styles.statChange,
+                {
+                  color: change.startsWith('+')
+                    ? ModernTheme.colors.success[500]
+                    : ModernTheme.colors.error[500],
+                },
+              ]}
+            >
               {change}
             </Text>
           )}
@@ -193,16 +209,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   );
 
   // Render quick action
-  const renderQuickAction = (title: string, icon: React.ComponentType<any>, onPress: () => void) => (
-    <TouchableOpacity
-      style={styles.quickAction}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <LinearGradient
-        colors={ModernTheme.colors.gradients.card}
-        style={styles.quickActionGradient}
-      >
+  const renderQuickAction = (
+    title: string,
+    icon: React.ComponentType<any>,
+    onPress: () => void
+  ) => (
+    <TouchableOpacity style={styles.quickAction} onPress={onPress} activeOpacity={0.7}>
+      <LinearGradient colors={ModernTheme.colors.gradients.card} style={styles.quickActionGradient}>
         <View style={styles.quickActionIcon}>
           <LinearGradient
             colors={ModernTheme.colors.gradients.primary}
@@ -234,12 +247,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </View>
         <Text style={styles.reportItemType}>{report.type}</Text>
         <View style={styles.reportItemStats}>
-          <Text style={styles.reportItemStat}>
-            {report.metrics.length} metrics
-          </Text>
-          <Text style={styles.reportItemStat}>
-            {report.insights.length} insights
-          </Text>
+          <Text style={styles.reportItemStat}>{report.metrics.length} metrics</Text>
+          <Text style={styles.reportItemStat}>{report.insights.length} insights</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -248,14 +257,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Render alert item
   const renderAlert = (alert: any) => (
     <View key={alert.id} style={styles.alertItem}>
-      <View style={[styles.alertIcon, { backgroundColor: alert.type === 'warning' ? ModernTheme.colors.warning[500] : ModernTheme.colors.info[500] }]}>
+      <View
+        style={[
+          styles.alertIcon,
+          {
+            backgroundColor:
+              alert.type === 'warning'
+                ? ModernTheme.colors.warning[500]
+                : ModernTheme.colors.info[500],
+          },
+        ]}
+      >
         <AlertTriangle size={16} color={ModernTheme.colors.text.primary} />
       </View>
       <View style={styles.alertContent}>
         <Text style={styles.alertMessage}>{alert.message}</Text>
-        <Text style={styles.alertTime}>
-          {new Date(alert.timestamp).toLocaleTimeString()}
-        </Text>
+        <Text style={styles.alertTime}>{new Date(alert.timestamp).toLocaleTimeString()}</Text>
       </View>
     </View>
   );
@@ -278,9 +295,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <View style={styles.headerContent}>
           <View>
             <Text style={styles.headerTitle}>Admin Dashboard</Text>
-            <Text style={styles.headerSubtitle}>
-              Welcome back, {currentUser.name}
-            </Text>
+            <Text style={styles.headerSubtitle}>Welcome back, {currentUser.name}</Text>
           </View>
           <View style={styles.headerActions}>
             <TouchableOpacity
@@ -294,10 +309,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </View>
               )}
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerAction}
-              onPress={() => onNavigate('Search')}
-            >
+            <TouchableOpacity style={styles.headerAction} onPress={() => onNavigate('Search')}>
               <Search size={20} color={ModernTheme.colors.text.primary} />
             </TouchableOpacity>
           </View>
@@ -307,7 +319,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Time Range Selector */}
       <View style={styles.timeRangeSelector}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {(['24h', '7d', '30d', '90d'] as const).map((range) => (
+          {(['24h', '7d', '30d', '90d'] as const).map(range => (
             <TouchableOpacity
               key={range}
               style={[
@@ -331,10 +343,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
-        {renderStatCard('Total Users', stats?.totalUsers.toLocaleString() || '0', Users, ModernTheme.colors.primary[500], '+12%')}
-        {renderStatCard('Active Users', stats?.activeUsers.toLocaleString() || '0', Activity, ModernTheme.colors.success[500], '+8%')}
-        {renderStatCard('Live Streams', stats?.liveStreams.toLocaleString() || '0', Zap, ModernTheme.colors.warning[500], '+15%')}
-        {renderStatCard('Revenue', `$${stats?.totalRevenue.toLocaleString() || '0'}`, DollarSign, ModernTheme.colors.info[500], '+22%')}
+        {renderStatCard(
+          'Total Users',
+          stats?.totalUsers.toLocaleString() || '0',
+          Users,
+          ModernTheme.colors.primary[500],
+          '+12%'
+        )}
+        {renderStatCard(
+          'Active Users',
+          stats?.activeUsers.toLocaleString() || '0',
+          Activity,
+          ModernTheme.colors.success[500],
+          '+8%'
+        )}
+        {renderStatCard(
+          'Live Streams',
+          stats?.liveStreams.toLocaleString() || '0',
+          Zap,
+          ModernTheme.colors.warning[500],
+          '+15%'
+        )}
+        {renderStatCard(
+          'Revenue',
+          `$${stats?.totalRevenue.toLocaleString() || '0'}`,
+          DollarSign,
+          ModernTheme.colors.info[500],
+          '+22%'
+        )}
       </View>
 
       {/* System Health */}
@@ -351,17 +387,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <View style={styles.systemHealthContent}>
             <View style={styles.systemHealthHeader}>
               <Text style={styles.systemHealthTitle}>System Health</Text>
-              <View style={[
-                styles.systemHealthStatus,
-                { backgroundColor: stats?.systemHealth === 'healthy' ? ModernTheme.colors.success[500] : ModernTheme.colors.warning[500] }
-              ]}>
+              <View
+                style={[
+                  styles.systemHealthStatus,
+                  {
+                    backgroundColor:
+                      stats?.systemHealth === 'healthy'
+                        ? ModernTheme.colors.success[500]
+                        : ModernTheme.colors.warning[500],
+                  },
+                ]}
+              >
                 <Text style={styles.systemHealthStatusText}>
                   {stats?.systemHealth || 'Unknown'}
                 </Text>
               </View>
             </View>
             <Text style={styles.systemHealthTime}>
-              Last updated: {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleTimeString() : 'Never'}
+              Last updated:{' '}
+              {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleTimeString() : 'Never'}
             </Text>
           </View>
         </LinearGradient>
@@ -385,10 +429,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Moderation Overview</Text>
-            <TouchableOpacity
-              style={styles.sectionAction}
-              onPress={handleNavigateToModeration}
-            >
+            <TouchableOpacity style={styles.sectionAction} onPress={handleNavigateToModeration}>
               <Text style={styles.sectionActionText}>View All</Text>
               <ChevronRight size={16} color={ModernTheme.colors.primary[500]} />
             </TouchableOpacity>
@@ -403,7 +444,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <Text style={styles.moderationCardLabel}>Resolved Today</Text>
             </View>
             <View style={styles.moderationCard}>
-              <Text style={styles.moderationCardValue}>{Math.round(moderationData.accuracyScore * 100)}%</Text>
+              <Text style={styles.moderationCardValue}>
+                {Math.round(moderationData.accuracyScore * 100)}%
+              </Text>
               <Text style={styles.moderationCardLabel}>Accuracy</Text>
             </View>
           </View>
@@ -414,34 +457,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Reports</Text>
-          <TouchableOpacity
-            style={styles.sectionAction}
-            onPress={() => onNavigate('Reports')}
-          >
+          <TouchableOpacity style={styles.sectionAction} onPress={() => onNavigate('Reports')}>
             <Text style={styles.sectionActionText}>View All</Text>
             <ChevronRight size={16} color={ModernTheme.colors.primary[500]} />
           </TouchableOpacity>
         </View>
-        <View style={styles.reportsList}>
-          {recentReports.map(renderRecentReport)}
-        </View>
+        <View style={styles.reportsList}>{recentReports.map(renderRecentReport)}</View>
       </View>
 
       {/* System Alerts */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>System Alerts</Text>
-          <TouchableOpacity
-            style={styles.sectionAction}
-            onPress={() => onNavigate('Alerts')}
-          >
+          <TouchableOpacity style={styles.sectionAction} onPress={() => onNavigate('Alerts')}>
             <Text style={styles.sectionActionText}>View All</Text>
             <ChevronRight size={16} color={ModernTheme.colors.primary[500]} />
           </TouchableOpacity>
         </View>
-        <View style={styles.alertsList}>
-          {alerts.map(renderAlert)}
-        </View>
+        <View style={styles.alertsList}>{alerts.map(renderAlert)}</View>
       </View>
     </ScrollView>
   );

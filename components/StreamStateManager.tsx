@@ -1,13 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  ActivityIndicator,
-  Animated,
-} from 'react-native';
-import { 
   AlertCircle,
   RotateCcw,
   Wifi,
@@ -21,12 +13,20 @@ import {
   Signal,
   AlertTriangle,
 } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView, MotiText, AnimatePresence } from 'moti';
-import { BlurViewFallback as BlurView } from './BlurViewFallback';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+  Animated,
+} from 'react-native';
 import { ModernTheme } from '@/theme/modernTheme';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
 
-export type StreamState = 
+export type StreamState =
   | 'idle'
   | 'loading'
   | 'buffering'
@@ -188,8 +188,10 @@ export const StreamStateManager: React.FC<StreamStateManagerProps> = ({
   }, [state, error, streamName, platform, retryCount, maxRetries]);
 
   const getErrorTitle = useCallback(() => {
-    if (!error) return 'Error';
-    
+    if (!error) {
+      return 'Error';
+    }
+
     switch (error.type) {
       case 'network':
         return 'Network Error';
@@ -263,16 +265,13 @@ export const StreamStateManager: React.FC<StreamStateManagerProps> = ({
         style={[StyleSheet.absoluteFill, styles.container]}
       >
         <BlurView style={StyleSheet.absoluteFill} blurType="dark" blurAmount={30} />
-        
+
         <Animated.View
           style={[
             styles.content,
             {
               opacity: fadeAnimation,
-              transform: [
-                { scale: pulseAnimation },
-                { translateY: slideAnimation },
-              ],
+              transform: [{ scale: pulseAnimation }, { translateY: slideAnimation }],
             },
           ]}
         >
@@ -333,9 +332,7 @@ export const StreamStateManager: React.FC<StreamStateManagerProps> = ({
                   />
                 </View>
                 {loadingProgress > 0 && (
-                  <Text style={styles.progressText}>
-                    {Math.round(loadingProgress)}%
-                  </Text>
+                  <Text style={styles.progressText}>{Math.round(loadingProgress)}%</Text>
                 )}
               </MotiView>
             )}
@@ -354,9 +351,7 @@ export const StreamStateManager: React.FC<StreamStateManagerProps> = ({
                     <Text style={[styles.connectionText, { color: connectionConfig.color }]}>
                       {connectionConfig.text} Connection
                     </Text>
-                    {platform && (
-                      <Text style={styles.platformText}>• {platform}</Text>
-                    )}
+                    {platform && <Text style={styles.platformText}>• {platform}</Text>}
                   </View>
                 </BlurView>
               </MotiView>
@@ -374,16 +369,10 @@ export const StreamStateManager: React.FC<StreamStateManagerProps> = ({
                   <View style={styles.errorDetailsContent}>
                     <AlertTriangle size={16} color={ModernTheme.colors.warning} />
                     <View style={styles.errorDetailsText}>
-                      <Text style={styles.errorCode}>
-                        Error Code: {error.code || 'UNKNOWN'}
-                      </Text>
-                      <Text style={styles.errorType}>
-                        Type: {error.type.toUpperCase()}
-                      </Text>
+                      <Text style={styles.errorCode}>Error Code: {error.code || 'UNKNOWN'}</Text>
+                      <Text style={styles.errorType}>Type: {error.type.toUpperCase()}</Text>
                       {error.retryDelay && (
-                        <Text style={styles.retryDelay}>
-                          Retry delay: {error.retryDelay}ms
-                        </Text>
+                        <Text style={styles.retryDelay}>Retry delay: {error.retryDelay}ms</Text>
                       )}
                     </View>
                   </View>
@@ -406,7 +395,7 @@ export const StreamStateManager: React.FC<StreamStateManagerProps> = ({
                 disabled={!onRetry}
               >
                 <LinearGradient
-                  colors={[config.color, config.color + '80']}
+                  colors={[config.color, `${config.color}80`]}
                   style={styles.actionGradient}
                 >
                   <RotateCcw size={16} color="#fff" />
@@ -454,9 +443,7 @@ export const StreamStateManager: React.FC<StreamStateManagerProps> = ({
               style={styles.retryExhausted}
             >
               <AlertCircle size={16} color={ModernTheme.colors.warning} />
-              <Text style={styles.retryExhaustedText}>
-                Maximum retry attempts reached
-              </Text>
+              <Text style={styles.retryExhaustedText}>Maximum retry attempts reached</Text>
             </MotiView>
           )}
         </Animated.View>

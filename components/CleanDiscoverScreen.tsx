@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
@@ -13,7 +14,6 @@ import {
   FlatList,
   Platform,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import {
   Search,
@@ -28,9 +28,6 @@ import {
   Users,
   Clock,
 } from 'lucide-react-native';
-import { TwitchStream, TwitchGame } from '@/services/twitchApi';
-import { ModernTheme } from '@/theme/modernTheme';
-import { StreamPreviewCard } from './StreamPreviewCard';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -41,6 +38,9 @@ import Animated, {
   withRepeat,
   withSequence,
 } from 'react-native-reanimated';
+import { TwitchStream, TwitchGame } from '@/services/twitchApi';
+import { ModernTheme } from '@/theme/modernTheme';
+import { StreamPreviewCard } from './StreamPreviewCard';
 import { HapticFeedback } from '@/utils/haptics';
 
 interface CleanDiscoverScreenProps {
@@ -80,7 +80,7 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
   isStreamActive,
 }) => {
   const { width: screenWidth } = Dimensions.get('window');
-  
+
   // State management
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
@@ -90,7 +90,7 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
   });
   const [showFilters, setShowFilters] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   // Animation values
   const searchBarScale = useSharedValue(1);
   const filtersHeight = useSharedValue(0);
@@ -100,23 +100,20 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
   // Sparkle animation
   React.useEffect(() => {
     sparkleRotation.value = withRepeat(
-      withSequence(
-        withTiming(360, { duration: 2000 }),
-        withTiming(0, { duration: 0 })
-      ),
+      withSequence(withTiming(360, { duration: 2000 }), withTiming(0, { duration: 0 })),
       -1
     );
   }, []);
-  
+
   // Calculate grid dimensions
   const getGridDimensions = useCallback(() => {
     const padding = ModernTheme.spacing.md;
     const itemSpacing = ModernTheme.spacing.sm;
     const columns = viewMode === 'grid' ? 2 : 1;
-    const availableWidth = screenWidth - (padding * 2);
-    const itemWidth = (availableWidth - (itemSpacing * (columns - 1))) / columns;
+    const availableWidth = screenWidth - padding * 2;
+    const itemWidth = (availableWidth - itemSpacing * (columns - 1)) / columns;
     const itemHeight = viewMode === 'grid' ? itemWidth * 0.75 : itemWidth * 0.4;
-    
+
     return {
       itemWidth,
       itemHeight,
@@ -124,12 +121,12 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
       spacing: itemSpacing,
     };
   }, [screenWidth, viewMode]);
-  
+
   const gridDimensions = getGridDimensions();
-  
+
   // Filter and sort streams
   const filteredStreams = useMemo(() => {
-    let filtered = streams.filter(stream => {
+    const filtered = streams.filter(stream => {
       const matchesQuery = !searchFilters.query || 
         stream.user_name.toLowerCase().includes(searchFilters.query.toLowerCase()) ||
         stream.game_name.toLowerCase().includes(searchFilters.query.toLowerCase());
@@ -138,7 +135,7 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
       
       return matchesQuery && matchesViewers;
     });
-    
+
     // Sort streams
     switch (searchFilters.sortBy) {
       case 'viewers':
@@ -148,34 +145,36 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
         filtered.sort((a, b) => a.user_name.localeCompare(b.user_name));
         break;
       case 'recent':
-        filtered.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
+        filtered.sort(
+          (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+        );
         break;
     }
-    
+
     return filtered;
   }, [streams, searchFilters]);
-  
+
   // Handle refresh
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await onRefresh?.();
     setRefreshing(false);
   }, [onRefresh]);
-  
+
   // Handle search
   const handleSearch = useCallback((query: string) => {
     searchBarScale.value = withSpring(0.95, { damping: 15 }, () => {
       searchBarScale.value = withSpring(1);
     });
-    
+
     // Haptic feedback for search
     if (query.length === 1) {
       HapticFeedback.light();
     }
-    
+
     setSearchFilters(prev => ({ ...prev, query }));
   }, []);
-  
+
   // Toggle filters
   const toggleFilters = useCallback(() => {
     HapticFeedback.medium();
@@ -194,12 +193,12 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
     HapticFeedback.light();
     setSearchFilters(prev => ({ ...prev, sortBy: sort }));
   }, []);
-  
+
   // Animated styles
   const searchBarStyle = useAnimatedStyle(() => ({
     transform: [{ scale: searchBarScale.value }],
   }));
-  
+
   const filtersStyle = useAnimatedStyle(() => ({
     height: filtersHeight.value,
     opacity: filtersHeight.value / 140,
@@ -212,39 +211,50 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
   const headerStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: headerOffset.value }],
   }));
-  
+
   // Render stream item
-  const renderStreamItem = useCallback(({ item: stream, index }: { item: TwitchStream; index: number }) => {
-    return (
-      <Animated.View
-        entering={FadeIn.delay(index * 50)}
-        style={[
-          styles.streamItem,
-          {
-            width: gridDimensions.itemWidth,
-            height: gridDimensions.itemHeight,
-            marginBottom: gridDimensions.spacing,
-            marginRight: viewMode === 'grid' && index % 2 === 0 ? gridDimensions.spacing : 0,
-          }
-        ]}
-      >
-        <StreamPreviewCard
-          stream={stream}
-          width={gridDimensions.itemWidth}
-          height={gridDimensions.itemHeight}
-          onPress={() => onStreamSelect(stream)}
-          onAddStream={async () => {
-            const result = await onAddStream(stream);
-            // Could show a toast or alert here based on result
-          }}
-          onToggleFavorite={() => onToggleFavorite(stream.user_id)}
-          isFavorite={isFavorite(stream.user_id)}
-          isActive={isStreamActive(stream.id)}
-        />
-      </Animated.View>
-    );
-  }, [gridDimensions, viewMode, onStreamSelect, onAddStream, onToggleFavorite, isFavorite, isStreamActive]);
-  
+  const renderStreamItem = useCallback(
+    ({ item: stream, index }: { item: TwitchStream; index: number }) => {
+      return (
+        <Animated.View
+          entering={FadeIn.delay(index * 50)}
+          style={[
+            styles.streamItem,
+            {
+              width: gridDimensions.itemWidth,
+              height: gridDimensions.itemHeight,
+              marginBottom: gridDimensions.spacing,
+              marginRight: viewMode === 'grid' && index % 2 === 0 ? gridDimensions.spacing : 0,
+            },
+          ]}
+        >
+          <StreamPreviewCard
+            stream={stream}
+            width={gridDimensions.itemWidth}
+            height={gridDimensions.itemHeight}
+            onPress={() => onStreamSelect(stream)}
+            onAddStream={async () => {
+              const result = await onAddStream(stream);
+              // Could show a toast or alert here based on result
+            }}
+            onToggleFavorite={() => onToggleFavorite(stream.user_id)}
+            isFavorite={isFavorite(stream.user_id)}
+            isActive={isStreamActive(stream.id)}
+          />
+        </Animated.View>
+      );
+    },
+    [
+      gridDimensions,
+      viewMode,
+      onStreamSelect,
+      onAddStream,
+      onToggleFavorite,
+      isFavorite,
+      isStreamActive,
+    ]
+  );
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -263,13 +273,16 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
             <Text style={styles.headerSubtitle}>
               {filteredStreams.length} live streams • {games.length} trending games
             </Text>
-            
+
             {/* Quick Stats */}
             <View style={styles.quickStats}>
               <View style={styles.statItem}>
                 <Users size={14} color={ModernTheme.colors.text.secondary} />
                 <Text style={styles.statText}>
-                  {filteredStreams.reduce((sum, stream) => sum + stream.viewer_count, 0).toLocaleString()} viewers
+                  {filteredStreams
+                    .reduce((sum, stream) => sum + stream.viewer_count, 0)
+                    .toLocaleString()}{' '}
+                  viewers
                 </Text>
               </View>
               <View style={styles.statItem}>
@@ -278,7 +291,7 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
               </View>
             </View>
           </View>
-          
+
           {/* Search Bar */}
           <Animated.View style={[styles.searchContainer, searchBarStyle]}>
             <View style={styles.searchBar}>
@@ -296,7 +309,7 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
                 </TouchableOpacity>
               )}
             </View>
-            
+
             {/* Controls */}
             <View style={styles.controls}>
               <TouchableOpacity
@@ -305,56 +318,66 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
               >
                 <Filter size={18} color={ModernTheme.colors.text.primary} />
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[styles.controlButton, viewMode === 'grid' && styles.controlButtonActive]}
                 onPress={() => handleViewModeChange('grid')}
                 accessibilityLabel="Grid view"
                 accessibilityRole="button"
               >
-                <Grid3X3 size={18} color={viewMode === 'grid' ? '#000' : ModernTheme.colors.text.primary} />
+                <Grid3X3
+                  size={18}
+                  color={viewMode === 'grid' ? '#000' : ModernTheme.colors.text.primary}
+                />
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[styles.controlButton, viewMode === 'list' && styles.controlButtonActive]}
                 onPress={() => handleViewModeChange('list')}
                 accessibilityLabel="List view"
                 accessibilityRole="button"
               >
-                <List size={18} color={viewMode === 'list' ? '#000' : ModernTheme.colors.text.primary} />
+                <List
+                  size={18}
+                  color={viewMode === 'list' ? '#000' : ModernTheme.colors.text.primary}
+                />
               </TouchableOpacity>
             </View>
           </Animated.View>
-          
+
           {/* Filters Panel */}
           <Animated.View style={[styles.filtersPanel, filtersStyle]}>
             <View style={styles.filtersContent}>
               <View style={styles.filterRow}>
                 <Text style={styles.filterLabel}>Sort by:</Text>
                 <View style={styles.filterButtons}>
-                  {(['viewers', 'recent', 'alphabetical'] as SortBy[]).map((sort) => {
+                  {(['viewers', 'recent', 'alphabetical'] as SortBy[]).map(sort => {
                     const isActive = searchFilters.sortBy === sort;
-                    const icon = sort === 'viewers' ? <Eye size={12} color={isActive ? '#000' : ModernTheme.colors.text.secondary} /> :
-                                sort === 'recent' ? <Clock size={12} color={isActive ? '#000' : ModernTheme.colors.text.secondary} /> :
-                                <TrendingUp size={12} color={isActive ? '#000' : ModernTheme.colors.text.secondary} />;
-                    
+                    const icon =
+                      sort === 'viewers' ? (
+                        <Eye
+                          size={12}
+                          color={isActive ? '#000' : ModernTheme.colors.text.secondary}
+                        />
+                      sort === 'recent' ? <Clock size={12} color={isActive ? '#000' : ModernTheme.colors.text.secondary} /> :
+                        <TrendingUp size={12} color={isActive ? '#000' : ModernTheme.colors.text.secondary} />;
+
                     return (
                       <TouchableOpacity
                         key={sort}
-                        style={[
-                          styles.filterButton,
-                          isActive && styles.filterButtonActive
-                        ]}
+                        style={[styles.filterButton, isActive && styles.filterButtonActive]}
                         onPress={() => handleSortChange(sort)}
                         accessibilityLabel={`Sort by ${sort}`}
                         accessibilityRole="button"
                       >
                         <View style={styles.filterButtonContent}>
                           {icon}
-                          <Text style={[
-                            styles.filterButtonText,
-                            isActive && styles.filterButtonTextActive
-                          ]}>
+                          <Text
+                            style={[
+                              styles.filterButtonText,
+                              isActive && styles.filterButtonTextActive,
+                            ]}
+                          >
                             {sort === 'viewers' ? 'Viewers' : sort === 'recent' ? 'Recent' : 'A-Z'}
                           </Text>
                         </View>
@@ -367,7 +390,7 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
           </Animated.View>
         </LinearGradient>
       </View>
-      
+
       {/* Content */}
       <View style={styles.content}>
         {isLoading && filteredStreams.length === 0 ? (
@@ -384,13 +407,12 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
               <Search size={48} color={ModernTheme.colors.text.secondary} />
               <Text style={styles.emptyTitle}>No streams found</Text>
               <Text style={styles.emptySubtitle}>
-                {searchFilters.query ? 
-                  `No results for "${searchFilters.query}"` : 
-                  'Try adjusting your filters or refreshing'
-                }
+                {searchFilters.query
+                  ? `No results for "${searchFilters.query}"`
+                  : 'Try adjusting your filters or refreshing'}
               </Text>
-              <TouchableOpacity 
-                style={styles.emptyButton} 
+              <TouchableOpacity
+                style={styles.emptyButton}
                 onPress={() => {
                   setSearchFilters({ query: '', sortBy: 'viewers', minViewers: 0 });
                   handleRefresh();
@@ -404,7 +426,7 @@ export const CleanDiscoverScreen: React.FC<CleanDiscoverScreenProps> = ({
           <FlatList
             data={filteredStreams}
             renderItem={renderStreamItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={item => item.id}
             numColumns={gridDimensions.columns}
             key={`${viewMode}-${gridDimensions.columns}`}
             contentContainerStyle={styles.streamsList}

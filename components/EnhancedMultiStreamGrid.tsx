@@ -1,31 +1,3 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  Text,
-  LayoutAnimation,
-  Platform,
-  SafeAreaView,
-  PanResponder,
-  Animated as RNAnimated,
-} from 'react-native';
-import { WebView } from 'react-native-webview';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  interpolate,
-  runOnJS,
-  withSequence,
-  withDelay,
-  useAnimatedGestureHandler,
-  interpolateColor,
-} from 'react-native-reanimated';
-import { MotiView, MotiText } from 'moti';
-import { BlurViewFallback as BlurView } from './BlurViewFallback';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Play,
@@ -44,9 +16,37 @@ import {
   Target,
   Sparkles,
 } from 'lucide-react-native';
+import { MotiView, MotiText } from 'moti';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+  Text,
+  LayoutAnimation,
+  Platform,
+  SafeAreaView,
+  PanResponder,
+  Animated as RNAnimated,
+} from 'react-native';
+import { PanGestureHandler, PinchGestureHandler } from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  interpolate,
+  runOnJS,
+  withSequence,
+  withDelay,
+  useAnimatedGestureHandler,
+  interpolateColor,
+} from 'react-native-reanimated';
+import { WebView } from 'react-native-webview';
 import { useStreamManager } from '@/hooks/useStreamManager';
 import { TwitchStream } from '@/services/twitchApi';
-import { PanGestureHandler, PinchGestureHandler } from 'react-native-gesture-handler';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -95,7 +95,7 @@ const AudioManager = {
         this.muteStream(playerId);
       }
     });
-    
+
     // Unmute the active stream
     this.unmuteStream(id);
     this.activeStreamId = id;
@@ -106,10 +106,12 @@ const AudioManager = {
     if (player && player.webViewRef.current) {
       player.isMuted = true;
       // Send mute command to Twitch embed
-      player.webViewRef.current.postMessage(JSON.stringify({
-        action: 'mute',
-        id: id
-      }));
+      player.webViewRef.current.postMessage(
+        JSON.stringify({
+          action: 'mute',
+          id,
+        })
+      );
     }
   },
 
@@ -118,10 +120,12 @@ const AudioManager = {
     if (player && player.webViewRef.current) {
       player.isMuted = false;
       // Send unmute command to Twitch embed
-      player.webViewRef.current.postMessage(JSON.stringify({
-        action: 'unmute',
-        id: id
-      }));
+      player.webViewRef.current.postMessage(
+        JSON.stringify({
+          action: 'unmute',
+          id,
+        })
+      );
     }
   },
 };
@@ -148,7 +152,7 @@ const StreamCell: React.FC<{
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showControls, setShowControls] = useState(false);
-  
+
   // Enhanced animation entrance
   const entranceDelay = index * 150;
   const entranceScale = useSharedValue(0.3);
@@ -163,23 +167,17 @@ const StreamCell: React.FC<{
       isFullscreen: false,
       webViewRef,
     };
-    
+
     AudioManager.registerPlayer(stream.id, player);
-    
+
     // Enhanced entrance animation
-    entranceScale.value = withDelay(
-      entranceDelay,
-      withSpring(1, { damping: 20, stiffness: 300 })
-    );
-    entranceOpacity.value = withDelay(
-      entranceDelay,
-      withTiming(1, { duration: 800 })
-    );
+    entranceScale.value = withDelay(entranceDelay, withSpring(1, { damping: 20, stiffness: 300 }));
+    entranceOpacity.value = withDelay(entranceDelay, withTiming(1, { duration: 800 }));
     entranceRotation.value = withDelay(
       entranceDelay,
       withSpring(0, { damping: 15, stiffness: 200 })
     );
-    
+
     return () => {
       AudioManager.unregisterPlayer(stream.id);
     };
@@ -212,13 +210,13 @@ const StreamCell: React.FC<{
       withSpring(1.02, { damping: 15 }),
       withSpring(1, { damping: 20 })
     );
-    
+
     // Enhanced visual feedback
     borderGlow.value = withSequence(
       withTiming(1, { duration: 200 }),
       withTiming(0, { duration: 800 })
     );
-    
+
     AudioManager.setActiveStream(stream.id);
     onPress();
   };
@@ -230,11 +228,11 @@ const StreamCell: React.FC<{
       withSpring(2, { damping: 20 }),
       withSpring(0, { damping: 20 })
     );
-    
+
     // Show controls on long press
     setShowControls(true);
     setTimeout(() => setShowControls(false), 3000);
-    
+
     onLongPress();
   };
 
@@ -256,16 +254,18 @@ const StreamCell: React.FC<{
   const togglePlayPause = () => {
     setIsPlaying(!isPlaying);
     if (webViewRef.current) {
-      webViewRef.current.postMessage(JSON.stringify({
-        action: isPlaying ? 'pause' : 'play',
-        id: stream.id
-      }));
+      webViewRef.current.postMessage(
+        JSON.stringify({
+          action: isPlaying ? 'pause' : 'play',
+          id: stream.id,
+        })
+      );
     }
   };
 
   // Generate Twitch embed HTML with constrained dimensions - THIS FIXES THE FULLSCREEN ISSUE
   const embedUrl = `https://player.twitch.tv/?channel=${stream.user_name}&parent=localhost&muted=true&autoplay=true`;
-  
+
   const twitchEmbedHtml = `
     <!DOCTYPE html>
     <html>
@@ -351,15 +351,15 @@ const StreamCell: React.FC<{
               style={StyleSheet.absoluteFill}
               onLoadStart={() => setIsLoading(true)}
               onLoadEnd={() => setIsLoading(false)}
-              allowsInlineMediaPlayback={true}
+              allowsInlineMediaPlayback
               mediaPlaybackRequiresUserAction={false}
               scrollEnabled={false}
               bounces={false}
-              javaScriptEnabled={true}
-              domStorageEnabled={true}
-              startInLoadingState={true}
+              javaScriptEnabled
+              domStorageEnabled
+              startInLoadingState
             />
-            
+
             {/* Loading overlay */}
             {isLoading && (
               <MotiView
@@ -367,11 +367,7 @@ const StreamCell: React.FC<{
                 animate={{ opacity: 1 }}
                 style={[StyleSheet.absoluteFill, styles.loadingOverlay]}
               >
-                <BlurView
-                  style={StyleSheet.absoluteFill}
-                  blurType="dark"
-                  blurAmount={20}
-                />
+                <BlurView style={StyleSheet.absoluteFill} blurType="dark" blurAmount={20} />
                 <MotiView
                   from={{ rotate: '0deg' }}
                   animate={{ rotate: '360deg' }}
@@ -387,10 +383,7 @@ const StreamCell: React.FC<{
             )}
 
             {/* Stream info overlay */}
-            <LinearGradient
-              colors={['rgba(0,0,0,0.8)', 'transparent']}
-              style={styles.infoOverlay}
-            >
+            <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.infoOverlay}>
               <View style={styles.streamInfo}>
                 <MotiText
                   style={styles.streamTitle}
@@ -411,10 +404,7 @@ const StreamCell: React.FC<{
                       loop: true,
                       repeatReverse: true,
                     }}
-                    style={[
-                      styles.liveDot,
-                      { backgroundColor: '#ff4444' }
-                    ]}
+                    style={[styles.liveDot, { backgroundColor: '#ff4444' }]}
                   />
                   <Text style={styles.liveText}>LIVE</Text>
                   <Text style={styles.viewerCount}>
@@ -426,26 +416,12 @@ const StreamCell: React.FC<{
 
             {/* Control overlay */}
             <View style={styles.controlsOverlay}>
-              <BlurView
-                style={styles.controlsContainer}
-                blurType="dark"
-                blurAmount={10}
-              >
-                <TouchableOpacity
-                  style={styles.controlButton}
-                  onPress={togglePlayPause}
-                >
-                  {isPlaying ? (
-                    <Pause size={16} color="#fff" />
-                  ) : (
-                    <Play size={16} color="#fff" />
-                  )}
+              <BlurView style={styles.controlsContainer} blurType="dark" blurAmount={10}>
+                <TouchableOpacity style={styles.controlButton} onPress={togglePlayPause}>
+                  {isPlaying ? <Pause size={16} color="#fff" /> : <Play size={16} color="#fff" />}
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.controlButton}
-                  onPress={toggleMute}
-                >
+                <TouchableOpacity style={styles.controlButton} onPress={toggleMute}>
                   {isMuted ? (
                     <VolumeX size={16} color="#fff" />
                   ) : (
@@ -453,10 +429,7 @@ const StreamCell: React.FC<{
                   )}
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.controlButton}
-                  onPress={onRemove}
-                >
+                <TouchableOpacity style={styles.controlButton} onPress={onRemove}>
                   <Text style={styles.removeText}>×</Text>
                 </TouchableOpacity>
               </BlurView>
@@ -493,7 +466,7 @@ const StreamCell: React.FC<{
                 </LinearGradient>
               </MotiView>
             )}
-            
+
             {/* Stream quality indicator */}
             <View style={styles.qualityIndicator}>
               <BlurView blurType="dark" blurAmount={10} style={styles.qualityBlur}>
@@ -533,7 +506,7 @@ export const EnhancedMultiStreamGrid: React.FC<StreamGridProps> = ({
     // Reserve space for header (~120px) and bottom tab bar (~100px) and safe areas
     const availableHeight = SCREEN_HEIGHT - 200;
     const availableWidth = SCREEN_WIDTH - padding * 2;
-    
+
     switch (layout) {
       case '1x1':
         return {
@@ -603,7 +576,12 @@ export const EnhancedMultiStreamGrid: React.FC<StreamGridProps> = ({
       >
         <BlurView style={styles.headerBlur} blurType="dark" blurAmount={20}>
           <LinearGradient
-            colors={['rgba(139, 92, 246, 0.2)', 'rgba(124, 58, 237, 0.15)', 'rgba(99, 102, 241, 0.1)', 'transparent']}
+            colors={[
+              'rgba(139, 92, 246, 0.2)',
+              'rgba(124, 58, 237, 0.15)',
+              'rgba(99, 102, 241, 0.1)',
+              'transparent',
+            ]}
             style={styles.headerGradient}
           >
             <View style={styles.titleRow}>
@@ -638,7 +616,7 @@ export const EnhancedMultiStreamGrid: React.FC<StreamGridProps> = ({
                   </View>
                 </View>
               </View>
-              
+
               <TouchableOpacity
                 style={styles.settingsButton}
                 onPress={() => setShowControls(!showControls)}
@@ -668,7 +646,7 @@ export const EnhancedMultiStreamGrid: React.FC<StreamGridProps> = ({
                 2×2
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[styles.layoutButton, layout === '3x3' && styles.activeLayoutButton]}
               onPress={() => handleLayoutChange('3x3')}
@@ -688,12 +666,9 @@ export const EnhancedMultiStreamGrid: React.FC<StreamGridProps> = ({
                 Full
               </Text>
             </TouchableOpacity>
-            
+
             {activeStreams.length > 0 && (
-              <TouchableOpacity
-                style={styles.clearAllButton}
-                onPress={clearAllStreams}
-              >
+              <TouchableOpacity style={styles.clearAllButton} onPress={clearAllStreams}>
                 <Text style={styles.clearAllText}>Clear All</Text>
               </TouchableOpacity>
             )}
@@ -708,7 +683,7 @@ export const EnhancedMultiStreamGrid: React.FC<StreamGridProps> = ({
           const col = index % columns;
           const marginRight = col < columns - 1 ? 8 : 0;
           const marginBottom = row < Math.ceil(activeStreams.length / columns) - 1 ? 8 : 0;
-          
+
           return (
             <View
               key={stream.id}
@@ -717,9 +692,9 @@ export const EnhancedMultiStreamGrid: React.FC<StreamGridProps> = ({
                 {
                   width: cellWidth,
                   height: cellHeight,
-                  marginRight: marginRight,
-                  marginBottom: marginBottom,
-                }
+                  marginRight,
+                  marginBottom,
+                },
               ]}
             >
               <StreamCell

@@ -4,7 +4,6 @@
  */
 import React, { useEffect, useRef } from 'react';
 import { InterstitialAd, AdEventType } from 'react-native-google-mobile-ads';
-
 import { adMobService } from '@/services/adMobService';
 import { logDebug, logError } from '@/utils/errorHandler';
 
@@ -64,7 +63,7 @@ class InterstitialAdManager {
       }
 
       const adUnitId = adMobService.getAdUnitId('interstitial');
-      
+
       this.interstitialAd = InterstitialAd.createForAdRequest(adUnitId, {
         requestNonPersonalizedAdsOnly: false,
       });
@@ -74,7 +73,7 @@ class InterstitialAdManager {
         logDebug('Interstitial ad loaded');
       });
 
-      this.interstitialAd.addAdEventListener(AdEventType.ERROR, (error) => {
+      this.interstitialAd.addAdEventListener(AdEventType.ERROR, error => {
         this.isLoaded = false;
         logError('Interstitial ad error', { error: error.message });
       });
@@ -128,9 +127,9 @@ class InterstitialAdManager {
       logDebug('Interstitial ad shown successfully', { context });
       return true;
     } catch (error) {
-      logError('Failed to show interstitial ad', { 
+      logError('Failed to show interstitial ad', {
         error: error.message,
-        context 
+        context,
       });
       return false;
     }
@@ -140,18 +139,26 @@ class InterstitialAdManager {
    * Check if ad can be shown based on frequency and timing rules
    */
   private canShowAd(): boolean {
-    if (!adMobService.canShowAds()) return false;
-    if (this.isShowing) return false;
-    
+    if (!adMobService.canShowAds()) {
+      return false;
+    }
+    if (this.isShowing) {
+      return false;
+    }
+
     this.resetHourlyCountIfNeeded();
-    
+
     // Check frequency limits
-    if (this.adCountThisHour >= this.maxFrequencyPerHour) return false;
-    
+    if (this.adCountThisHour >= this.maxFrequencyPerHour) {
+      return false;
+    }
+
     // Check minimum interval
     const timeSinceLastAd = Date.now() - this.lastShownTime;
-    if (timeSinceLastAd < this.minIntervalMs) return false;
-    
+    if (timeSinceLastAd < this.minIntervalMs) {
+      return false;
+    }
+
     return this.isLoaded;
   }
 
@@ -159,19 +166,27 @@ class InterstitialAdManager {
    * Get reason why ad cannot be shown (for debugging)
    */
   private getBlockingReason(): string {
-    if (!adMobService.canShowAds()) return 'No consent or AdMob not ready';
-    if (this.isShowing) return 'Ad already showing';
-    if (!this.isLoaded) return 'Ad not loaded';
-    
+    if (!adMobService.canShowAds()) {
+      return 'No consent or AdMob not ready';
+    }
+    if (this.isShowing) {
+      return 'Ad already showing';
+    }
+    if (!this.isLoaded) {
+      return 'Ad not loaded';
+    }
+
     this.resetHourlyCountIfNeeded();
-    if (this.adCountThisHour >= this.maxFrequencyPerHour) return 'Hourly frequency limit reached';
-    
+    if (this.adCountThisHour >= this.maxFrequencyPerHour) {
+      return 'Hourly frequency limit reached';
+    }
+
     const timeSinceLastAd = Date.now() - this.lastShownTime;
     if (timeSinceLastAd < this.minIntervalMs) {
       const remainingMs = this.minIntervalMs - timeSinceLastAd;
       return `Minimum interval not met (${Math.ceil(remainingMs / 1000)}s remaining)`;
     }
-    
+
     return 'Unknown';
   }
 
@@ -202,7 +217,7 @@ class InterstitialAdManager {
    */
   getStatus(): object {
     this.resetHourlyCountIfNeeded();
-    
+
     return {
       isLoaded: this.isLoaded,
       isShowing: this.isShowing,
@@ -223,21 +238,23 @@ export const useInterstitialAd = (props: InterstitialAdManagerProps = {}) => {
       props.minIntervalMinutes,
       props.maxFrequencyPerHour
     );
-    
+
     managerRef.current.initialize();
   }, []);
 
   const showInterstitial = async (context?: string): Promise<boolean> => {
-    if (!managerRef.current) return false;
-    
+    if (!managerRef.current) {
+      return false;
+    }
+
     const success = await managerRef.current.show(context);
-    
+
     if (success) {
       props.onAdShown?.(context);
     } else {
       props.onAdError?.(`Failed to show ad: ${context}`);
     }
-    
+
     return success;
   };
 

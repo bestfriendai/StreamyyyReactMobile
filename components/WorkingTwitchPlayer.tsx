@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Volume2, VolumeX, X, Eye, ExternalLink, AlertCircle } from 'lucide-react-native';
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
@@ -10,15 +12,6 @@ import {
   Linking,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Volume2,
-  VolumeX,
-  X,
-  Eye,
-  ExternalLink,
-  AlertCircle,
-} from 'lucide-react-native';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
 
@@ -268,12 +261,15 @@ export const WorkingTwitchPlayer: React.FC<WorkingTwitchPlayerProps> = ({
     // Don't hide loading here - wait for iframe load message
   }, [stream.user_login]);
 
-  const handleWebViewError = useCallback((syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.error('❌ Working Twitch player error:', stream.user_login, nativeEvent);
-    setError('Failed to load player');
-    setIsLoading(false);
-  }, [stream.user_login]);
+  const handleWebViewError = useCallback(
+    (syntheticEvent: any) => {
+      const { nativeEvent } = syntheticEvent;
+      console.error('❌ Working Twitch player error:', stream.user_login, nativeEvent);
+      setError('Failed to load player');
+      setIsLoading(false);
+    },
+    [stream.user_login]
+  );
 
   const handleWebViewLoadStart = useCallback(() => {
     console.log('🔄 Working Twitch player loading:', stream.user_login);
@@ -283,31 +279,34 @@ export const WorkingTwitchPlayer: React.FC<WorkingTwitchPlayerProps> = ({
   }, [stream.user_login]);
 
   // Handle WebView messages
-  const handleWebViewMessage = useCallback((event: any) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      console.log('Working Twitch player message:', data);
-      
-      switch (data.type) {
-        case 'loaded':
-          console.log('✅ Twitch iframe loaded successfully:', data.channel);
-          setIsLoading(false);
-          setError(null);
-          setHasLoaded(true);
-          break;
-        case 'error':
-          console.log('❌ Twitch iframe error:', data.message);
-          setIsLoading(false);
-          setError(data.message || 'Stream unavailable');
-          break;
-        case 'touch':
-          onPress?.();
-          break;
+  const handleWebViewMessage = useCallback(
+    (event: any) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        console.log('Working Twitch player message:', data);
+
+        switch (data.type) {
+          case 'loaded':
+            console.log('✅ Twitch iframe loaded successfully:', data.channel);
+            setIsLoading(false);
+            setError(null);
+            setHasLoaded(true);
+            break;
+          case 'error':
+            console.log('❌ Twitch iframe error:', data.message);
+            setIsLoading(false);
+            setError(data.message || 'Stream unavailable');
+            break;
+          case 'touch':
+            onPress?.();
+            break;
+        }
+      } catch (error) {
+        console.log('WebView message parse error:', error);
       }
-    } catch (error) {
-      console.log('WebView message parse error:', error);
-    }
-  }, [onPress]);
+    },
+    [onPress]
+  );
 
   // Handle retry
   const handleRetry = useCallback(() => {
@@ -357,10 +356,10 @@ export const WorkingTwitchPlayer: React.FC<WorkingTwitchPlayerProps> = ({
           onError={handleWebViewError}
           onLoadStart={handleWebViewLoadStart}
           onMessage={handleWebViewMessage}
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
           scalesPageToFit={false}
           bounces={false}
@@ -368,11 +367,11 @@ export const WorkingTwitchPlayer: React.FC<WorkingTwitchPlayerProps> = ({
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['*']}
-          mixedContentMode={'compatibility'}
-          allowsFullscreenVideo={true}
-          allowsProtectedMedia={true}
-          thirdPartyCookiesEnabled={true}
-          sharedCookiesEnabled={true}
+          mixedContentMode="compatibility"
+          allowsFullscreenVideo
+          allowsProtectedMedia
+          thirdPartyCookiesEnabled
+          sharedCookiesEnabled
           cacheEnabled={false}
           incognito={false}
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
@@ -406,10 +405,7 @@ export const WorkingTwitchPlayer: React.FC<WorkingTwitchPlayerProps> = ({
         {/* Stream Info Overlay */}
         {!error && (
           <View style={styles.infoOverlay}>
-            <LinearGradient
-              colors={['rgba(0,0,0,0.8)', 'transparent']}
-              style={styles.infoGradient}
-            >
+            <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.infoGradient}>
               <View style={styles.streamInfo}>
                 <View style={styles.platformBadge}>
                   <Text style={styles.platformText}>LIVE</Text>
@@ -440,21 +436,15 @@ export const WorkingTwitchPlayer: React.FC<WorkingTwitchPlayerProps> = ({
             >
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={onMuteToggle}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={onMuteToggle}>
                     {isMuted ? (
                       <VolumeX size={16} color="#fff" />
                     ) : (
                       <Volume2 size={16} color="#fff" />
                     )}
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handleOpenExternal}
-                  >
+
+                  <TouchableOpacity style={styles.controlButton} onPress={handleOpenExternal}>
                     <ExternalLink size={16} color="#fff" />
                   </TouchableOpacity>
                 </View>
@@ -479,10 +469,12 @@ export const WorkingTwitchPlayer: React.FC<WorkingTwitchPlayerProps> = ({
 
         {/* Status Indicator */}
         <View style={styles.statusIndicator}>
-          <View style={[
-            styles.statusDot,
-            { backgroundColor: hasLoaded ? '#00ff00' : isLoading ? '#ffff00' : '#ff0000' }
-          ]} />
+          <View
+            style={[
+              styles.statusDot,
+              { backgroundColor: hasLoaded ? '#00ff00' : isLoading ? '#ffff00' : '#ff0000' },
+            ]}
+          />
         </View>
       </TouchableOpacity>
     </View>

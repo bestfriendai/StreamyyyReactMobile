@@ -1,3 +1,18 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  Crown,
+  Check,
+  X,
+  Star,
+  Zap,
+  Shield,
+  Sparkles,
+  TrendingUp,
+  Users,
+  Grid,
+  Settings,
+  CreditCard,
+} from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   View,
@@ -9,23 +24,6 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { NavigationHeader } from '@/components/NavigationHeader';
-import { 
-  Crown, 
-  Check, 
-  X, 
-  Star, 
-  Zap, 
-  Shield, 
-  Sparkles,
-  TrendingUp,
-  Users,
-  Grid,
-  Settings,
-  CreditCard
-} from 'lucide-react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -34,6 +32,8 @@ import Animated, {
   withRepeat,
   interpolate,
 } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { NavigationHeader } from '@/components/NavigationHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -61,12 +61,7 @@ const plans: SubscriptionPlan[] = [
     price: 0,
     period: 'month',
     maxStreams: 4,
-    features: [
-      'Up to 4 streams',
-      'Basic layouts',
-      'Standard quality',
-      'Community support',
-    ],
+    features: ['Up to 4 streams', 'Basic layouts', 'Standard quality', 'Community support'],
     icon: Users,
     color: '#6B7280',
     gradient: ['#6B7280', '#4B5563'],
@@ -128,47 +123,35 @@ export default function SubscriptionScreen() {
   React.useEffect(() => {
     // Entrance animation
     slideIn.value = withSpring(1, { damping: 15 });
-    
+
     // Continuous animations
-    sparkleRotation.value = withRepeat(
-      withTiming(360, { duration: 4000 }),
-      -1,
-      false
-    );
-    
-    pulseScale.value = withRepeat(
-      withTiming(1.05, { duration: 2000 }),
-      -1,
-      true
-    );
+    sparkleRotation.value = withRepeat(withTiming(360, { duration: 4000 }), -1, false);
+
+    pulseScale.value = withRepeat(withTiming(1.05, { duration: 2000 }), -1, true);
   }, []);
 
   const handleSubscribe = async (planId: string) => {
     if (!isSignedIn) {
-      Alert.alert(
-        'Sign In Required',
-        'Please sign in to subscribe to a plan.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Sign In', onPress: () => console.log('Navigate to sign in') },
-        ]
-      );
+      Alert.alert('Sign In Required', 'Please sign in to subscribe to a plan.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign In', onPress: () => console.log('Navigate to sign in') },
+      ]);
       return;
     }
 
     setIsProcessing(true);
-    
+
     try {
       // Mock subscription process
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       updateSubscription({
         tier: planId as any,
         status: 'active',
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         cancelAtPeriodEnd: false,
       });
-      
+
       Alert.alert(
         'Success!',
         `You've successfully subscribed to ${plans.find(p => p.id === planId)?.displayName}!`
@@ -194,7 +177,7 @@ export default function SubscriptionScreen() {
   const animatedSlideStyle = useAnimatedStyle(() => {
     const translateY = interpolate(slideIn.value, [0, 1], [50, 0]);
     const opacity = interpolate(slideIn.value, [0, 1], [0, 1]);
-    
+
     return {
       transform: [{ translateY }],
       opacity,
@@ -204,7 +187,7 @@ export default function SubscriptionScreen() {
   const PlanCard = ({ plan, index }: { plan: SubscriptionPlan; index: number }) => {
     const cardScale = useSharedValue(1);
     const IconComponent = plan.icon;
-    
+
     const animatedCardStyle = useAnimatedStyle(() => ({
       transform: [{ scale: cardScale.value }],
     }));
@@ -241,15 +224,16 @@ export default function SubscriptionScreen() {
           onPressOut={handlePressOut}
         >
           <LinearGradient
-            colors={isCurrentPlan ? plan.gradient as any : ['rgba(42, 42, 42, 0.8)', 'rgba(58, 58, 58, 0.8)']}
+            colors={
+              isCurrentPlan
+                ? (plan.gradient as any)
+                : ['rgba(42, 42, 42, 0.8)', 'rgba(58, 58, 58, 0.8)']
+            }
             style={styles.planGradient}
           >
             {plan.recommended && (
               <View style={styles.recommendedBadge}>
-                <LinearGradient
-                  colors={['#F59E0B', '#D97706']}
-                  style={styles.recommendedGradient}
-                >
+                <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.recommendedGradient}>
                   <Star size={12} color="#fff" />
                   <Text style={styles.recommendedText}>RECOMMENDED</Text>
                 </LinearGradient>
@@ -258,10 +242,7 @@ export default function SubscriptionScreen() {
 
             <View style={styles.planHeader}>
               <View style={styles.planIconContainer}>
-                <LinearGradient
-                  colors={plan.gradient as any}
-                  style={styles.planIcon}
-                >
+                <LinearGradient colors={plan.gradient as any} style={styles.planIcon}>
                   <IconComponent size={24} color="#fff" />
                 </LinearGradient>
               </View>
@@ -271,9 +252,7 @@ export default function SubscriptionScreen() {
                   <Text style={styles.planPrice}>
                     ${plan.price === 0 ? 'Free' : plan.price.toFixed(2)}
                   </Text>
-                  {plan.price > 0 && (
-                    <Text style={styles.planPeriod}>/{plan.period}</Text>
-                  )}
+                  {plan.price > 0 && <Text style={styles.planPeriod}>/{plan.period}</Text>}
                 </View>
               </View>
             </View>
@@ -290,11 +269,9 @@ export default function SubscriptionScreen() {
             <View style={styles.planFooter}>
               <View style={styles.streamLimit}>
                 <Grid size={16} color={plan.color} />
-                <Text style={styles.streamLimitText}>
-                  {plan.maxStreams} streams max
-                </Text>
+                <Text style={styles.streamLimitText}>{plan.maxStreams} streams max</Text>
               </View>
-              
+
               {isCurrentPlan ? (
                 <View style={styles.currentPlanButton}>
                   <LinearGradient
@@ -311,10 +288,7 @@ export default function SubscriptionScreen() {
                   onPress={() => handleSubscribe(plan.id)}
                   disabled={isProcessing}
                 >
-                  <LinearGradient
-                    colors={plan.gradient as any}
-                    style={styles.subscribeGradient}
-                  >
+                  <LinearGradient colors={plan.gradient as any} style={styles.subscribeGradient}>
                     <Text style={styles.subscribeText}>
                       {plan.price === 0 ? 'Downgrade' : 'Subscribe'}
                     </Text>
@@ -332,11 +306,8 @@ export default function SubscriptionScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <LinearGradient
-        colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']}
-        style={styles.background}
-      />
-      
+      <LinearGradient colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']} style={styles.background} />
+
       <NavigationHeader
         title="Premium"
         subtitle={`Current: ${currentPlan?.displayName || 'Free'}`}
@@ -347,7 +318,7 @@ export default function SubscriptionScreen() {
           </TouchableOpacity>
         }
       />
-      
+
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -401,7 +372,7 @@ export default function SubscriptionScreen() {
         {/* Features Comparison */}
         <Animated.View style={[styles.comparisonSection, animatedSlideStyle]}>
           <Text style={styles.comparisonTitle}>Why Upgrade?</Text>
-          
+
           <View style={styles.comparisonGrid}>
             <View style={styles.comparisonItem}>
               <TrendingUp size={24} color="#22C55E" />
@@ -410,7 +381,7 @@ export default function SubscriptionScreen() {
                 Watch more streams simultaneously with higher tier plans
               </Text>
             </View>
-            
+
             <View style={styles.comparisonItem}>
               <Shield size={24} color="#3B82F6" />
               <Text style={styles.comparisonItemTitle}>Better Quality</Text>
@@ -418,7 +389,7 @@ export default function SubscriptionScreen() {
                 Enjoy HD and 4K streaming with premium plans
               </Text>
             </View>
-            
+
             <View style={styles.comparisonItem}>
               <Zap size={24} color="#F59E0B" />
               <Text style={styles.comparisonItemTitle}>Advanced Features</Text>
@@ -432,25 +403,28 @@ export default function SubscriptionScreen() {
         {/* FAQ */}
         <Animated.View style={[styles.faqSection, animatedSlideStyle]}>
           <Text style={styles.faqTitle}>Frequently Asked Questions</Text>
-          
+
           <View style={styles.faqItem}>
             <Text style={styles.faqQuestion}>Can I change my plan anytime?</Text>
             <Text style={styles.faqAnswer}>
-              Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.
+              Yes, you can upgrade or downgrade your plan at any time. Changes take effect
+              immediately.
             </Text>
           </View>
-          
+
           <View style={styles.faqItem}>
             <Text style={styles.faqQuestion}>What happens to my streams when I downgrade?</Text>
             <Text style={styles.faqAnswer}>
-              Your active streams will be reduced to match your new plan limits. You can choose which streams to keep.
+              Your active streams will be reduced to match your new plan limits. You can choose
+              which streams to keep.
             </Text>
           </View>
-          
+
           <View style={styles.faqItem}>
             <Text style={styles.faqQuestion}>Is there a free trial?</Text>
             <Text style={styles.faqAnswer}>
-              Yes! All paid plans come with a 7-day free trial. Cancel anytime during the trial period.
+              Yes! All paid plans come with a 7-day free trial. Cancel anytime during the trial
+              period.
             </Text>
           </View>
         </Animated.View>

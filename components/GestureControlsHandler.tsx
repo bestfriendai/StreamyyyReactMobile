@@ -1,30 +1,3 @@
-import React, { useRef, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  Dimensions,
-  Platform,
-  Text,
-  Vibration,
-} from 'react-native';
-import {
-  PanGestureHandler,
-  PinchGestureHandler,
-  TapGestureHandler,
-  LongPressGestureHandler,
-  State,
-} from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  useAnimatedGestureHandler,
-  withSpring,
-  withTiming,
-  runOnJS,
-  interpolate,
-  interpolateColor,
-} from 'react-native-reanimated';
-import { MotiView, MotiText } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Volume2,
@@ -44,6 +17,26 @@ import {
   ZoomOut,
   Hand,
 } from 'lucide-react-native';
+import { MotiView, MotiText } from 'moti';
+import React, { useRef, useState } from 'react';
+import { View, StyleSheet, Dimensions, Platform, Text, Vibration } from 'react-native';
+import {
+  PanGestureHandler,
+  PinchGestureHandler,
+  TapGestureHandler,
+  LongPressGestureHandler,
+  State,
+} from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  useAnimatedGestureHandler,
+  withSpring,
+  withTiming,
+  runOnJS,
+  interpolate,
+  interpolateColor,
+} from 'react-native-reanimated';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -85,7 +78,7 @@ export const GestureControlsHandler: React.FC<GestureControlsProps> = ({
   const [gestureActive, setGestureActive] = useState(false);
   const [gestureType, setGestureType] = useState<string>('');
   const [gestureValue, setGestureValue] = useState(0);
-  
+
   // Gesture refs
   const panRef = useRef<PanGestureHandler>(null);
   const pinchRef = useRef<PinchGestureHandler>(null);
@@ -114,12 +107,14 @@ export const GestureControlsHandler: React.FC<GestureControlsProps> = ({
 
   // Show gesture indicator
   const showIndicator = (type: string, value?: number) => {
-    if (!showGestureIndicators) return;
-    
+    if (!showGestureIndicators) {
+      return;
+    }
+
     setGestureType(type);
     setGestureValue(value || 0);
     setGestureActive(true);
-    
+
     indicatorOpacity.value = withTiming(1, { duration: 200 });
     indicatorScale.value = withSpring(1, { damping: 15 });
   };
@@ -128,7 +123,7 @@ export const GestureControlsHandler: React.FC<GestureControlsProps> = ({
   const hideIndicator = () => {
     indicatorOpacity.value = withTiming(0, { duration: 300 });
     indicatorScale.value = withTiming(0.8, { duration: 300 });
-    
+
     setTimeout(() => {
       setGestureActive(false);
       setGestureType('');
@@ -144,20 +139,20 @@ export const GestureControlsHandler: React.FC<GestureControlsProps> = ({
     },
     onActive: (event, context) => {
       const { translationX, translationY, velocityX, velocityY } = event;
-      
+
       // Determine gesture type based on direction and position
       const isHorizontal = Math.abs(translationX) > Math.abs(translationY);
       const isVertical = Math.abs(translationY) > Math.abs(translationX);
-      
+
       if (isHorizontal && Math.abs(translationX) > 50) {
         // Horizontal swipe for seeking
-        const seekAmount = translationX / SCREEN_WIDTH * 30; // 30 seconds max
+        const seekAmount = (translationX / SCREEN_WIDTH) * 30; // 30 seconds max
         runOnJS(showIndicator)('seek', seekAmount);
       } else if (isVertical && Math.abs(translationY) > 50) {
         // Vertical swipe for volume/brightness
         const isLeftSide = event.x < SCREEN_WIDTH / 2;
         const changeAmount = -translationY / SCREEN_HEIGHT;
-        
+
         if (isLeftSide) {
           // Left side: brightness
           runOnJS(showIndicator)('brightness', changeAmount);
@@ -169,16 +164,16 @@ export const GestureControlsHandler: React.FC<GestureControlsProps> = ({
     },
     onEnd: (event, context) => {
       const { translationX, translationY, velocityX, velocityY } = event;
-      
+
       // Determine final gesture
       const isHorizontal = Math.abs(translationX) > Math.abs(translationY);
       const isVertical = Math.abs(translationY) > Math.abs(translationX);
-      
+
       if (isHorizontal && Math.abs(translationX) > 50) {
-        const seekAmount = translationX / SCREEN_WIDTH * 30;
+        const seekAmount = (translationX / SCREEN_WIDTH) * 30;
         runOnJS(onSeek)?.(seekAmount);
         runOnJS(triggerHaptic)('medium');
-        
+
         if (translationX > 0) {
           runOnJS(onSwipeRight)?.();
         } else {
@@ -187,22 +182,22 @@ export const GestureControlsHandler: React.FC<GestureControlsProps> = ({
       } else if (isVertical && Math.abs(translationY) > 50) {
         const isLeftSide = event.x < SCREEN_WIDTH / 2;
         const changeAmount = -translationY / SCREEN_HEIGHT;
-        
+
         if (isLeftSide) {
           runOnJS(onBrightnessChange)?.(Math.max(0, Math.min(1, changeAmount)));
         } else {
           runOnJS(onVolumeChange)?.(Math.max(0, Math.min(1, changeAmount)));
         }
-        
+
         runOnJS(triggerHaptic)('light');
-        
+
         if (translationY > 0) {
           runOnJS(onSwipeDown)?.();
         } else {
           runOnJS(onSwipeUp)?.();
         }
       }
-      
+
       // Reset animation values
       translateX.value = withSpring(0);
       translateY.value = withSpring(0);
@@ -218,7 +213,7 @@ export const GestureControlsHandler: React.FC<GestureControlsProps> = ({
     onActive: (event, context) => {
       const newScale = context.startScale * event.scale;
       scale.value = Math.max(0.5, Math.min(3, newScale));
-      
+
       runOnJS(showIndicator)('zoom', newScale);
     },
     onEnd: (event, context) => {
@@ -290,25 +285,45 @@ export const GestureControlsHandler: React.FC<GestureControlsProps> = ({
     switch (gestureType) {
       case 'volume':
         return {
-          icon: gestureValue > 0 ? <Volume2 size={24} color="#fff" /> : <VolumeX size={24} color="#fff" />,
+          icon:
+            gestureValue > 0 ? (
+              <Volume2 size={24} color="#fff" />
+            ) : (
+              <VolumeX size={24} color="#fff" />
+            ),
           text: `Volume ${Math.round(gestureValue * 100)}%`,
           color: ['#10B981', '#059669'],
         };
       case 'brightness':
         return {
-          icon: gestureValue > 0 ? <Brightness size={24} color="#fff" /> : <BrightnessDown size={24} color="#fff" />,
+          icon:
+            gestureValue > 0 ? (
+              <Brightness size={24} color="#fff" />
+            ) : (
+              <BrightnessDown size={24} color="#fff" />
+            ),
           text: `Brightness ${Math.round(gestureValue * 100)}%`,
           color: ['#F59E0B', '#D97706'],
         };
       case 'seek':
         return {
-          icon: gestureValue > 0 ? <SkipForward size={24} color="#fff" /> : <SkipBack size={24} color="#fff" />,
+          icon:
+            gestureValue > 0 ? (
+              <SkipForward size={24} color="#fff" />
+            ) : (
+              <SkipBack size={24} color="#fff" />
+            ),
           text: `${gestureValue > 0 ? '+' : ''}${Math.round(gestureValue)}s`,
           color: ['#8B5CF6', '#7C3AED'],
         };
       case 'zoom':
         return {
-          icon: gestureValue > 1 ? <ZoomIn size={24} color="#fff" /> : <ZoomOut size={24} color="#fff" />,
+          icon:
+            gestureValue > 1 ? (
+              <ZoomIn size={24} color="#fff" />
+            ) : (
+              <ZoomOut size={24} color="#fff" />
+            ),
           text: `${Math.round(gestureValue * 100)}%`,
           color: ['#6366F1', '#4F46E5'],
         };
@@ -379,10 +394,7 @@ export const GestureControlsHandler: React.FC<GestureControlsProps> = ({
       {/* Gesture Indicator */}
       {gestureActive && showGestureIndicators && (
         <Animated.View style={[styles.gestureIndicator, indicatorAnimatedStyle]}>
-          <LinearGradient
-            colors={indicator.color}
-            style={styles.indicatorGradient}
-          >
+          <LinearGradient colors={indicator.color} style={styles.indicatorGradient}>
             <View style={styles.indicatorContent}>
               {indicator.icon}
               <Text style={styles.indicatorText}>{indicator.text}</Text>

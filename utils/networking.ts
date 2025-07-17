@@ -193,7 +193,7 @@ class NetworkManager {
           'User-Agent': 'StreamYYY/1.0 (Multi-Platform Streaming App)',
           ...config.headers,
         },
-        body: config.body ? JSON.stringify(config.body) : undefined,
+        body: config.body ? JSON.stringify(config.body) : null,
         signal,
       });
 
@@ -302,7 +302,9 @@ class NetworkManager {
     error.status = status;
     error.code = code;
     error.retryable = retryable;
-    error.response = response;
+    if (response) {
+      error.response = response;
+    }
     return error;
   }
 

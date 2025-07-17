@@ -1,15 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  Share,
-  Haptics,
-  Platform,
-  Dimensions,
-} from 'react-native';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Play,
@@ -39,6 +28,18 @@ import {
   X,
   Check,
 } from 'lucide-react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Share,
+  Haptics,
+  Platform,
+  Dimensions,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -48,7 +49,6 @@ import Animated, {
   runOnJS,
   withDelay,
 } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
 import { TwitchStream } from '@/services/twitchApi';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -206,7 +206,7 @@ export function FloatingStreamControls({
 
     Alert.alert(
       newRecording ? 'Recording Started' : 'Recording Stopped',
-      newRecording 
+      newRecording
         ? `Started recording ${stream.user_name}'s stream`
         : 'Recording saved to your device',
       [{ text: 'OK' }]
@@ -216,13 +216,11 @@ export function FloatingStreamControls({
   const handleScreenshot = useCallback(() => {
     onScreenshot();
     triggerHaptic('medium');
-    
+
     // Show success feedback
-    Alert.alert(
-      'Screenshot Captured',
-      `Screenshot of ${stream.user_name}'s stream saved`,
-      [{ text: 'OK' }]
-    );
+    Alert.alert('Screenshot Captured', `Screenshot of ${stream.user_name}'s stream saved`, [
+      { text: 'OK' },
+    ]);
   }, [onScreenshot, triggerHaptic, stream.user_name]);
 
   const handleShare = useCallback(() => {
@@ -238,12 +236,15 @@ export function FloatingStreamControls({
     });
   }, [stream, onShare, triggerHaptic]);
 
-  const handleQualityChange = useCallback((quality: string) => {
-    setSelectedQuality(quality);
-    onQualityChange(quality);
-    setShowQualityMenu(false);
-    triggerHaptic('light');
-  }, [onQualityChange, triggerHaptic]);
+  const handleQualityChange = useCallback(
+    (quality: string) => {
+      setSelectedQuality(quality);
+      onQualityChange(quality);
+      setShowQualityMenu(false);
+      triggerHaptic('light');
+    },
+    [onQualityChange, triggerHaptic]
+  );
 
   const qualityOptions = [
     { id: 'source', label: 'Source', detail: streamStats.resolution },
@@ -334,10 +335,7 @@ export function FloatingStreamControls({
 
   const animatedContainerStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
-    transform: [
-      { scale: scale.value },
-      { translateY: translateY.value },
-    ],
+    transform: [{ scale: scale.value }, { translateY: translateY.value }],
   }));
 
   const animatedQualityMenuStyle = useAnimatedStyle(() => ({
@@ -361,10 +359,7 @@ export function FloatingStreamControls({
         colors={action.disabled ? ['#6B7280', '#4B5563'] : action.color}
         style={[styles.actionGradient, size === 'large' && styles.largeActionGradient]}
       >
-        <action.icon 
-          size={size === 'large' ? 20 : 16} 
-          color="#fff" 
-        />
+        <action.icon size={size === 'large' ? 20 : 16} color="#fff" />
         {action.badge && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{action.badge}</Text>
@@ -374,16 +369,14 @@ export function FloatingStreamControls({
     </AnimatedTouchableOpacity>
   );
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return null;
+  }
 
   return (
     <>
       {/* Backdrop */}
-      <TouchableOpacity
-        style={styles.backdrop}
-        activeOpacity={1}
-        onPress={onClose}
-      >
+      <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose}>
         <View style={styles.backdropContent} />
       </TouchableOpacity>
 
@@ -413,10 +406,7 @@ export function FloatingStreamControls({
                   {stream.game_name}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={onClose}
-              >
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                 <X size={20} color="#666" />
               </TouchableOpacity>
             </View>
@@ -468,7 +458,7 @@ export function FloatingStreamControls({
               style={styles.qualityContent}
             >
               <Text style={styles.qualityTitle}>Select Quality</Text>
-              {qualityOptions.map((option) => (
+              {qualityOptions.map(option => (
                 <TouchableOpacity
                   key={option.id}
                   style={[
@@ -495,9 +485,7 @@ export function FloatingStreamControls({
                       {option.detail}
                     </Text>
                   </View>
-                  {selectedQuality === option.id && (
-                    <Check size={16} color="#8B5CF6" />
-                  )}
+                  {selectedQuality === option.id && <Check size={16} color="#8B5CF6" />}
                 </TouchableOpacity>
               ))}
             </LinearGradient>

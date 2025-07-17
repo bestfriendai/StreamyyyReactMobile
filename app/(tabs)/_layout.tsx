@@ -1,30 +1,10 @@
-import React from 'react';
 import { Tabs } from 'expo-router';
-import { 
-  Compass, 
-  Grid3X3, 
-  Heart, 
-  Settings, 
-  Crown,
-  User,
-  Sparkles,
-  Zap
-} from 'lucide-react-native';
-import { View, Platform, Pressable } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  interpolate,
-} from 'react-native-reanimated';
+import { Compass, Grid3X3, Heart, Settings, Crown, User, Sparkles, Zap } from 'lucide-react-native';
+import React from 'react';
+import { View, Platform } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
-import { HapticFeedback } from '@/utils/haptics';
 import { useInterstitialAd } from '@/hooks/useInterstitialAd';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+import { HapticFeedback } from '@/utils/haptics';
 
 interface TabIconProps {
   icon: React.ComponentType<any>;
@@ -35,47 +15,26 @@ interface TabIconProps {
 }
 
 function TabIcon({ icon: Icon, size, color, focused, label }: TabIconProps) {
-  const scale = useSharedValue(1);
-  const glow = useSharedValue(0);
-  
-  React.useEffect(() => {
-    scale.value = withSpring(focused ? 1.1 : 1, { damping: 20 });
-    glow.value = withTiming(focused ? 1 : 0, { duration: 200 });
-  }, [focused]);
-  
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-  
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glow.value,
-    transform: [{ scale: interpolate(glow.value, [0, 1], [0.8, 1.2]) }],
-  }));
-  
+  // Simplified version without complex animations for faster navigation
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
       {focused && (
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              width: size + 12,
-              height: size + 12,
-              borderRadius: (size + 12) / 2,
-              backgroundColor: 'rgba(139, 92, 246, 0.2)',
-            },
-            glowStyle,
-          ]}
+        <View
+          style={{
+            position: 'absolute',
+            width: size + 8,
+            height: size + 8,
+            borderRadius: (size + 8) / 2,
+            backgroundColor: 'rgba(139, 92, 246, 0.15)',
+          }}
         />
       )}
-      <Animated.View style={animatedStyle}>
-        <Icon 
-          size={focused ? size + 2 : size} 
-          color={color} 
-          strokeWidth={focused ? 2.5 : 2}
-          fill={focused && (label === 'Favorites' || label === 'Premium') ? color : 'transparent'}
-        />
-      </Animated.View>
+      <Icon
+        size={focused ? size + 1 : size}
+        color={color}
+        strokeWidth={focused ? 2.2 : 2}
+        fill={focused && (label === 'Favorites' || label === 'Premium') ? color : 'transparent'}
+      />
     </View>
   );
 }
@@ -85,12 +44,17 @@ export default function TabLayout() {
   const { showAd, canShow } = useInterstitialAd();
 
   const handleTabPress = (tabName: string) => {
-    HapticFeedback.light();
-    
-    // Show interstitial ad on certain tab transitions (not too frequently)
-    if (canShow && Math.random() < 0.3) { // 30% chance
-      showAd(`tab_${tabName}`);
-    }
+    // Remove blocking operations for faster navigation
+    // Haptic feedback and ads run asynchronously
+    setTimeout(() => {
+      HapticFeedback.light();
+
+      // Show ads less frequently and asynchronously
+      if (canShow && Math.random() < 0.1) {
+        // Reduced to 10% chance
+        showAd(`tab_${tabName}`);
+      }
+    }, 0);
   };
 
   return (
@@ -120,49 +84,11 @@ export default function TabLayout() {
               right: 0,
               top: 0,
               height: Platform.OS === 'ios' ? 95 : 90,
-              overflow: 'hidden',
+              backgroundColor: 'rgba(0, 0, 0, 0.95)',
+              borderTopWidth: 1,
+              borderTopColor: 'rgba(139, 92, 246, 0.2)',
             }}
-          >
-            <BlurView
-              intensity={95}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-              }}
-            />
-            <LinearGradient
-              colors={[
-                'rgba(0, 0, 0, 0.95)',
-                'rgba(0, 0, 0, 0.9)',
-                'rgba(0, 0, 0, 0.95)',
-              ]}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-              }}
-            />
-            <View
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 1,
-                backgroundColor: 'rgba(139, 92, 246, 0.3)',
-                shadowColor: '#8B5CF6',
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.5,
-                shadowRadius: 3,
-                elevation: 5,
-              }}
-            />
-          </View>
+          />
         ),
         tabBarActiveTintColor: '#ffffff',
         tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.5)',
@@ -183,19 +109,14 @@ export default function TabLayout() {
         tabBarItemStyle: {
           paddingVertical: 4,
         },
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Discover',
           tabBarIcon: ({ size, color, focused }) => (
-            <TabIcon
-              icon={Compass}
-              size={size}
-              color={color}
-              focused={focused}
-              label="Discover"
-            />
+            <TabIcon icon={Compass} size={size} color={color} focused={focused} label="Discover" />
           ),
           tabBarAccessibilityLabel: 'Discover streams and games',
           // tabBarTestID: 'discover-tab',
@@ -229,13 +150,7 @@ export default function TabLayout() {
         options={{
           title: 'Favorites',
           tabBarIcon: ({ size, color, focused }) => (
-            <TabIcon
-              icon={Heart}
-              size={size}
-              color={color}
-              focused={focused}
-              label="Favorites"
-            />
+            <TabIcon icon={Heart} size={size} color={color} focused={focused} label="Favorites" />
           ),
           tabBarAccessibilityLabel: 'Your favorite streamers',
           // tabBarTestID: 'favorites-tab',
@@ -249,13 +164,7 @@ export default function TabLayout() {
         options={{
           title: 'Premium',
           tabBarIcon: ({ size, color, focused }) => (
-            <TabIcon
-              icon={Crown}
-              size={size}
-              color={color}
-              focused={focused}
-              label="Premium"
-            />
+            <TabIcon icon={Crown} size={size} color={color} focused={focused} label="Premium" />
           ),
           tabBarAccessibilityLabel: 'Subscription and premium features',
           // tabBarTestID: 'premium-tab',
@@ -269,13 +178,7 @@ export default function TabLayout() {
         options={{
           title: 'Settings',
           tabBarIcon: ({ size, color, focused }) => (
-            <TabIcon
-              icon={Settings}
-              size={size}
-              color={color}
-              focused={focused}
-              label="Settings"
-            />
+            <TabIcon icon={Settings} size={size} color={color} focused={focused} label="Settings" />
           ),
           tabBarAccessibilityLabel: 'App settings and preferences',
           // tabBarTestID: 'settings-tab',

@@ -1,3 +1,6 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Sparkles } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   View,
@@ -11,10 +14,6 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Sparkles } from 'lucide-react-native';
-import { router } from 'expo-router';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -22,6 +21,7 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -42,35 +42,37 @@ export default function SignInScreen() {
   React.useEffect(() => {
     // Logo entrance animation
     logoScale.value = withSpring(1, { damping: 15 });
-    
+
     // Sparkle rotation
     sparkleRotation.value = withTiming(360, { duration: 3000 });
   }, []);
 
   const validateForm = () => {
     const errors: { [key: string]: string } = {};
-    
+
     if (!email.trim()) {
       errors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       errors.email = 'Please enter a valid email';
     }
-    
+
     if (!password.trim()) {
       errors.password = 'Password is required';
     } else if (password.length < 6) {
       errors.password = 'Password must be at least 6 characters';
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSignIn = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      return;
+    }
 
     const result = await signIn(email, password);
-    
+
     if (result.error) {
       Alert.alert(
         'Sign In Failed',
@@ -103,11 +105,8 @@ export default function SignInScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']}
-        style={styles.background}
-      />
-      
+      <LinearGradient colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']} style={styles.background} />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardContainer}
@@ -116,10 +115,7 @@ export default function SignInScreen() {
           {/* Logo Section */}
           <Animated.View style={[styles.logoSection, animatedLogoStyle]}>
             <View style={styles.logoContainer}>
-              <LinearGradient
-                colors={['#8B5CF6', '#A855F7', '#C084FC']}
-                style={styles.logo}
-              >
+              <LinearGradient colors={['#8B5CF6', '#A855F7', '#C084FC']} style={styles.logo}>
                 <Animated.View style={[styles.sparkle, animatedSparkleStyle]}>
                   <Sparkles size={32} color="#fff" />
                 </Animated.View>
@@ -151,9 +147,7 @@ export default function SignInScreen() {
                   autoComplete="email"
                 />
               </View>
-              {formErrors.email && (
-                <Text style={styles.errorText}>{formErrors.email}</Text>
-              )}
+              {formErrors.email && <Text style={styles.errorText}>{formErrors.email}</Text>}
             </View>
 
             {/* Password Input */}
@@ -180,15 +174,13 @@ export default function SignInScreen() {
                   )}
                 </TouchableOpacity>
               </View>
-              {formErrors.password && (
-                <Text style={styles.errorText}>{formErrors.password}</Text>
-              )}
+              {formErrors.password && <Text style={styles.errorText}>{formErrors.password}</Text>}
             </View>
 
             {/* Forgot Password */}
             <TouchableOpacity
               style={styles.forgotPassword}
-              onPress={() => router.push('/(auth)/forgot-password')}
+              onPress={() => console.log('Forgot password not implemented')}
             >
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
@@ -202,10 +194,7 @@ export default function SignInScreen() {
                 onPressOut={handleButtonPressOut}
                 disabled={isLoading}
               >
-                <LinearGradient
-                  colors={['#8B5CF6', '#7C3AED']}
-                  style={styles.signInGradient}
-                >
+                <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.signInGradient}>
                   {isLoading ? (
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
@@ -232,7 +221,7 @@ export default function SignInScreen() {
             {/* Sign Up Link */}
             <View style={styles.signUpContainer}>
               <Text style={styles.signUpText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/(auth)/sign-up')}>
+              <TouchableOpacity onPress={() => console.log('Sign up not implemented')}>
                 <Text style={styles.signUpLink}>Sign Up</Text>
               </TouchableOpacity>
             </View>

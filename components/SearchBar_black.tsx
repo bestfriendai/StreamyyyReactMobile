@@ -1,6 +1,7 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Search, X, Sparkles } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { Search, X, Sparkles } from 'lucide-react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -8,7 +9,6 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Theme } from '@/constants/Theme';
 
 interface SearchBarProps {
@@ -18,11 +18,11 @@ interface SearchBarProps {
   loading?: boolean;
 }
 
-export function SearchBar({ 
-  onSearch, 
-  onClear, 
-  placeholder = 'Search streamers...', 
-  loading = false 
+export function SearchBar({
+  onSearch,
+  onClear,
+  placeholder = 'Search streamers...',
+  loading = false,
 }: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -66,19 +66,21 @@ export function SearchBar({
 
   const handleChangeText = (text: string) => {
     setQuery(text);
-    if (text.length === 0) onClear();
+    if (text.length === 0) {
+      onClear();
+    }
   };
 
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.searchWrapper, animatedStyle]}>
         <Animated.View style={[styles.glowEffect, animatedGlowStyle]} />
-        <LinearGradient
-          colors={Theme.gradients.card}
-          style={styles.searchContainer}
-        >
+        <LinearGradient colors={Theme.gradients.card} style={styles.searchContainer}>
           <View style={styles.searchIconContainer}>
-            <Search size={20} color={isFocused ? Theme.colors.accent.primary : Theme.colors.text.tertiary} />
+            <Search
+              size={20}
+              color={isFocused ? Theme.colors.accent.primary : Theme.colors.text.tertiary}
+            />
             {isFocused && (
               <Sparkles size={12} color={Theme.colors.accent.primary} style={styles.sparkleIcon} />
             )}
@@ -99,10 +101,7 @@ export function SearchBar({
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
-              <LinearGradient
-                colors={Theme.gradients.buttonActive}
-                style={styles.clearGradient}
-              >
+              <LinearGradient colors={Theme.gradients.buttonActive} style={styles.clearGradient}>
                 <X size={16} color={Theme.colors.background.primary} />
               </LinearGradient>
             </TouchableOpacity>
@@ -128,7 +127,7 @@ const styles = StyleSheet.create({
     right: -2,
     bottom: -2,
     borderRadius: 18,
-    backgroundColor: Theme.colors.accent.primary + '40',
+    backgroundColor: `${Theme.colors.accent.primary}40`,
     ...Platform.select({
       ios: {
         shadowColor: Theme.colors.accent.primary,

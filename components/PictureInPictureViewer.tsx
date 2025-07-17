@@ -1,3 +1,4 @@
+import { MotiView, MotiText } from 'moti';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -10,18 +11,9 @@ import {
   Platform,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { MotiView, MotiText } from 'moti';
 import { BlurView } from '@react-native-community/blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Maximize2,
-  Minimize2,
-  Volume2,
-  VolumeX,
-  X,
-  Move,
-  RotateCw,
-} from 'lucide-react-native';
+import { Maximize2, Minimize2, Volume2, VolumeX, X, Move, RotateCw } from 'lucide-react-native';
 import { TwitchStream } from '@/services/twitchApi';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -44,7 +36,7 @@ export const PictureInPictureViewer: React.FC<PictureInPictureViewerProps> = ({
   const [isMuted, setIsMuted] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
-  
+
   const pan = useRef(new Animated.ValueXY(position)).current;
   const scale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -71,7 +63,7 @@ export const PictureInPictureViewer: React.FC<PictureInPictureViewerProps> = ({
     onMoveShouldSetPanResponder: (evt, gestureState) => {
       return Math.abs(gestureState.dx) > 5 || Math.abs(gestureState.dy) > 5;
     },
-    
+
     onPanResponderGrant: () => {
       setIsDragging(true);
       Animated.spring(scale, {
@@ -81,23 +73,25 @@ export const PictureInPictureViewer: React.FC<PictureInPictureViewerProps> = ({
         friction: 8,
       }).start();
     },
-    
-    onPanResponderMove: Animated.event(
-      [null, { dx: pan.x, dy: pan.y }],
-      { useNativeDriver: false }
-    ),
-    
+
+    onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], {
+      useNativeDriver: false,
+    }),
+
     onPanResponderRelease: (evt, gestureState) => {
       setIsDragging(false);
-      
+
       // Snap to edges
-      const newX = Math.max(10, Math.min(SCREEN_WIDTH - size.width - 10, 
-        position.x + gestureState.dx));
-      const newY = Math.max(50, Math.min(SCREEN_HEIGHT - size.height - 100, 
-        position.y + gestureState.dy));
-      
+      const newX = Math.max(
+        10,
+        Math.min(SCREEN_WIDTH - size.width - 10, position.x + gestureState.dx)
+      );
+      const newY = Math.max(
+        50,
+        Math.min(SCREEN_HEIGHT - size.height - 100, position.y + gestureState.dy)
+
       setPosition({ x: newX, y: newY });
-      
+
       Animated.parallel([
         Animated.spring(pan, {
           toValue: { x: 0, y: 0 },
@@ -108,7 +102,7 @@ export const PictureInPictureViewer: React.FC<PictureInPictureViewerProps> = ({
           useNativeDriver: true,
           tension: 300,
           friction: 8,
-        })
+        }),
       ]).start();
     },
   });
@@ -116,24 +110,26 @@ export const PictureInPictureViewer: React.FC<PictureInPictureViewerProps> = ({
   const toggleMute = () => {
     setIsMuted(!isMuted);
     if (webViewRef.current) {
-      webViewRef.current.postMessage(JSON.stringify({
-        action: isMuted ? 'unmute' : 'mute',
-        id: stream.id
-      }));
+      webViewRef.current.postMessage(
+        JSON.stringify({
+          action: isMuted ? 'unmute' : 'mute',
+          id: stream.id,
+        })
+      );
     }
   };
 
   const handleResize = () => {
-    const newSize = size.width === 160 
+    const newSize = size.width === 160
       ? { width: 240, height: 135 }
       : { width: 160, height: 90 };
-    
+
     setSize(newSize);
-    
+
     // Adjust position if resized PiP goes off screen
     const adjustedX = Math.min(position.x, SCREEN_WIDTH - newSize.width - 10);
     const adjustedY = Math.min(position.y, SCREEN_HEIGHT - newSize.height - 100);
-    
+
     if (adjustedX !== position.x || adjustedY !== position.y) {
       setPosition({ x: adjustedX, y: adjustedY });
     }
@@ -141,7 +137,7 @@ export const PictureInPictureViewer: React.FC<PictureInPictureViewerProps> = ({
 
   // Generate Twitch embed HTML optimized for PiP
   const embedUrl = `https://player.twitch.tv/?channel=${stream.user_name}&parent=localhost&muted=${isMuted}&autoplay=true`;
-  
+
   const twitchEmbedHtml = `
     <!DOCTYPE html>
     <html>
@@ -182,7 +178,7 @@ export const PictureInPictureViewer: React.FC<PictureInPictureViewerProps> = ({
     </html>
   `;
 
-  if (!isVisible) return null;
+  if (!isVisible) {return null;}
 
   return (
     <Animated.View
@@ -193,12 +189,8 @@ export const PictureInPictureViewer: React.FC<PictureInPictureViewerProps> = ({
           top: position.y,
           width: size.width,
           height: size.height,
-          opacity: opacity,
-          transform: [
-            { translateX: pan.x },
-            { translateY: pan.y },
-            { scale: scale }
-          ],
+          opacity,
+          transform: [{ translateX: pan.x }, { translateY: pan.y }, { scale: scale }],
         },
       ]}
       {...panResponder.panHandlers}
@@ -223,15 +215,15 @@ export const PictureInPictureViewer: React.FC<PictureInPictureViewerProps> = ({
                 style={StyleSheet.absoluteFill}
                 onLoadStart={() => setIsLoading(true)}
                 onLoadEnd={() => setIsLoading(false)}
-                allowsInlineMediaPlaybook={true}
+                allowsInlineMediaPlaybook
                 mediaPlaybackRequiresUserAction={false}
                 scrollEnabled={false}
                 bounces={false}
-                javaScriptEnabled={true}
-                domStorageEnabled={true}
-                startInLoadingState={true}
+                javaScriptEnabled
+                domStorageEnabled
+                startInLoadingState
               />
-              
+
               {/* Loading overlay */}
               {isLoading && (
                 <MotiView
@@ -239,11 +231,7 @@ export const PictureInPictureViewer: React.FC<PictureInPictureViewerProps> = ({
                   animate={{ opacity: 1 }}
                   style={[StyleSheet.absoluteFill, styles.loadingOverlay]}
                 >
-                  <BlurView
-                    style={StyleSheet.absoluteFill}
-                    blurType="dark"
-                    blurAmount={20}
-                  />
+                  <BlurView style={StyleSheet.absoluteFill} blurType="dark" blurAmount={20} />
                   <MotiView
                     from={{ rotate: '0deg' }}
                     animate={{ rotate: '360deg' }}
@@ -277,10 +265,7 @@ export const PictureInPictureViewer: React.FC<PictureInPictureViewerProps> = ({
                 colors={['rgba(0,0,0,0.8)', 'transparent']}
                 style={styles.infoOverlay}
               >
-                <MotiText
-                  style={styles.streamTitle}
-                  numberOfLines={1}
-                >
+                <MotiText style={styles.streamTitle} numberOfLines={1}>
                   {stream.user_name}
                 </MotiText>
                 <View style={styles.liveIndicator}>
@@ -291,10 +276,7 @@ export const PictureInPictureViewer: React.FC<PictureInPictureViewerProps> = ({
 
               {/* Controls */}
               <BlurView style={styles.controlsContainer} blurType="dark" blurAmount={10}>
-                <TouchableOpacity
-                  style={styles.controlButton}
-                  onPress={toggleMute}
-                >
+                <TouchableOpacity style={styles.controlButton} onPress={toggleMute}>
                   {isMuted ? (
                     <VolumeX size={12} color="#fff" />
                   ) : (
@@ -302,10 +284,7 @@ export const PictureInPictureViewer: React.FC<PictureInPictureViewerProps> = ({
                   )}
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.controlButton}
-                  onPress={handleResize}
-                >
+                <TouchableOpacity style={styles.controlButton} onPress={handleResize}>
                   {size.width === 160 ? (
                     <Maximize2 size={12} color="#fff" />
                   ) : (
@@ -313,17 +292,11 @@ export const PictureInPictureViewer: React.FC<PictureInPictureViewerProps> = ({
                   )}
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.controlButton}
-                  onPress={onMaximize}
-                >
+                <TouchableOpacity style={styles.controlButton} onPress={onMaximize}>
                   <Maximize2 size={12} color="#fff" />
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.controlButton}
-                  onPress={onClose}
-                >
+                <TouchableOpacity style={styles.controlButton} onPress={onClose}>
                   <X size={12} color="#ff4444" />
                 </TouchableOpacity>
               </BlurView>

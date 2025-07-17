@@ -3,18 +3,14 @@ module.exports = {
   root: true,
   extends: [
     'expo',
-    '@react-native-community',
-    'eslint:recommended',
-    '@typescript-eslint/recommended',
-    'prettier'
+    '@react-native-community'
   ],
   parser: '@typescript-eslint/parser',
   plugins: [
     '@typescript-eslint',
     'react',
     'react-native',
-    'react-hooks',
-    'prettier'
+    'react-hooks'
   ],
   env: {
     'react-native/react-native': true,
@@ -106,20 +102,6 @@ module.exports = {
       }
     ],
 
-    // Prettier integration
-    'prettier/prettier': [
-      'error',
-      {
-        singleQuote: true,
-        trailingComma: 'es5',
-        tabWidth: 2,
-        semi: true,
-        printWidth: 100,
-        bracketSpacing: true,
-        arrowParens: 'avoid',
-        endOfLine: 'auto'
-      }
-    ],
 
     // Custom rules for this project
     'no-restricted-imports': [

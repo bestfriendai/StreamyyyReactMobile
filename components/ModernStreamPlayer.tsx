@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -41,6 +40,7 @@ import {
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView, MotiText, AnimatePresence } from 'moti';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -52,9 +52,9 @@ import Animated, {
   withSequence,
   withDelay,
 } from 'react-native-reanimated';
-import { BlurViewFallback as BlurView } from './BlurViewFallback';
 import { TwitchStream, twitchApi } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -78,10 +78,10 @@ interface ModernStreamPlayerProps {
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 const AnimatedPanGestureHandler = Animated.createAnimatedComponent(PanGestureHandler);
 
-export function ModernStreamPlayer({ 
-  stream, 
-  onRemove, 
-  width, 
+export function ModernStreamPlayer({
+  stream,
+  onRemove,
+  width,
   height,
   isActive = false,
   onToggleActive,
@@ -108,11 +108,13 @@ export function ModernStreamPlayer({
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [showPlaybackRateOptions, setShowPlaybackRateOptions] = useState(false);
-  const [connectionQuality, setConnectionQuality] = useState<'excellent' | 'good' | 'poor' | 'disconnected'>('good');
+  const [connectionQuality, setConnectionQuality] = useState<
+    'excellent' | 'good' | 'poor' | 'disconnected'
+  >('good');
   const [isBuffering, setIsBuffering] = useState(false);
   const [lastTapTime, setLastTapTime] = useState(0);
   const [tapCount, setTapCount] = useState(0);
-  
+
   // Refs
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(false);
@@ -120,7 +122,7 @@ export function ModernStreamPlayer({
   const panRef = useRef<PanGestureHandler>(null);
   const tapRef = useRef<TapGestureHandler>(null);
   const doubleTapRef = useRef<TapGestureHandler>(null);
-  
+
   // Animation values
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -139,17 +141,18 @@ export function ModernStreamPlayer({
   const viewerWidth = width || screenWidth - 32;
   const viewerHeight = height || (viewerWidth * 9) / 16;
 
-  const embedUrl = twitchApi.generateEmbedUrl(stream.user_login) + (isMuted ? '&muted=true' : '&muted=false');
+  const embedUrl =
+    twitchApi.generateEmbedUrl(stream.user_login) + (isMuted ? '&muted=true' : '&muted=false');
 
   // Lifecycle effects
   useEffect(() => {
     isMountedRef.current = true;
-    
+
     // Start loading animation
     loadingRotation.value = withTiming(360, { duration: 2000 }, () => {
       loadingRotation.value = 0;
     });
-    
+
     return () => {
       isMountedRef.current = false;
       if (timeoutRef.current) {
@@ -211,12 +214,12 @@ export function ModernStreamPlayer({
   useEffect(() => {
     if (showControls && autoHideControls) {
       controlsOpacity.value = withTiming(1, { duration: 200 });
-      
+
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
-      
+
       timeoutRef.current = setTimeout(() => {
         if (isMountedRef.current) {
           setShowControls(false);
@@ -251,27 +254,32 @@ export function ModernStreamPlayer({
       context.startY = gestureY.value;
     },
     onActive: (event, context) => {
-      if (!enableGestures) return;
-      
+      if (!enableGestures) {return;}
+
       gestureX.value = context.startX + event.translationX;
       gestureY.value = context.startY + event.translationY;
-      
+
       // Scale based on gesture magnitude
-      const distance = Math.sqrt(event.translationX * event.translationX + event.translationY * event.translationY);
+      const distance = Math.sqrt(
+        event.translationX * event.translationX + event.translationY * event.translationY
+      );
       gestureScale.value = 1 + distance / 500;
     },
-    onEnd: (event) => {
-      if (!enableGestures) return;
-      
+    onEnd: event => {
+      if (!enableGestures) {return;}
+
       gestureX.value = withSpring(0);
       gestureY.value = withSpring(0);
       gestureScale.value = withSpring(1);
-      
+
       // Handle swipe gestures
       const velocityThreshold = 500;
       const distanceThreshold = 100;
-      
-      if (Math.abs(event.velocityX) > velocityThreshold || Math.abs(event.translationX) > distanceThreshold) {
+
+      if (
+        Math.abs(event.velocityX) > velocityThreshold ||
+        Math.abs(event.translationX) > distanceThreshold
+      ) {
         if (event.translationX > 0) {
           // Swipe right - skip forward
           runOnJS(handleSkipForward)();
@@ -280,8 +288,10 @@ export function ModernStreamPlayer({
           runOnJS(handleSkipBack)();
         }
       }
-      
-      if (Math.abs(event.velocityY) > velocityThreshold || Math.abs(event.translationY) > distanceThreshold) {
+
+        Math.abs(event.velocityY) > velocityThreshold ||
+        Math.abs(event.translationY) > distanceThreshold
+      ) {
         if (event.translationY < 0) {
           // Swipe up - increase volume
           runOnJS(handleVolumeUp)();
@@ -333,22 +343,31 @@ export function ModernStreamPlayer({
         withTiming(1.05, { duration: 200 }),
         withTiming(1, { duration: 200 })
       );
-      
+
       Alert.alert(
         stream.user_name,
         `${stream.game_name}\n${viewerCount.toLocaleString()} viewers`,
         [
-          { text: "Picture-in-Picture", onPress: () => onTogglePiP?.() },
-          { text: "Quality Settings", onPress: () => onOpenQuality?.() },
-          { text: "Share Stream", onPress: () => onShare?.() },
-          { text: "Toggle Favorite", onPress: () => setIsFavorite(!isFavorite) },
-          { text: "Toggle Bookmark", onPress: () => setIsBookmarked(!isBookmarked) },
-          { text: "Remove Stream", style: "destructive", onPress: () => onRemove(stream.id) },
-          { text: "Cancel", style: "cancel" }
+          { text: 'Picture-in-Picture', onPress: () => onTogglePiP?.() },
+          { text: 'Quality Settings', onPress: () => onOpenQuality?.() },
+          { text: 'Share Stream', onPress: () => onShare?.() },
+          { text: 'Toggle Favorite', onPress: () => setIsFavorite(!isFavorite) },
+          { text: 'Toggle Bookmark', onPress: () => setIsBookmarked(!isBookmarked) },
+          { text: 'Remove Stream', style: 'destructive', onPress: () => onRemove(stream.id) },
+          { text: 'Cancel', style: 'cancel' }
         ]
       );
     }
-  }, [stream, viewerCount, isFavorite, isBookmarked, onTogglePiP, onOpenQuality, onShare, onRemove]);
+  }, [
+    stream,
+    viewerCount,
+    isFavorite,
+    isBookmarked,
+    onTogglePiP,
+    onOpenQuality,
+    onShare,
+    onRemove,
+  ]);
 
   const handleMuteToggle = useCallback(() => {
     if (isMountedRef.current) {
@@ -445,11 +464,10 @@ export function ModernStreamPlayer({
 
   const animatedContainerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
-    borderColor: interpolate(
-      borderGlow.value,
-      [0, 1],
-      [0, 1]
-    ) > 0.5 ? ModernTheme.colors.accent[500] : ModernTheme.colors.border.primary,
+    borderColor:
+      interpolate(borderGlow.value, [0, 1], [0, 1]) > 0.5
+        ? ModernTheme.colors.accent[500]
+        : ModernTheme.colors.border.primary,
     borderWidth: interpolate(borderGlow.value, [0, 1], [1, 3]),
   }));
 
@@ -479,21 +497,29 @@ export function ModernStreamPlayer({
   // Connection quality indicator
   const getConnectionColor = () => {
     switch (connectionQuality) {
-      case 'excellent': return ModernTheme.colors.success[500];
-      case 'good': return ModernTheme.colors.success[400];
-      case 'poor': return ModernTheme.colors.error[400];
-      case 'disconnected': return ModernTheme.colors.gray[500];
-      default: return ModernTheme.colors.gray[400];
+      case 'excellent':
+        return ModernTheme.colors.success[500];
+      case 'good':
+        return ModernTheme.colors.success[400];
+      case 'poor':
+        return ModernTheme.colors.error[400];
+      case 'disconnected':
+        return ModernTheme.colors.gray[500];
+      default:
+        return ModernTheme.colors.gray[400];
     }
   };
 
   const getConnectionIcon = () => {
     switch (connectionQuality) {
       case 'excellent':
-      case 'good': return <Wifi size={12} color={getConnectionColor()} />;
-      case 'poor': 
-      case 'disconnected': return <WifiOff size={12} color={getConnectionColor()} />;
-      default: return <Wifi size={12} color={getConnectionColor()} />;
+      case 'good':
+        return <Wifi size={12} color={getConnectionColor()} />;
+      case 'poor':
+      case 'disconnected':
+        return <WifiOff size={12} color={getConnectionColor()} />;
+      default:
+        return <Wifi size={12} color={getConnectionColor()} />;
     }
   };
 
@@ -507,7 +533,7 @@ export function ModernStreamPlayer({
           </TouchableOpacity>
           <View style={styles.volumeTrack}>
             <View style={[styles.volumeFill, { width: `${volume * 100}%` }]} />
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.volumeThumb, { left: `${volume * 100}%` }]}
               onPress={() => {}}
             />
@@ -525,19 +551,21 @@ export function ModernStreamPlayer({
     <Animated.View style={[styles.playbackRateOptions, animatedPlaybackRateStyle]}>
       <BlurView style={styles.playbackRateBlur} blurType="dark" blurAmount={20}>
         <View style={styles.playbackRateContent}>
-          {[0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((rate) => (
+          {[0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map(rate => (
             <TouchableOpacity
               key={rate}
               style={[
                 styles.playbackRateOption,
-                playbackRate === rate && styles.playbackRateOptionActive
+                playbackRate === rate && styles.playbackRateOptionActive,
               ]}
               onPress={() => handlePlaybackRateChange(rate)}
             >
-              <Text style={[
-                styles.playbackRateText,
-                playbackRate === rate && styles.playbackRateTextActive
-              ]}>
+              <Text
+                style={[
+                  styles.playbackRateText,
+                  playbackRate === rate && styles.playbackRateTextActive,
+                ]}
+              >
                 {rate}x
               </Text>
             </TouchableOpacity>
@@ -548,7 +576,13 @@ export function ModernStreamPlayer({
   );
 
   return (
-    <Animated.View style={[styles.container, { width: viewerWidth, height: viewerHeight }, animatedContainerStyle]}>
+    <Animated.View
+      style={[
+        styles.container,
+        { width: viewerWidth, height: viewerHeight },
+        animatedContainerStyle,
+      ]}
+    >
       <MotiView
         from={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -589,16 +623,16 @@ export function ModernStreamPlayer({
                       onLoadStart={handleWebViewLoadStart}
                       onLoad={handleWebViewLoad}
                       onError={handleWebViewError}
-                      allowsInlineMediaPlaybook={true}
+                      allowsInlineMediaPlaybook
                       mediaPlaybackRequiresUserAction={false}
                       scrollEnabled={false}
                       bounces={false}
-                      javaScriptEnabled={true}
-                      domStorageEnabled={true}
-                      startInLoadingState={true}
+                      javaScriptEnabled
+                      domStorageEnabled
+                      startInLoadingState
                       allowsFullscreenVideo={allowFullscreen}
                     />
-                    
+
                     {/* Loading overlay */}
                     {isLoading && (
                       <MotiView
@@ -684,11 +718,9 @@ export function ModernStreamPlayer({
                             />
                             <Text style={styles.liveText}>LIVE</Text>
                           </View>
-                          <View style={styles.connectionIndicator}>
-                            {getConnectionIcon()}
-                          </View>
+                          <View style={styles.connectionIndicator}>{getConnectionIcon()}</View>
                         </View>
-                        
+
                         <MotiText
                           from={{ opacity: 0, translateY: 10 }}
                           animate={{ opacity: 1, translateY: 0 }}
@@ -698,16 +730,14 @@ export function ModernStreamPlayer({
                         >
                           {stream.user_name}
                         </MotiText>
-                        
+
                         <View style={styles.streamMeta}>
                           <Text style={styles.streamGame} numberOfLines={1}>
                             {stream.game_name}
                           </Text>
                           <View style={styles.viewerInfo}>
                             <Eye size={12} color={ModernTheme.colors.text.secondary} />
-                            <Text style={styles.viewerCount}>
-                              {viewerCount.toLocaleString()}
-                            </Text>
+                            <Text style={styles.viewerCount}>{viewerCount.toLocaleString()}</Text>
                           </View>
                         </View>
                       </View>
@@ -750,9 +780,10 @@ export function ModernStreamPlayer({
                               onLongPress={handleVolumeToggle}
                             >
                               <LinearGradient
-                                colors={isMuted 
-                                  ? ModernTheme.colors.gradients.danger
-                                  : ModernTheme.colors.gradients.primary
+                                colors={
+                                  isMuted
+                                    ? ModernTheme.colors.gradients.danger
+                                    : ModernTheme.colors.gradients.primary
                                 }
                                 style={styles.controlGradient}
                               >
@@ -811,16 +842,17 @@ export function ModernStreamPlayer({
                                   onPress={() => setIsFavorite(!isFavorite)}
                                 >
                                   <LinearGradient
-                                    colors={isFavorite 
-                                      ? ModernTheme.colors.gradients.danger
-                                      : ModernTheme.colors.gradients.secondary
+                                    colors={
+                                      isFavorite
+                                        ? ModernTheme.colors.gradients.danger
+                                        : ModernTheme.colors.gradients.secondary
                                     }
                                     style={styles.controlGradient}
                                   >
-                                    <Heart 
-                                      size={16} 
-                                      color="#fff" 
-                                      fill={isFavorite ? "#fff" : "transparent"}
+                                    <Heart
+                                      size={16}
+                                      color="#fff"
+                                      fill={isFavorite ? '#fff' : 'transparent'}
                                     />
                                   </LinearGradient>
                                 </TouchableOpacity>
@@ -830,25 +862,23 @@ export function ModernStreamPlayer({
                                   onPress={() => setIsBookmarked(!isBookmarked)}
                                 >
                                   <LinearGradient
-                                    colors={isBookmarked 
-                                      ? ModernTheme.colors.gradients.success
-                                      : ModernTheme.colors.gradients.secondary
+                                    colors={
+                                      isBookmarked
+                                        ? ModernTheme.colors.gradients.success
+                                        : ModernTheme.colors.gradients.secondary
                                     }
                                     style={styles.controlGradient}
                                   >
-                                    <Bookmark 
-                                      size={16} 
-                                      color="#fff" 
-                                      fill={isBookmarked ? "#fff" : "transparent"}
+                                    <Bookmark
+                                      size={16}
+                                      color="#fff"
+                                      fill={isBookmarked ? '#fff' : 'transparent'}
                                     />
                                   </LinearGradient>
                                 </TouchableOpacity>
 
                                 {onShare && (
-                                  <TouchableOpacity
-                                    style={styles.controlButton}
-                                    onPress={onShare}
-                                  >
+                                  <TouchableOpacity style={styles.controlButton} onPress={onShare}>
                                     <LinearGradient
                                       colors={ModernTheme.colors.gradients.primary}
                                       style={styles.controlGradient}
@@ -871,9 +901,7 @@ export function ModernStreamPlayer({
                                 colors={ModernTheme.colors.gradients.secondary}
                                 style={styles.controlGradient}
                               >
-                                <Text style={styles.playbackRateIndicator}>
-                                  {playbackRate}x
-                                </Text>
+                                <Text style={styles.playbackRateIndicator}>{playbackRate}x</Text>
                               </LinearGradient>
                             </TouchableOpacity>
 

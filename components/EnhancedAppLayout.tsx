@@ -1,19 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  Platform,
-  StatusBar,
-  SafeAreaView,
-  TouchableOpacity,
-  Modal,
-  ScrollView,
-  Alert,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router, useSegments } from 'expo-router';
 import {
   Search,
   Bell,
@@ -34,6 +20,20 @@ import {
   ChevronDown,
   Filter,
 } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  Platform,
+  StatusBar,
+  SafeAreaView,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+  Alert,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -41,10 +41,15 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { router, useSegments } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGlobalStore, useActions, useTempState, useAppTheme } from '@/services/SimpleStateManager';
 import { navigationService } from '@/services/NavigationService';
+import {
+  useGlobalStore,
+  useActions,
+  useTempState,
+  useAppTheme,
+} from '@/services/SimpleStateManager';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -129,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({
         colors={['rgba(15, 15, 15, 0.95)', 'rgba(26, 26, 26, 0.95)']}
         style={StyleSheet.absoluteFill}
       />
-      
+
       <View style={styles.headerContent}>
         {/* Left Section */}
         <View style={styles.headerLeft}>
@@ -138,7 +143,7 @@ const Header: React.FC<HeaderProps> = ({
               <Menu size={24} color="#fff" />
             </TouchableOpacity>
           )}
-          
+
           {title && (
             <Text style={styles.headerTitle} numberOfLines={1}>
               {title}
@@ -242,10 +247,26 @@ const SideMenu: React.FC<SideMenuProps> = ({ visible, onClose }) => {
 
   const menuItems = [
     { icon: Compass, title: 'Discover', onPress: () => navigationService.navigate('/(tabs)') },
-    { icon: Grid3X3, title: 'Multi-Stream', onPress: () => navigationService.navigate('/(tabs)/grid') },
-    { icon: Heart, title: 'Favorites', onPress: () => navigationService.navigate('/(tabs)/favorites') },
-    { icon: Crown, title: 'Premium', onPress: () => navigationService.navigate('/(tabs)/subscription') },
-    { icon: Settings, title: 'Settings', onPress: () => navigationService.navigate('/(tabs)/settings') },
+    {
+      icon: Grid3X3,
+      title: 'Multi-Stream',
+      onPress: () => navigationService.navigate('/(tabs)/grid'),
+    },
+    {
+      icon: Heart,
+      title: 'Favorites',
+      onPress: () => navigationService.navigate('/(tabs)/favorites'),
+    },
+    {
+      icon: Crown,
+      title: 'Premium',
+      onPress: () => navigationService.navigate('/(tabs)/subscription'),
+    },
+    {
+      icon: Settings,
+      title: 'Settings',
+      onPress: () => navigationService.navigate('/(tabs)/settings'),
+    },
   ];
 
   const handleSignOut = async () => {
@@ -264,19 +285,16 @@ const SideMenu: React.FC<SideMenuProps> = ({ visible, onClose }) => {
         <Animated.View style={[styles.menuBackdrop, overlayStyle]}>
           <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} />
         </Animated.View>
-        
+
         <Animated.View style={[styles.sideMenu, animatedStyle]}>
-          <LinearGradient
-            colors={['#1a1a1a', '#2a2a2a']}
-            style={StyleSheet.absoluteFill}
-          />
+          <LinearGradient colors={['#1a1a1a', '#2a2a2a']} style={StyleSheet.absoluteFill} />
 
           {/* Header */}
           <View style={styles.menuHeader}>
             <TouchableOpacity style={styles.menuCloseButton} onPress={onClose}>
               <X size={24} color="#fff" />
             </TouchableOpacity>
-            
+
             <View style={styles.menuProfile}>
               {isSignedIn ? (
                 <>
@@ -360,13 +378,15 @@ const EnhancedTabBar: React.FC<EnhancedTabBarProps> = ({ state, descriptors, nav
         colors={['rgba(15, 15, 15, 0.95)', 'rgba(26, 26, 26, 0.95)']}
         style={StyleSheet.absoluteFill}
       />
-      
+
       {state.routes.map((route: any, index: number) => {
         const { options } = descriptors[route.key];
         const isFocused = state.index === index;
         const tabItem = tabItems.find(item => item.name === route.name);
-        
-        if (!tabItem) return null;
+
+        if (!tabItem) {
+          return null;
+        }
 
         const onPress = () => {
           const event = navigation.emit({
@@ -401,10 +421,10 @@ const EnhancedTabBar: React.FC<EnhancedTabBarProps> = ({ state, descriptors, nav
                 </View>
               )}
             </View>
-            <Text style={[styles.tabLabel, { color: textColor }]}>
-              {tabItem.title}
-            </Text>
-            {isFocused && <View style={[styles.tabIndicator, { backgroundColor: theme.primaryColor }]} />}
+            <Text style={[styles.tabLabel, { color: textColor }]}>{tabItem.title}</Text>
+            {isFocused && (
+              <View style={[styles.tabIndicator, { backgroundColor: theme.primaryColor }]} />
+            )}
           </TouchableOpacity>
         );
       })}
@@ -443,17 +463,10 @@ export const EnhancedAppLayout: React.FC<EnhancedAppLayoutProps> = ({
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="transparent"
-        translucent
-      />
-      
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+
       {/* Background */}
-      <LinearGradient
-        colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']}
-        style={StyleSheet.absoluteFill}
-      />
+      <LinearGradient colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']} style={StyleSheet.absoluteFill} />
 
       {/* Header */}
       {shouldShowHeader && (
@@ -465,24 +478,21 @@ export const EnhancedAppLayout: React.FC<EnhancedAppLayoutProps> = ({
       )}
 
       {/* Main Content */}
-      <View style={styles.content}>
-        {children}
-      </View>
+      <View style={styles.content}>{children}</View>
 
       {/* Custom Tab Bar */}
       {shouldShowTabBar && (
-        <EnhancedTabBar 
+        <EnhancedTabBar
           state={{ routes: tabItems.map(item => ({ name: item.name, key: item.name })), index: 0 }}
           descriptors={{}}
-          navigation={{ navigate: (name: string) => router.push(`/(tabs)/${name === 'index' ? '' : name}`) }}
+          navigation={{
+            navigate: (name: string) => router.push(`/(tabs)/${name === 'index' ? '' : name}`),
+          }}
         />
       )}
 
       {/* Side Menu */}
-      <SideMenu
-        visible={menuVisible}
-        onClose={() => setMenuVisible(false)}
-      />
+      <SideMenu visible={menuVisible} onClose={() => setMenuVisible(false)} />
 
       {/* Offline Indicator */}
       {!temp.isConnected && (

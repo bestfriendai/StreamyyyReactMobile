@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -30,7 +30,7 @@ export function Toast({ message, type, visible, onHide, duration = 3000 }: Toast
       translateY.value = withSpring(0, { damping: 15 });
       opacity.value = withTiming(1, { duration: 300 });
       scale.value = withSpring(1, { damping: 15 });
-      
+
       // Auto-hide after duration
       const timer = setTimeout(() => {
         hideToast();
@@ -45,7 +45,7 @@ export function Toast({ message, type, visible, onHide, duration = 3000 }: Toast
   const hideToast = () => {
     translateY.value = withTiming(-100, { duration: 300 });
     opacity.value = withTiming(0, { duration: 300 });
-    scale.value = withTiming(0.8, { duration: 300 }, (finished) => {
+    scale.value = withTiming(0.8, { duration: 300 }, finished => {
       if (finished) {
         runOnJS(onHide)();
       }
@@ -53,10 +53,7 @@ export function Toast({ message, type, visible, onHide, duration = 3000 }: Toast
   };
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: translateY.value },
-      { scale: scale.value },
-    ],
+    transform: [{ translateY: translateY.value }, { scale: scale.value }],
     opacity: opacity.value,
   }));
 
@@ -95,7 +92,9 @@ export function Toast({ message, type, visible, onHide, duration = 3000 }: Toast
     }
   };
 
-  if (!visible) return null;
+  if (!visible) {
+    return null;
+  }
 
   const config = getToastConfig();
 

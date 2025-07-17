@@ -1,8 +1,8 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Volume2, VolumeX, Maximize, X } from 'lucide-react-native';
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { Volume2, VolumeX, Maximize, X } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { TwitchStream, twitchApi } from '@/services/twitchApi';
 
 interface StreamViewerProps {
@@ -22,11 +22,12 @@ export function StreamViewer({ stream, onRemove, width, height }: StreamViewerPr
   const viewerWidth = width || screenWidth - 32;
   const viewerHeight = height || (viewerWidth * 9) / 16;
 
-  const embedUrl = twitchApi.generateEmbedUrl(stream.user_login) + (isMuted ? '&muted=true' : '&muted=false');
+  const embedUrl =
+    twitchApi.generateEmbedUrl(stream.user_login) + (isMuted ? '&muted=true' : '&muted=false');
 
   useEffect(() => {
     isMountedRef.current = true;
-    
+
     return () => {
       isMountedRef.current = false;
       // Clear any existing timeout when component unmounts
@@ -44,7 +45,7 @@ export function StreamViewer({ stream, onRemove, width, height }: StreamViewerPr
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
-      
+
       // Set new timeout
       timeoutRef.current = setTimeout(() => {
         // Only update state if component is still mounted
@@ -77,28 +78,24 @@ export function StreamViewer({ stream, onRemove, width, height }: StreamViewerPr
 
   return (
     <View style={[styles.container, { width: viewerWidth, height: viewerHeight }]}>
-      <TouchableOpacity
-        style={styles.touchArea}
-        onPress={handlePress}
-        activeOpacity={1}
-      >
+      <TouchableOpacity style={styles.touchArea} onPress={handlePress} activeOpacity={1}>
         <WebView
           source={{ uri: embedUrl }}
           style={styles.webview}
           allowsFullscreenVideo={false}
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          startInLoadingState={true}
+          javaScriptEnabled
+          domStorageEnabled
+          startInLoadingState
           mixedContentMode="compatibility"
           scrollEnabled={false}
           bounces={false}
           onLoadStart={() => console.log(`Loading stream: ${stream.user_name}`)}
           onLoad={() => console.log(`Stream loaded: ${stream.user_name}`)}
-          onError={(error) => console.error(`Stream error for ${stream.user_name}:`, error)}
+          onError={error => console.error(`Stream error for ${stream.user_name}:`, error)}
         />
-        
+
         {showControls && (
           <View style={styles.controlsOverlay}>
             <LinearGradient
@@ -115,10 +112,7 @@ export function StreamViewer({ stream, onRemove, width, height }: StreamViewerPr
                     <Text style={styles.liveText}>LIVE</Text>
                   </View>
                 </View>
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => onRemove(stream.id)}
-                >
+                <TouchableOpacity style={styles.closeButton} onPress={() => onRemove(stream.id)}>
                   <LinearGradient
                     colors={['rgba(239, 68, 68, 0.9)', 'rgba(220, 38, 38, 0.9)']}
                     style={styles.closeGradient}
@@ -127,7 +121,7 @@ export function StreamViewer({ stream, onRemove, width, height }: StreamViewerPr
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
-              
+
               <View style={styles.bottomControls}>
                 <View style={styles.streamDetails}>
                   <Text style={styles.streamTitle} numberOfLines={1}>
@@ -138,10 +132,7 @@ export function StreamViewer({ stream, onRemove, width, height }: StreamViewerPr
                   </Text>
                 </View>
                 <View style={styles.controlButtons}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handleMuteToggle}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={handleMuteToggle}>
                     <LinearGradient
                       colors={['rgba(139, 92, 246, 0.9)', 'rgba(124, 58, 237, 0.9)']}
                       style={styles.controlGradient}

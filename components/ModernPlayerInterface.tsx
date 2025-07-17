@@ -3,9 +3,9 @@
  * Provides a modern, interactive interface for stream players
  */
 
+import { Play, Pause, Volume2, Settings, Maximize } from 'lucide-react-native';
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Play, Pause, Volume2, Settings, Maximize } from 'lucide-react-native';
 
 interface ModernPlayerInterfaceProps {
   isPlaying: boolean;
@@ -33,24 +33,20 @@ export const ModernPlayerInterface: React.FC<ModernPlayerInterfaceProps> = ({
           <Text style={styles.title}>{streamTitle || 'Live Stream'}</Text>
           <Text style={styles.viewers}>{viewerCount?.toLocaleString() || '0'} viewers</Text>
         </View>
-        
+
         <View style={styles.controls}>
           <TouchableOpacity style={styles.controlButton} onPress={onPlayPause}>
-            {isPlaying ? (
-              <Pause size={24} color="#fff" />
-            ) : (
-              <Play size={24} color="#fff" />
-            )}
+            {isPlaying ? <Pause size={24} color="#fff" /> : <Play size={24} color="#fff" />}
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.controlButton} onPress={onVolumeToggle}>
             <Volume2 size={20} color="#fff" />
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.controlButton} onPress={onSettings}>
             <Settings size={20} color="#fff" />
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.controlButton} onPress={onFullscreen}>
             <Maximize size={20} color="#fff" />
           </TouchableOpacity>

@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Volume2, VolumeX, X, Eye, ExternalLink } from 'lucide-react-native';
 import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
@@ -10,14 +12,6 @@ import {
   Linking,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Volume2,
-  VolumeX,
-  X,
-  Eye,
-  ExternalLink,
-} from 'lucide-react-native';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
 
@@ -58,7 +52,7 @@ export const SimpleTwitchPlayerFixed: React.FC<SimpleTwitchPlayerFixedProps> = (
       controls: 'false',
       time: '0s',
     });
-    
+
     // Add parent domains for mobile compatibility
     const parentDomains = [
       'localhost',
@@ -68,18 +62,18 @@ export const SimpleTwitchPlayerFixed: React.FC<SimpleTwitchPlayerFixedProps> = (
       'snack.expo.dev',
       'reactnative.dev',
     ];
-    
+
     parentDomains.forEach(domain => {
       params.append('parent', domain);
     });
-    
+
     return `${baseUrl}?${params.toString()}`;
   }, [stream.user_login, isMuted]);
 
   // Generate simple HTML that directly embeds the Twitch iframe
   const getSimpleEmbedHtml = useCallback(() => {
     const embedUrl = getTwitchEmbedUrl();
-    
+
     return `
 <!DOCTYPE html>
 <html>
@@ -184,12 +178,15 @@ export const SimpleTwitchPlayerFixed: React.FC<SimpleTwitchPlayerFixedProps> = (
     setError(null);
   }, [stream.user_login]);
 
-  const handleWebViewError = useCallback((syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.error('❌ Simple Twitch player error:', stream.user_login, nativeEvent);
-    setError('Stream not available');
-    setIsLoading(false);
-  }, [stream.user_login]);
+  const handleWebViewError = useCallback(
+    (syntheticEvent: any) => {
+      const { nativeEvent } = syntheticEvent;
+      console.error('❌ Simple Twitch player error:', stream.user_login, nativeEvent);
+      setError('Stream not available');
+      setIsLoading(false);
+    },
+    [stream.user_login]
+  );
 
   const handleWebViewLoadStart = useCallback(() => {
     console.log('🔄 Simple Twitch player loading:', stream.user_login);
@@ -198,16 +195,19 @@ export const SimpleTwitchPlayerFixed: React.FC<SimpleTwitchPlayerFixedProps> = (
   }, [stream.user_login]);
 
   // Handle WebView messages
-  const handleWebViewMessage = useCallback((event: any) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      if (data.type === 'touch') {
-        onPress?.();
+  const handleWebViewMessage = useCallback(
+    (event: any) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        if (data.type === 'touch') {
+          onPress?.();
+        }
+      } catch (error) {
+        console.log('WebView message error:', error);
       }
-    } catch (error) {
-      console.log('WebView message error:', error);
-    }
-  }, [onPress]);
+    },
+    [onPress]
+  );
 
   // Handle external link
   const handleOpenExternal = useCallback(() => {
@@ -240,10 +240,10 @@ export const SimpleTwitchPlayerFixed: React.FC<SimpleTwitchPlayerFixedProps> = (
           onError={handleWebViewError}
           onLoadStart={handleWebViewLoadStart}
           onMessage={handleWebViewMessage}
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
           scalesPageToFit={false}
           bounces={false}
@@ -251,9 +251,9 @@ export const SimpleTwitchPlayerFixed: React.FC<SimpleTwitchPlayerFixedProps> = (
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['*']}
-          mixedContentMode={'compatibility'}
-          allowsFullscreenVideo={true}
-          allowsProtectedMedia={true}
+          mixedContentMode="compatibility"
+          allowsFullscreenVideo
+          allowsProtectedMedia
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
         />
 
@@ -276,10 +276,7 @@ export const SimpleTwitchPlayerFixed: React.FC<SimpleTwitchPlayerFixedProps> = (
         {/* Stream Info Overlay */}
         {!error && (
           <View style={styles.infoOverlay}>
-            <LinearGradient
-              colors={['rgba(0,0,0,0.8)', 'transparent']}
-              style={styles.infoGradient}
-            >
+            <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.infoGradient}>
               <View style={styles.streamInfo}>
                 <View style={styles.platformBadge}>
                   <Text style={styles.platformText}>LIVE</Text>
@@ -310,21 +307,15 @@ export const SimpleTwitchPlayerFixed: React.FC<SimpleTwitchPlayerFixedProps> = (
             >
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={onMuteToggle}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={onMuteToggle}>
                     {isMuted ? (
                       <VolumeX size={16} color="#fff" />
                     ) : (
                       <Volume2 size={16} color="#fff" />
                     )}
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handleOpenExternal}
-                  >
+
+                  <TouchableOpacity style={styles.controlButton} onPress={handleOpenExternal}>
                     <ExternalLink size={16} color="#fff" />
                   </TouchableOpacity>
                 </View>

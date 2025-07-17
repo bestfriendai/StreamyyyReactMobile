@@ -33,7 +33,7 @@ import Animated, {
 import { useTheme } from '@/contexts/ThemeContext';
 
 // Animation presets based on unified theme
-export type AnimationPreset = 
+export type AnimationPreset =
   | 'fadeIn'
   | 'fadeOut'
   | 'slideUp'
@@ -74,7 +74,7 @@ export const AnimatedContainer: React.FC<AnimatedContainerProps> = ({
   onAnimationComplete,
 }) => {
   const { theme } = useTheme();
-  
+
   // Animation values
   const opacity = useSharedValue(0);
   const translateX = useSharedValue(0);
@@ -145,10 +145,7 @@ export const AnimatedContainer: React.FC<AnimatedContainerProps> = ({
     bounce: () => {
       scale.value = withDelay(
         delay,
-        withSequence(
-          withSpring(1.1, { damping: 8 }),
-          withSpring(1, { damping: 12 })
-        )
+        withSequence(withSpring(1.1, { damping: 8 }), withSpring(1, { damping: 12 }))
       );
       opacity.value = withDelay(delay, withTiming(1, { duration: getDuration() }));
     },
@@ -216,7 +213,7 @@ export const AnimatedContainer: React.FC<AnimatedContainerProps> = ({
   // Animated styles
   const animatedStyle = useAnimatedStyle(() => {
     const rotateValue = interpolate(rotate.value, [0, 360], [0, 360]);
-    
+
     return {
       opacity: opacity.value,
       transform: [
@@ -231,45 +228,37 @@ export const AnimatedContainer: React.FC<AnimatedContainerProps> = ({
   // Use Reanimated's built-in animations if provided
   if (entering || exiting) {
     return (
-      <Animated.View
-        style={[style, animatedStyle]}
-        entering={entering}
-        exiting={exiting}
-      >
+      <Animated.View style={[style, animatedStyle]} entering={entering} exiting={exiting}>
         {children}
       </Animated.View>
     );
   }
 
-  return (
-    <Animated.View style={[style, animatedStyle]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
 };
 
 // Pre-configured animation components
-export const FadeInContainer: React.FC<Omit<AnimatedContainerProps, 'preset'>> = (props) => (
+export const FadeInContainer: React.FC<Omit<AnimatedContainerProps, 'preset'>> = props => (
   <AnimatedContainer {...props} preset="fadeIn" />
 );
 
-export const SlideUpContainer: React.FC<Omit<AnimatedContainerProps, 'preset'>> = (props) => (
+export const SlideUpContainer: React.FC<Omit<AnimatedContainerProps, 'preset'>> = props => (
   <AnimatedContainer {...props} preset="slideUp" />
 );
 
-export const ScaleContainer: React.FC<Omit<AnimatedContainerProps, 'preset'>> = (props) => (
+export const ScaleContainer: React.FC<Omit<AnimatedContainerProps, 'preset'>> = props => (
   <AnimatedContainer {...props} preset="scale" />
 );
 
-export const BounceContainer: React.FC<Omit<AnimatedContainerProps, 'preset'>> = (props) => (
+export const BounceContainer: React.FC<Omit<AnimatedContainerProps, 'preset'>> = props => (
   <AnimatedContainer {...props} preset="bounce" />
 );
 
-export const PulseContainer: React.FC<Omit<AnimatedContainerProps, 'preset'>> = (props) => (
+export const PulseContainer: React.FC<Omit<AnimatedContainerProps, 'preset'>> = props => (
   <AnimatedContainer {...props} preset="pulse" loop />
 );
 
-export const SpringContainer: React.FC<Omit<AnimatedContainerProps, 'preset'>> = (props) => (
+export const SpringContainer: React.FC<Omit<AnimatedContainerProps, 'preset'>> = props => (
   <AnimatedContainer {...props} preset="spring" />
 );
 
@@ -285,7 +274,7 @@ export const animationPresets = {
     zoomIn: ZoomIn.duration(300),
     bounceIn: BounceIn.duration(500),
   },
-  
+
   // Exit animations
   exit: {
     fadeOut: FadeOut.duration(200),
@@ -305,22 +294,11 @@ export const StaggeredContainer: React.FC<{
   preset?: AnimationPreset;
   speed?: AnimationSpeed;
   style?: ViewStyle;
-}> = ({
-  children,
-  staggerDelay = 100,
-  preset = 'fadeIn',
-  speed = 'normal',
-  style,
-}) => {
+}> = ({ children, staggerDelay = 100, preset = 'fadeIn', speed = 'normal', style }) => {
   return (
     <Animated.View style={style}>
       {React.Children.map(children, (child, index) => (
-        <AnimatedContainer
-          key={index}
-          preset={preset}
-          speed={speed}
-          delay={index * staggerDelay}
-        >
+        <AnimatedContainer key={index} preset={preset} speed={speed} delay={index * staggerDelay}>
           {child}
         </AnimatedContainer>
       ))}

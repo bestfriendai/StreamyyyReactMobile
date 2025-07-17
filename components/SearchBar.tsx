@@ -1,6 +1,7 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Search, X, Sparkles } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { Search, X, Sparkles } from 'lucide-react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -8,7 +9,6 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -17,11 +17,11 @@ interface SearchBarProps {
   loading?: boolean;
 }
 
-export function SearchBar({ 
-  onSearch, 
-  onClear, 
-  placeholder = 'Search streamers...', 
-  loading = false 
+export function SearchBar({
+  onSearch,
+  onClear,
+  placeholder = 'Search streamers...',
+  loading = false,
 }: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -65,7 +65,9 @@ export function SearchBar({
 
   const handleChangeText = (text: string) => {
     setQuery(text);
-    if (text.length === 0) onClear();
+    if (text.length === 0) {
+      onClear();
+    }
   };
 
   return (
@@ -73,18 +75,12 @@ export function SearchBar({
       <Animated.View style={[styles.searchWrapper, animatedStyle]}>
         <Animated.View style={[styles.glowEffect, animatedGlowStyle]} />
         <LinearGradient
-          colors={[
-            'rgba(42, 42, 42, 0.95)',
-            'rgba(58, 58, 58, 0.9)',
-            'rgba(42, 42, 42, 0.95)'
-          ]}
+          colors={['rgba(42, 42, 42, 0.95)', 'rgba(58, 58, 58, 0.9)', 'rgba(42, 42, 42, 0.95)']}
           style={styles.searchContainer}
         >
           <View style={styles.searchIconContainer}>
-            <Search size={20} color={isFocused ? "#8B5CF6" : "#666"} />
-            {isFocused && (
-              <Sparkles size={12} color="#8B5CF6" style={styles.sparkleIcon} />
-            )}
+            <Search size={20} color={isFocused ? '#8B5CF6' : '#666'} />
+            {isFocused && <Sparkles size={12} color="#8B5CF6" style={styles.sparkleIcon} />}
           </View>
           <TextInput
             style={styles.input}

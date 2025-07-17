@@ -1,6 +1,6 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 interface BlurViewFallbackProps {
   style?: ViewStyle;
@@ -18,7 +18,7 @@ export const BlurViewFallback: React.FC<BlurViewFallbackProps> = ({
   // Create gradient colors based on blur type and amount
   const getGradientColors = () => {
     const opacity = Math.min(blurAmount / 20, 0.9); // Convert blur amount to opacity
-    
+
     switch (blurType) {
       case 'light':
         return [
@@ -44,10 +44,7 @@ export const BlurViewFallback: React.FC<BlurViewFallbackProps> = ({
 
   return (
     <View style={[styles.container, style]}>
-      <LinearGradient
-        colors={getGradientColors()}
-        style={StyleSheet.absoluteFill}
-      />
+      <LinearGradient colors={getGradientColors()} style={StyleSheet.absoluteFill} />
       {children}
     </View>
   );

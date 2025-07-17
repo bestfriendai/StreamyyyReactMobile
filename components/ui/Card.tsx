@@ -3,14 +3,9 @@
  * Uses unified theme system for consistent styling
  */
 
-import React from 'react';
-import {
-  View,
-  ViewStyle,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import { View, ViewStyle, TouchableOpacity, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -130,11 +125,7 @@ export const Card: React.FC<CardProps> = ({
   const cardStyles = getCardStyles();
   const defaultGradientColors = gradientColors || theme.gradients.card;
 
-  const renderContent = () => (
-    <View style={contentStyle}>
-      {children}
-    </View>
-  );
+  const renderContent = () => <View style={contentStyle}>{children}</View>;
 
   // Interactive card with touch handling
   if (interactive && onPress) {
@@ -179,9 +170,7 @@ export const Card: React.FC<CardProps> = ({
 
   // Static card
   const StaticCard = () => (
-    <AnimatedView style={[cardStyles, style]}>
-      {renderContent()}
-    </AnimatedView>
+    <AnimatedView style={[cardStyles, style]}>{renderContent()}</AnimatedView>
   );
 
   if (gradient) {
@@ -206,42 +195,23 @@ export const Card: React.FC<CardProps> = ({
 };
 
 // Specialized card variants
-export const StreamCard: React.FC<Omit<CardProps, 'variant'> & {
-  variant?: 'default' | 'compact';
-}> = ({ variant = 'default', ...props }) => {
+export const StreamCard: React.FC<
+  Omit<CardProps, 'variant'> & {
+    variant?: 'default' | 'compact';
+  }
+> = ({ variant = 'default', ...props }) => {
   const cardVariant = variant === 'compact' ? 'flat' : 'elevated';
   const borderRadius = variant === 'compact' ? 'lg' : 'xl';
-  
-  return (
-    <Card
-      {...props}
-      variant={cardVariant}
-      borderRadius={borderRadius}
-      interactive
-    />
-  );
+
+  return <Card {...props} variant={cardVariant} borderRadius={borderRadius} interactive />;
 };
 
-export const ControlCard: React.FC<Omit<CardProps, 'variant'>> = (props) => {
-  return (
-    <Card
-      {...props}
-      variant="glass"
-      borderRadius="lg"
-      padding={4}
-    />
-  );
+export const ControlCard: React.FC<Omit<CardProps, 'variant'>> = props => {
+  return <Card {...props} variant="glass" borderRadius="lg" padding={4} />;
 };
 
-export const InfoCard: React.FC<Omit<CardProps, 'variant'>> = (props) => {
-  return (
-    <Card
-      {...props}
-      variant="flat"
-      borderRadius="lg"
-      padding={5}
-    />
-  );
+export const InfoCard: React.FC<Omit<CardProps, 'variant'>> = props => {
+  return <Card {...props} variant="flat" borderRadius="lg" padding={5} />;
 };
 
 export default Card;

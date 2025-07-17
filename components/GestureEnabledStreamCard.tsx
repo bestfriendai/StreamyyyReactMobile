@@ -1,3 +1,17 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  Volume2,
+  VolumeX,
+  Maximize,
+  Minimize,
+  RotateCw,
+  Share,
+  Star,
+  MoreVertical,
+  Move,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react-native';
 import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
@@ -8,7 +22,6 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   PanGestureHandler,
   PinchGestureHandler,
@@ -26,21 +39,8 @@ import Animated, {
   runOnJS,
   interpolate,
 } from 'react-native-reanimated';
-import {
-  Volume2,
-  VolumeX,
-  Maximize,
-  Minimize,
-  RotateCw,
-  Share,
-  Star,
-  MoreVertical,
-  Move,
-  ZoomIn,
-  ZoomOut,
-} from 'lucide-react-native';
-import { StreamViewer } from './StreamViewer';
 import { TwitchStream } from '@/services/twitchApi';
+import { StreamViewer } from './StreamViewer';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -129,34 +129,34 @@ export function GestureEnabledStreamCard({
       runOnJS(setGestureType)('pan');
       runOnJS(triggerHaptic)('light');
       runOnJS(onGestureStart?.())();
-      
+
       cardElevation.value = withSpring(4);
       borderOpacity.value = withTiming(1, { duration: 200 });
     },
-    onActive: (event) => {
+    onActive: event => {
       gestureTranslateX.value = event.translationX;
       gestureTranslateY.value = event.translationY;
     },
-    onEnd: (event) => {
+    onEnd: event => {
       // Snap to grid or boundaries if needed
       const finalX = translateX.value + event.translationX;
       const finalY = translateY.value + event.translationY;
-      
+
       // Boundary constraints
       const maxX = screenWidth - initialSize.width;
       const maxY = screenHeight - initialSize.height;
-      
+
       const constrainedX = Math.max(0, Math.min(maxX, finalX));
       const constrainedY = Math.max(0, Math.min(maxY, finalY));
-      
+
       translateX.value = withSpring(constrainedX);
       translateY.value = withSpring(constrainedY);
       gestureTranslateX.value = withSpring(0);
       gestureTranslateY.value = withSpring(0);
-      
+
       cardElevation.value = withSpring(1);
       borderOpacity.value = withTiming(0, { duration: 200 });
-      
+
       runOnJS(setIsGestureActive)(false);
       runOnJS(setGestureType)('none');
       runOnJS(onGestureEnd?.())();
@@ -171,12 +171,12 @@ export function GestureEnabledStreamCard({
       runOnJS(setGestureType)('pinch');
       runOnJS(triggerHaptic)('medium');
       runOnJS(onGestureStart?.())();
-      
+
       borderOpacity.value = withTiming(1, { duration: 200 });
     },
-    onActive: (event) => {
+    onActive: event => {
       gestureScale.value = Math.max(0.5, Math.min(2.0, event.scale));
-      
+
       // Optional rotation during pinch
       if (Math.abs(event.rotation) > 0.1) {
         gestureRotation.value = event.rotation * 0.5; // Damped rotation
@@ -187,11 +187,11 @@ export function GestureEnabledStreamCard({
       const finalScale = Math.max(0.7, Math.min(1.5, gestureScale.value));
       scale.value = withSpring(finalScale);
       rotation.value = withSpring(rotation.value + gestureRotation.value);
-      
+
       gestureScale.value = withSpring(1);
       gestureRotation.value = withSpring(0);
       borderOpacity.value = withTiming(0, { duration: 200 });
-      
+
       runOnJS(setIsGestureActive)(false);
       runOnJS(setGestureType)('none');
       runOnJS(onGestureEnd?.())();
@@ -203,7 +203,7 @@ export function GestureEnabledStreamCard({
     onStart: () => {
       runOnJS(setGestureType)('longPress');
       runOnJS(triggerHaptic)('heavy');
-      
+
       cardElevation.value = withSpring(6);
       controlsOpacity.value = withTiming(1, { duration: 300 });
       runOnJS(setShowControls)(true);
@@ -222,7 +222,7 @@ export function GestureEnabledStreamCard({
     onEnd: () => {
       if (!isGestureActive) {
         runOnJS(onFocus)(stream.id);
-        
+
         // Visual feedback for focus
         scale.value = withSpring(isFocused ? 1 : 1.05, {}, () => {
           scale.value = withSpring(1);
@@ -238,7 +238,7 @@ export function GestureEnabledStreamCard({
         controlsOpacity.value = withTiming(0, { duration: 300 });
         setShowControls(false);
       }, 3000);
-      
+
       return () => clearTimeout(timeout);
     }
   }, [showControls]);
@@ -301,7 +301,9 @@ export function GestureEnabledStreamCard({
   };
 
   return (
-    <GestureHandlerRootView style={[styles.container, { width: initialSize.width, height: initialSize.height }]}>
+    <GestureHandlerRootView
+      style={[styles.container, { width: initialSize.width, height: initialSize.height }]}
+    >
       <PanGestureHandler
         ref={panRef}
         onGestureEvent={panGestureHandler}
@@ -377,10 +379,7 @@ export function GestureEnabledStreamCard({
                                 {stream.game_name}
                               </Text>
                             </View>
-                            <TouchableOpacity
-                              style={styles.closeButton}
-                              onPress={handleRemove}
-                            >
+                            <TouchableOpacity style={styles.closeButton} onPress={handleRemove}>
                               <LinearGradient
                                 colors={['#EF4444', '#DC2626']}
                                 style={styles.controlButton}
@@ -454,7 +453,9 @@ export function GestureEnabledStreamCard({
 
                               <TouchableOpacity
                                 style={styles.actionButton}
-                                onPress={() => {/* Handle share */}}
+                                onPress={() => {
+                                  /* Handle share */
+                                }}
                               >
                                 <LinearGradient
                                   colors={['#06B6D4', '#0891B2']}
@@ -466,7 +467,9 @@ export function GestureEnabledStreamCard({
 
                               <TouchableOpacity
                                 style={styles.actionButton}
-                                onPress={() => {/* Handle favorite */}}
+                                onPress={() => {
+                                  /* Handle favorite */
+                                }}
                               >
                                 <LinearGradient
                                   colors={['#F59E0B', '#D97706']}

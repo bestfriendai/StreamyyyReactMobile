@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Play, Eye, Plus, Check, Heart } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   View,
@@ -8,21 +10,9 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Play,
-  Eye,
-  Plus,
-  Check,
-  Heart,
-} from 'lucide-react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
 
 interface StreamPreviewCardProps {
   stream: TwitchStream;
@@ -46,30 +36,32 @@ export const StreamPreviewCard: React.FC<StreamPreviewCardProps> = ({
   height,
 }) => {
   const [imageError, setImageError] = useState(false);
-  
+
   // Animation values
   const scale = useSharedValue(1);
   const heartScale = useSharedValue(1);
-  
+
   // Get thumbnail URL
   const getThumbnailUrl = () => {
-    if (!stream.thumbnail_url) return null;
-    
+    if (!stream.thumbnail_url) {
+      return null;
+    }
+
     // Replace template variables with actual dimensions
     return stream.thumbnail_url
       .replace('{width}', Math.floor(width * 2).toString())
       .replace('{height}', Math.floor(height * 1.5).toString());
   };
-  
+
   // Animated styles
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
-  
+
   const heartStyle = useAnimatedStyle(() => ({
     transform: [{ scale: heartScale.value }],
   }));
-  
+
   // Handle press with animation
   const handlePress = () => {
     scale.value = withSpring(0.95, { damping: 15 }, () => {
@@ -77,7 +69,7 @@ export const StreamPreviewCard: React.FC<StreamPreviewCardProps> = ({
     });
     onPress();
   };
-  
+
   // Handle add stream
   const handleAddStream = (e: any) => {
     e.stopPropagation();
@@ -86,7 +78,7 @@ export const StreamPreviewCard: React.FC<StreamPreviewCardProps> = ({
     });
     onAddStream?.();
   };
-  
+
   // Handle favorite toggle
   const handleToggleFavorite = (e: any) => {
     e.stopPropagation();
@@ -97,18 +89,16 @@ export const StreamPreviewCard: React.FC<StreamPreviewCardProps> = ({
     });
     onToggleFavorite?.();
   };
-  
+
   const thumbnailUrl = getThumbnailUrl();
-  
+
   return (
     <Animated.View style={[styles.container, { width, height }, containerStyle]}>
-      <TouchableOpacity
-        style={styles.touchArea}
-        onPress={handlePress}
-        activeOpacity={0.9}
-      >
+      <TouchableOpacity style={styles.touchArea} onPress={handlePress} activeOpacity={0.9}>
         <LinearGradient
-          colors={isActive ? ModernTheme.colors.gradients.accent : ModernTheme.colors.gradients.card}
+          colors={
+            isActive ? ModernTheme.colors.gradients.accent : ModernTheme.colors.gradients.card
+          }
           style={styles.cardGradient}
         >
           {/* Thumbnail */}
@@ -125,21 +115,19 @@ export const StreamPreviewCard: React.FC<StreamPreviewCardProps> = ({
                 <Play size={32} color={ModernTheme.colors.text.secondary} />
               </View>
             )}
-            
+
             {/* Live Badge */}
             <View style={styles.liveBadge}>
               <View style={styles.liveDot} />
               <Text style={styles.liveText}>LIVE</Text>
             </View>
-            
+
             {/* Viewer Count */}
             <View style={styles.viewerBadge}>
               <Eye size={12} color={ModernTheme.colors.text.primary} />
-              <Text style={styles.viewerText}>
-                {stream.viewer_count?.toLocaleString() || '0'}
-              </Text>
+              <Text style={styles.viewerText}>{stream.viewer_count?.toLocaleString() || '0'}</Text>
             </View>
-            
+
             {/* Action Buttons */}
             <View style={styles.actionButtons}>
               {onToggleFavorite && (
@@ -148,15 +136,19 @@ export const StreamPreviewCard: React.FC<StreamPreviewCardProps> = ({
                     style={[styles.actionButton, isFavorite && styles.favoriteActive]}
                     onPress={handleToggleFavorite}
                   >
-                    <Heart 
-                      size={16} 
-                      color={isFavorite ? ModernTheme.colors.status.live : ModernTheme.colors.text.primary}
+                    <Heart
+                      size={16}
+                      color={
+                        isFavorite
+                          ? ModernTheme.colors.status.live
+                          : ModernTheme.colors.text.primary
+                      }
                       fill={isFavorite ? ModernTheme.colors.status.live : 'transparent'}
                     />
                   </TouchableOpacity>
                 </Animated.View>
               )}
-              
+
               {onAddStream && (
                 <TouchableOpacity
                   style={[styles.actionButton, isActive && styles.addedActive]}
@@ -170,7 +162,7 @@ export const StreamPreviewCard: React.FC<StreamPreviewCardProps> = ({
                 </TouchableOpacity>
               )}
             </View>
-            
+
             {/* Play Overlay */}
             <View style={styles.playOverlay}>
               <LinearGradient
@@ -183,7 +175,7 @@ export const StreamPreviewCard: React.FC<StreamPreviewCardProps> = ({
               </LinearGradient>
             </View>
           </View>
-          
+
           {/* Stream Info */}
           <View style={styles.streamInfo}>
             <Text style={styles.streamTitle} numberOfLines={1}>

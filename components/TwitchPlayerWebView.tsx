@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Volume2, VolumeX, X, Eye, ExternalLink } from 'lucide-react-native';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
@@ -9,23 +11,15 @@ import {
   TextStyle,
   Alert,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Volume2,
-  VolumeX,
-  X,
-  Eye,
-  ExternalLink,
-} from 'lucide-react-native';
-import { TwitchStream } from '@/services/twitchApi';
-import { ModernTheme } from '@/theme/modernTheme';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { WebView } from 'react-native-webview';
+import { TwitchStream } from '@/services/twitchApi';
+import { ModernTheme } from '@/theme/modernTheme';
 
 interface TwitchPlayerWebViewProps {
   stream: TwitchStream;
@@ -328,13 +322,13 @@ export const TwitchPlayerWebView: React.FC<TwitchPlayerWebViewProps> = ({
           text: 'Open in Twitch',
           onPress: () => {
             console.log('Open in Twitch:', stream.user_login);
-          }
+          },
         },
         onRemove && {
           text: 'Remove',
           style: 'destructive',
-          onPress: onRemove
-        }
+          onPress: onRemove,
+        },
       ].filter(Boolean)
     );
     onLongPress?.();
@@ -353,20 +347,23 @@ export const TwitchPlayerWebView: React.FC<TwitchPlayerWebViewProps> = ({
     }
   }, [stream.user_login]);
 
-  const handleWebViewError = useCallback((syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.error('❌ Twitch WebView error:', stream.user_login, nativeEvent);
+  const handleWebViewError = useCallback(
+    (syntheticEvent: any) => {
+      const { nativeEvent } = syntheticEvent;
+      console.error('❌ Twitch WebView error:', stream.user_login, nativeEvent);
 
-    let errorMessage = 'Failed to load stream';
-    if (nativeEvent.description?.includes('network')) {
-      errorMessage = 'Network error - Check connection';
-    } else if (nativeEvent.description?.includes('SSL')) {
-      errorMessage = 'SSL error - Try refreshing';
-    }
+      let errorMessage = 'Failed to load stream';
+      if (nativeEvent.description?.includes('network')) {
+        errorMessage = 'Network error - Check connection';
+      } else if (nativeEvent.description?.includes('SSL')) {
+        errorMessage = 'SSL error - Try refreshing';
+      }
 
-    setError(errorMessage);
-    setIsLoading(false);
-  }, [stream.user_login]);
+      setError(errorMessage);
+      setIsLoading(false);
+    },
+    [stream.user_login]
+  );
 
   const handleWebViewLoadStart = useCallback(() => {
     console.log('🔄 Twitch WebView loading started:', stream.user_login);
@@ -385,16 +382,19 @@ export const TwitchPlayerWebView: React.FC<TwitchPlayerWebViewProps> = ({
   }, [stream.user_login]);
 
   // Handle WebView messages
-  const handleWebViewMessage = useCallback((event: any) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      if (data.type === 'tap') {
-        handlePress();
+  const handleWebViewMessage = useCallback(
+    (event: any) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        if (data.type === 'tap') {
+          handlePress();
+        }
+      } catch (error) {
+        console.log('WebView message error:', error);
       }
-    } catch (error) {
-      console.log('WebView message error:', error);
-    }
-  }, [handlePress]);
+    },
+    [handlePress]
+  );
 
   // Handle retry
   const handleRetry = useCallback(() => {
@@ -406,9 +406,11 @@ export const TwitchPlayerWebView: React.FC<TwitchPlayerWebViewProps> = ({
   // Handle mute toggle
   const handleMuteToggle = useCallback(() => {
     // Send message to WebView to toggle mute
-    webViewRef.current?.postMessage(JSON.stringify({
-      action: 'toggleMute'
-    }));
+    webViewRef.current?.postMessage(
+      JSON.stringify({
+        action: 'toggleMute',
+      })
+    );
     onMuteToggle?.();
   }, [onMuteToggle]);
 
@@ -440,10 +442,10 @@ export const TwitchPlayerWebView: React.FC<TwitchPlayerWebViewProps> = ({
           onError={handleWebViewError}
           onLoadStart={handleWebViewLoadStart}
           onMessage={handleWebViewMessage}
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
           scalesPageToFit={false}
           bounces={false}
@@ -451,13 +453,13 @@ export const TwitchPlayerWebView: React.FC<TwitchPlayerWebViewProps> = ({
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['*']}
-          mixedContentMode={'compatibility'}
-          allowsFullscreenVideo={true}
-          allowsProtectedMedia={true}
-          thirdPartyCookiesEnabled={true}
-          sharedCookiesEnabled={true}
+          mixedContentMode="compatibility"
+          allowsFullscreenVideo
+          allowsProtectedMedia
+          thirdPartyCookiesEnabled
+          sharedCookiesEnabled
           cacheEnabled={false}
-          incognito={true}
+          incognito
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
         />
 
@@ -482,10 +484,7 @@ export const TwitchPlayerWebView: React.FC<TwitchPlayerWebViewProps> = ({
         {/* Stream Info Overlay */}
         {!isLoading && !error && (
           <View style={styles.infoOverlay}>
-            <LinearGradient
-              colors={['rgba(0,0,0,0.8)', 'transparent']}
-              style={styles.infoGradient}
-            >
+            <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.infoGradient}>
               <View style={styles.streamInfo}>
                 <View style={styles.platformBadge}>
                   <Text style={styles.platformText}>LIVE</Text>
@@ -516,10 +515,7 @@ export const TwitchPlayerWebView: React.FC<TwitchPlayerWebViewProps> = ({
             >
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handleMuteToggle}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={handleMuteToggle}>
                     <LinearGradient
                       colors={ModernTheme.colors.gradients.primary}
                       style={styles.controlButtonGradient}
@@ -547,10 +543,7 @@ export const TwitchPlayerWebView: React.FC<TwitchPlayerWebViewProps> = ({
                   </TouchableOpacity>
 
                   {onRemove && (
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={onRemove}
-                    >
+                    <TouchableOpacity style={styles.controlButton} onPress={onRemove}>
                       <LinearGradient
                         colors={ModernTheme.colors.gradients.danger}
                         style={styles.controlButtonGradient}

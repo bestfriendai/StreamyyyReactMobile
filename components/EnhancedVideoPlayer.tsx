@@ -1,3 +1,6 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Play, Pause, Volume2, VolumeX, Maximize, X, Eye, Settings } from 'lucide-react-native';
+import { MotiView } from 'moti';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
@@ -8,21 +11,6 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
-import { MotiView } from 'moti';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Maximize,
-  X,
-  Eye,
-  Settings,
-} from 'lucide-react-native';
-import { TwitchStream } from '@/services/twitchApi';
-import { ModernTheme } from '@/theme/modernTheme';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -30,6 +18,9 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
+import { WebView } from 'react-native-webview';
+import { TwitchStream } from '@/services/twitchApi';
+import { ModernTheme } from '@/theme/modernTheme';
 
 interface EnhancedVideoPlayerProps {
   stream: TwitchStream;
@@ -66,7 +57,7 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [controlsVisible, setControlsVisible] = useState(false);
   const webViewRef = useRef<WebView>(null);
-  
+
   // Generate Twitch embed URL with comprehensive parent domains
   const getTwitchEmbedUrl = useCallback(() => {
     const params = new URLSearchParams({
@@ -74,9 +65,9 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
       muted: isMuted.toString(),
       autoplay: 'true',
       controls: 'false',
-      quality: quality === 'auto' ? 'auto' : quality
+      quality: quality === 'auto' ? 'auto' : quality,
     });
-    
+
     // Add comprehensive list of parent domains for better compatibility
     const parentDomains = [
       'localhost',
@@ -87,58 +78,60 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
       'snack.expo.dev',
       'reactnative.dev',
       'github.dev',
-      'codesandbox.io'
+      'codesandbox.io',
     ];
-    
+
     parentDomains.forEach(domain => {
       params.append('parent', domain);
     });
-    
+
     return `https://player.twitch.tv/?${params.toString()}`;
   }, [stream.user_login, isMuted, quality]);
-  
+
   const embedUrl = getTwitchEmbedUrl();
-  
+
   // Animation values
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
   const controlsOpacity = useSharedValue(0);
-  
+
   // Auto-hide controls timer
   const controlsTimer = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Animated styles
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
     opacity: opacity.value,
   }));
-  
+
   const controlsStyle = useAnimatedStyle(() => ({
     opacity: controlsOpacity.value,
   }));
-  
+
   // Handle press with animation
   const handlePress = useCallback(() => {
     scale.value = withSpring(0.95, { damping: 15 }, () => {
       scale.value = withSpring(1);
     });
-    
+
     // Toggle controls visibility
     setControlsVisible(!controlsVisible);
     controlsOpacity.value = withTiming(controlsVisible ? 0 : 1, { duration: 200 });
-    
+
     // Auto-hide controls after 3 seconds
     if (!controlsVisible) {
-      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      if (controlsTimer.current) {
+        clearTimeout(controlsTimer.current);
+      }
       controlsTimer.current = setTimeout(() => {
         setControlsVisible(false);
         controlsOpacity.value = withTiming(0, { duration: 200 });
       }, 3000);
     }
-    
+
     onPress?.();
   }, [controlsVisible, onPress]);
-  
+
   // Handle long press with animation
   const handleLongPress = useCallback(() => {
     scale.value = withSpring(1.05, { damping: 12 }, () => {
@@ -146,7 +139,7 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
     });
     onLongPress?.();
   }, [onLongPress]);
-  
+
   // Handle play/pause
   const handlePlayPause = useCallback(() => {
     setIsPlaying(!isPlaying);
@@ -157,12 +150,12 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
   const handleMuteToggle = useCallback(() => {
     onMuteToggle?.();
   }, [onMuteToggle]);
-  
+
   // Retry mechanism
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // WebView event handlers with improved error handling
   const handleWebViewLoad = useCallback(() => {
     console.log('✅ WebView loaded successfully for:', stream.user_login);
@@ -171,25 +164,31 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
     setRetryCount(0);
   }, [stream.user_login]);
 
-  const handleWebViewError = useCallback((syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.error('❌ WebView error for', stream.user_login, ':', nativeEvent);
-    
-    const errorMessage = nativeEvent.description || 'Stream failed to load';
-    setError(errorMessage);
-    setIsLoading(false);
-    
-    // Auto-retry logic
-    if (retryCount < maxRetries) {
-      console.log(`🔄 Auto-retrying stream load (${retryCount + 1}/${maxRetries})`);
-      retryTimeoutRef.current = setTimeout(() => {
-        setRetryCount(prev => prev + 1);
-        setError(null);
-        setIsLoading(true);
-        webViewRef.current?.reload();
-      }, 2000 * (retryCount + 1)); // Exponential backoff
-    }
-  }, [stream.user_login, retryCount, maxRetries]);
+  const handleWebViewError = useCallback(
+    (syntheticEvent: any) => {
+      const { nativeEvent } = syntheticEvent;
+      console.error('❌ WebView error for', stream.user_login, ':', nativeEvent);
+
+      const errorMessage = nativeEvent.description || 'Stream failed to load';
+      setError(errorMessage);
+      setIsLoading(false);
+
+      // Auto-retry logic
+      if (retryCount < maxRetries) {
+        console.log(`🔄 Auto-retrying stream load (${retryCount + 1}/${maxRetries})`);
+        retryTimeoutRef.current = setTimeout(
+          () => {
+            setRetryCount(prev => prev + 1);
+            setError(null);
+            setIsLoading(true);
+            webViewRef.current?.reload();
+          },
+          2000 * (retryCount + 1)
+        ); // Exponential backoff
+      }
+    },
+    [stream.user_login, retryCount, maxRetries]
+  );
 
   const handleWebViewLoadStart = useCallback(() => {
     console.log('🔄 WebView load started for:', stream.user_login);
@@ -201,7 +200,7 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
     try {
       const data = JSON.parse(event.nativeEvent.data);
       console.log('📨 WebView message:', data);
-      
+
       // Handle specific message types if needed
       if (data.type === 'player_ready') {
         setIsLoading(false);
@@ -214,7 +213,7 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
       console.log('WebView message (non-JSON):', event.nativeEvent.data);
     }
   }, []);
-  
+
   // Manual retry function
   const handleRetry = useCallback(() => {
     setError(null);
@@ -222,7 +221,7 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
     setRetryCount(0);
     webViewRef.current?.reload();
   }, []);
-  
+
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
@@ -234,7 +233,7 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
       }
     };
   }, []);
-  
+
   // Loading timeout to prevent infinite loading
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
@@ -244,10 +243,10 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
         setIsLoading(false);
       }
     }, 15000); // 15 second timeout
-    
+
     return () => clearTimeout(loadingTimeout);
   }, [isLoading, error, stream.user_login]);
-  
+
   return (
     <Animated.View style={[styles.container, { width, height }, containerStyle]}>
       <TouchableOpacity
@@ -265,23 +264,23 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
           onError={handleWebViewError}
           onLoadStart={handleWebViewLoadStart}
           onMessage={handleWebViewMessage}
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
-          scalesPageToFit={true}
+          scalesPageToFit
           bounces={false}
           scrollEnabled={false}
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['*']}
           mixedContentMode="compatibility"
-          thirdPartyCookiesEnabled={true}
-          sharedCookiesEnabled={true}
+          thirdPartyCookiesEnabled
+          sharedCookiesEnabled
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
           scalesPageToFit={false}
           bounces={false}
@@ -289,12 +288,12 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['https://*']}
-          mixedContentMode={'compatibility'}
+          mixedContentMode="compatibility"
           allowsFullscreenVideo={false}
-          allowsProtectedMedia={true}
+          allowsProtectedMedia
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1"
         />
-        
+
         {/* Loading Overlay */}
         {isLoading && (
           <View style={styles.loadingOverlay}>
@@ -302,17 +301,16 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
             <Text style={styles.loadingText}>Loading stream...</Text>
           </View>
         )}
-        
+
         {/* Error Overlay */}
         {error && (
           <View style={styles.errorOverlay}>
             <Text style={styles.errorText}>{error}</Text>
             <View style={styles.errorActions}>
-              <TouchableOpacity
-                style={styles.retryButton}
-                onPress={handleRetry}
-              >
-                <Text style={styles.retryText}>Retry ({retryCount}/{maxRetries})</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
+                <Text style={styles.retryText}>
+                  Retry ({retryCount}/{maxRetries})
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.openExternalButton}
@@ -327,20 +325,19 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
             </View>
           </View>
         )}
-        
+
         {/* Stream Info Overlay */}
         {!isLoading && !error && (
           <View style={styles.infoOverlay}>
-            <LinearGradient
-              colors={['rgba(0,0,0,0.8)', 'transparent']}
-              style={styles.infoGradient}
-            >
+            <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.infoGradient}>
               <View style={styles.streamInfo}>
                 <View style={styles.platformBadge}>
                   <Text style={styles.platformText}>TWITCH</Text>
                 </View>
                 <View style={styles.liveIndicator}>
-                  <View style={[styles.liveDot, { backgroundColor: ModernTheme.colors.status.live }]} />
+                  <View
+                    style={[styles.liveDot, { backgroundColor: ModernTheme.colors.status.live }]}
+                  />
                   <Text style={styles.liveText}>LIVE</Text>
                 </View>
               </View>
@@ -361,7 +358,7 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
             </LinearGradient>
           </View>
         )}
-        
+
         {/* Controls Overlay */}
         {showControls && !isLoading && !error && (
           <Animated.View style={[styles.controlsOverlay, controlsStyle]}>
@@ -371,10 +368,7 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
             >
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handlePlayPause}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={handlePlayPause}>
                     <LinearGradient
                       colors={ModernTheme.colors.gradients.primary}
                       style={styles.controlButtonGradient}
@@ -386,11 +380,8 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
                       )}
                     </LinearGradient>
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handleMuteToggle}
-                  >
+
+                  <TouchableOpacity style={styles.controlButton} onPress={handleMuteToggle}>
                     <LinearGradient
                       colors={ModernTheme.colors.gradients.primary}
                       style={styles.controlButtonGradient}
@@ -403,7 +394,7 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
                     </LinearGradient>
                   </TouchableOpacity>
                 </View>
-                
+
                 <View style={styles.rightControls}>
                   <TouchableOpacity style={styles.controlButton}>
                     <LinearGradient
@@ -413,12 +404,9 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
                       <Settings size={16} color="#fff" />
                     </LinearGradient>
                   </TouchableOpacity>
-                  
+
                   {onRemove && (
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={() => onRemove()}
-                    >
+                    <TouchableOpacity style={styles.controlButton} onPress={() => onRemove()}>
                       <LinearGradient
                         colors={ModernTheme.colors.gradients.danger}
                         style={styles.controlButtonGradient}
@@ -432,7 +420,7 @@ export const EnhancedVideoPlayer: React.FC<EnhancedVideoPlayerProps> = ({
             </LinearGradient>
           </Animated.View>
         )}
-        
+
         {/* Active Stream Indicator */}
         {isActive && (
           <View style={styles.activeIndicator}>

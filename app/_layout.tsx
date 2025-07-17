@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useFonts } from 'expo-font';
+import { useEffect } from 'react';
 import '../debug-env'; // Temporary debug import
 import {
   Inter_400Regular,
@@ -14,14 +14,14 @@ import { ClerkProvider } from '@clerk/clerk-expo';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { adMobService } from '@/services/adMobService';
+import { interstitialAdService } from '@/services/interstitialAdService';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandler';
 import { TamaguiProvider } from '@tamagui/core';
 import config from '../tamagui.config';
-import { adMobService } from '@/services/adMobService';
-import { interstitialAdService } from '@/services/interstitialAdService';
 import '@/utils/adDebugUtils'; // Load debug utilities
 
-const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || '';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,7 +38,8 @@ export default function RootLayout() {
     setupGlobalErrorHandlers();
 
     // Initialize AdMob service and interstitial ads
-    adMobService.initialize()
+    adMobService
+      .initialize()
       .then(() => {
         // Initialize interstitial ads after main SDK is ready
         return interstitialAdService.initialize();

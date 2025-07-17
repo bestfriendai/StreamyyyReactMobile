@@ -3,16 +3,6 @@
  * Comprehensive testing component for multi-stream functionality
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-  Platform,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Play,
@@ -24,13 +14,23 @@ import {
   Wifi,
   Users,
 } from 'lucide-react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  Platform,
+} from 'react-native';
 import { useStreamManager } from '@/hooks/useStreamManager';
-import { twitchApi, TwitchStream } from '@/services/twitchApi';
-import { 
-  streamHealthMonitor, 
-  generateHealthReport, 
-  StreamPerformanceReport 
+import {
+  streamHealthMonitor,
+  generateHealthReport,
+  StreamPerformanceReport,
 } from '@/services/streamHealthMonitor';
+import { twitchApi, TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
 import { logDebug, withErrorHandling } from '@/utils/errorHandler';
 
@@ -59,17 +59,20 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
   }, []);
 
   const loadTestStreams = useCallback(async () => {
-    await withErrorHandling(async () => {
-      const streams = await twitchApi.getTopStreams(10);
-      setTestStreams(streams.data.slice(0, 6)); // Limit to 6 for testing
-      logDebug('Test streams loaded', { count: streams.data.length });
-    }, { component: 'MultiViewTwitchTest', action: 'loadTestStreams' });
+    await withErrorHandling(
+      async () => {
+        const streams = await twitchApi.getTopStreams(10);
+        setTestStreams(streams.data.slice(0, 6)); // Limit to 6 for testing
+        logDebug('Test streams loaded', { count: streams.data.length });
+      },
+      { component: 'MultiViewTwitchTest', action: 'loadTestStreams' }
+    );
   }, []);
 
   const runComprehensiveTest = useCallback(async () => {
     setIsRunning(true);
     setTestResults([]);
-    
+
     const results: TestResult[] = [];
 
     try {
@@ -105,13 +108,12 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
 
       setTestResults(results);
       onTestComplete?.(results);
-
     } catch (error) {
       results.push({
         testName: 'Test Suite Execution',
         passed: false,
         message: 'Test suite failed to complete',
-        details: error
+        details: error,
       });
       setTestResults(results);
     } finally {
@@ -124,23 +126,23 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
     try {
       // Clear existing streams
       await clearAllStreams();
-      
+
       if (testStreams.length === 0) {
         return {
           testName: 'Stream Manager',
           passed: false,
-          message: 'No test streams available'
+          message: 'No test streams available',
         };
       }
 
       // Test adding a stream
       const result = await addStream(testStreams[0]);
-      
+
       if (!result.success) {
         return {
           testName: 'Stream Manager',
           passed: false,
-          message: `Failed to add stream: ${result.message}`
+          message: `Failed to add stream: ${result.message}`,
         };
       }
 
@@ -158,15 +160,14 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
         testName: 'Stream Manager',
         passed: true,
         message: `Successfully added streams, limit protection: ${limitReached ? 'Working' : 'Not tested'}`,
-        details: { activeStreams: activeStreams.length }
+        details: { activeStreams: activeStreams.length },
       };
-
     } catch (error) {
       return {
         testName: 'Stream Manager',
         passed: false,
         message: 'Stream manager test failed',
-        details: error
+        details: error,
       };
     }
   };
@@ -175,40 +176,39 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
     try {
       // Test API connectivity
       const streams = await twitchApi.getTopStreams(5);
-      
+
       if (!streams.data || streams.data.length === 0) {
         return {
           testName: 'Twitch API',
           passed: false,
-          message: 'No streams returned from API'
+          message: 'No streams returned from API',
         };
       }
 
       // Test embed URL generation
       const testStream = streams.data[0];
       const embedUrl = twitchApi.generateEmbedUrl(testStream.user_login);
-      
-      const hasParentDomains = embedUrl.includes('parent=localhost') && 
-                               embedUrl.includes('parent=expo.dev');
+
+      const hasParentDomains =
+        embedUrl.includes('parent=localhost') && embedUrl.includes('parent=expo.dev');
 
       return {
         testName: 'Twitch API',
         passed: hasParentDomains,
-        message: hasParentDomains 
+        message: hasParentDomains
           ? 'API and embed URL generation working correctly'
           : 'Embed URL missing required parent domains',
-        details: { 
+        details: {
           streamsCount: streams.data.length,
-          embedUrl: embedUrl.substring(0, 100) + '...'
-        }
+          embedUrl: `${embedUrl.substring(0, 100)}...`,
+        },
       };
-
     } catch (error) {
       return {
         testName: 'Twitch API',
         passed: false,
         message: 'Twitch API test failed',
-        details: error
+        details: error,
       };
     }
   };
@@ -217,7 +217,7 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
     try {
       // Clear and add multiple streams
       await clearAllStreams();
-      
+
       const streamsToAdd = testStreams.slice(0, 3);
       let successCount = 0;
 
@@ -236,19 +236,18 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
         testName: 'Multi-Stream Loading',
         passed: successCount === streamsToAdd.length,
         message: `${successCount}/${streamsToAdd.length} streams loaded successfully`,
-        details: { 
+        details: {
           attempted: streamsToAdd.length,
           successful: successCount,
-          activeStreams: activeStreams.length
-        }
+          activeStreams: activeStreams.length,
+        },
       };
-
     } catch (error) {
       return {
         testName: 'Multi-Stream Loading',
         passed: false,
         message: 'Multi-stream loading test failed',
-        details: error
+        details: error,
       };
     }
   };
@@ -259,25 +258,25 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
       const report = generateHealthReport();
       setPerformanceReport(report);
 
-      const hasValidReport = report && 
-                           typeof report.totalStreams === 'number' &&
-                           typeof report.averageLoadTime === 'number';
+      const hasValidReport =
+        report &&
+        typeof report.totalStreams === 'number' &&
+        typeof report.averageLoadTime === 'number';
 
       return {
         testName: 'Performance Monitoring',
         passed: hasValidReport,
-        message: hasValidReport 
+        message: hasValidReport
           ? `Performance monitoring active: ${report.totalStreams} streams, ${report.averageLoadTime.toFixed(0)}ms avg load time`
           : 'Performance monitoring not functioning',
-        details: report
+        details: report,
       };
-
     } catch (error) {
       return {
         testName: 'Performance Monitoring',
         passed: false,
         message: 'Performance monitoring test failed',
-        details: error
+        details: error,
       };
     }
   };
@@ -299,7 +298,7 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
         language: 'en',
         thumbnail_url: '',
         tag_ids: [],
-        is_mature: false
+        is_mature: false,
       };
 
       const result = await addStream(invalidStream);
@@ -308,18 +307,17 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
       return {
         testName: 'Error Handling',
         passed: handledCorrectly,
-        message: handledCorrectly 
+        message: handledCorrectly
           ? 'Invalid stream correctly rejected'
           : 'Invalid stream was incorrectly accepted',
-        details: { result }
+        details: { result },
       };
-
     } catch (error) {
       return {
         testName: 'Error Handling',
         passed: true, // Error catching is working
         message: 'Error handling working - exception caught',
-        details: error
+        details: error,
       };
     }
   };
@@ -329,15 +327,15 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
       const report = generateHealthReport();
       const estimatedMemory = report.totalMemoryUsage;
       const streamCount = activeStreams.length;
-      
+
       // Check if memory estimation is reasonable (50-80MB per stream)
       const expectedMemoryRange = {
         min: streamCount * 40,
-        max: streamCount * 100
+        max: streamCount * 100,
       };
 
-      const memoryInRange = estimatedMemory >= expectedMemoryRange.min && 
-                           estimatedMemory <= expectedMemoryRange.max;
+      const memoryInRange =
+        estimatedMemory >= expectedMemoryRange.min && estimatedMemory <= expectedMemoryRange.max;
 
       return {
         testName: 'Memory Management',
@@ -347,16 +345,15 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
           estimatedMemory,
           streamCount,
           expectedRange: expectedMemoryRange,
-          memoryPerStream: streamCount > 0 ? (estimatedMemory / streamCount).toFixed(1) : 0
-        }
+          memoryPerStream: streamCount > 0 ? (estimatedMemory / streamCount).toFixed(1) : 0,
+        },
       };
-
     } catch (error) {
       return {
         testName: 'Memory Management',
         passed: false,
         message: 'Memory management test failed',
-        details: error
+        details: error,
       };
     }
   };
@@ -392,7 +389,7 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
         >
           <LinearGradient
             colors={
-              isRunning 
+              isRunning
                 ? ['#666', '#555']
                 : [ModernTheme.colors.accent[500], ModernTheme.colors.accent[600]]
             }
@@ -405,11 +402,7 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
           </LinearGradient>
         </TouchableOpacity>
 
-        {currentTest && (
-          <Text style={styles.currentTest}>
-            Currently: {currentTest}
-          </Text>
-        )}
+        {currentTest && <Text style={styles.currentTest}>Currently: {currentTest}</Text>}
       </View>
 
       {/* Test Results */}
@@ -422,17 +415,13 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
             <View key={index} style={styles.resultItem}>
               <View style={styles.resultHeader}>
                 <Icon size={20} color={color} />
-                <Text style={[styles.resultTitle, { color }]}>
-                  {result.testName}
-                </Text>
+                <Text style={[styles.resultTitle, { color }]}>{result.testName}</Text>
               </View>
               <Text style={styles.resultMessage}>{result.message}</Text>
               {result.details && (
                 <View style={styles.resultDetails}>
                   <Text style={styles.detailsLabel}>Details:</Text>
-                  <Text style={styles.detailsText}>
-                    {JSON.stringify(result.details, null, 2)}
-                  </Text>
+                  <Text style={styles.detailsText}>{JSON.stringify(result.details, null, 2)}</Text>
                 </View>
               )}
             </View>
@@ -464,9 +453,7 @@ export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }
               <View style={styles.reportItem}>
                 <Activity size={16} color={ModernTheme.colors.text.secondary} />
                 <Text style={styles.reportLabel}>Memory Usage</Text>
-                <Text style={styles.reportValue}>
-                  {performanceReport.totalMemoryUsage}MB
-                </Text>
+                <Text style={styles.reportValue}>{performanceReport.totalMemoryUsage}MB</Text>
               </View>
             </View>
           </View>

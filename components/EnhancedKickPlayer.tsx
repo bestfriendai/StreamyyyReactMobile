@@ -1,15 +1,3 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  ActivityIndicator,
-  ViewStyle,
-  TextStyle,
-  Animated,
-} from 'react-native';
-import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Volume2,
@@ -29,10 +17,22 @@ import {
   MessageSquare,
   Zap,
 } from 'lucide-react-native';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle,
+  Animated,
+} from 'react-native';
+import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { UniversalStream } from '@/services/multiPlatformStreamingApi';
-import { ModernTheme } from '@/theme/modernTheme';
-import { streamQualityManager, QualityLevel } from '@/services/streamQualityManager';
 import { streamHealthMonitor } from '@/services/streamHealthMonitor';
+import { streamQualityManager, QualityLevel } from '@/services/streamQualityManager';
+import { ModernTheme } from '@/theme/modernTheme';
 
 interface EnhancedKickPlayerProps {
   stream: UniversalStream;
@@ -101,7 +101,7 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
     chatActivity: 0,
   });
   const [controlsVisible, setControlsVisible] = useState(true);
-  
+
   const webViewRef = useRef<WebView>(null);
   const loadStartTime = useRef<number>(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -110,7 +110,7 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
   // Initialize stream quality management
   useEffect(() => {
     streamQualityManager.initializeStream(stream.id, quality, quality === 'auto');
-    
+
     // Create a mock TwitchStream object for health monitoring
     const mockStream = {
       id: stream.id,
@@ -128,9 +128,9 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
       tag_ids: stream.tags,
       is_mature: stream.isMature,
     };
-    
+
     streamHealthMonitor.initializeStream(mockStream);
-    
+
     return () => {
       streamQualityManager.removeStream(stream.id);
       streamHealthMonitor.removeStream(stream.id);
@@ -140,21 +140,25 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
   // Auto-hide controls
   useEffect(() => {
     if (controlsVisible && showControls) {
-      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      if (controlsTimer.current) {
+        clearTimeout(controlsTimer.current);
+      }
       controlsTimer.current = setTimeout(() => {
         setControlsVisible(false);
       }, 3000);
     }
-    
+
     return () => {
-      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      if (controlsTimer.current) {
+        clearTimeout(controlsTimer.current);
+      }
     };
   }, [controlsVisible, showControls]);
 
   // Generate Kick embed HTML with custom player integration
   const getEmbedHtml = useCallback(() => {
     const channelName = stream.streamerName;
-    
+
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -421,7 +425,9 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
             </iframe>
         </div>
         
-        ${showChat ? `
+        ${
+  showChat
+    ? `
         <div class="chat-section">
             <div class="chat-container" id="chat-container">
                 <div style="color: #53FC18; font-weight: bold; margin-bottom: 10px; text-align: center;">
@@ -441,7 +447,9 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
                 </div>
             </div>
         </div>
-        ` : ''}
+        `
+    : ''
+}
     </div>
     
     <script>
@@ -670,70 +678,76 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
   }, [stream, isMuted, isPlaying, autoplay, quality, showChat, retryCount]);
 
   // WebView event handlers
-  const handleWebViewMessage = useCallback((event: WebViewMessageEvent) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      console.log(`Enhanced Kick player message:`, data);
-      
-      switch (data.type) {
-        case 'loaded':
-          setIsLoading(false);
-          setError(null);
-          setHasLoaded(true);
-          setRetryCount(0);
-          streamHealthMonitor.recordSuccess(stream.id, data.loadTime);
-          break;
-          
-        case 'error':
-          setIsLoading(false);
-          setError(data.message || 'Kick stream unavailable');
-          streamHealthMonitor.recordError(stream.id, data.message);
-          break;
-          
-        case 'retry':
-          setRetryCount(prev => prev + 1);
-          streamHealthMonitor.recordError(stream.id, 'Retry attempt', true);
-          break;
-          
-        case 'performance_update':
-          setStats(prev => ({ ...prev, ...data.stats }));
-          break;
-          
-        case 'touch':
-          if (data.target === 'player') {
-            setControlsVisible(true);
-            onPress?.();
-          }
-          break;
-          
-        case 'mute_toggle':
-          onMuteToggle?.();
-          break;
-          
-        case 'play_toggle':
-          onPlayToggle?.();
-          break;
-          
-        case 'stats_toggle':
-          setShowStats(data.visible);
-          break;
-          
-        case 'open_external':
-          // Handle external link opening
-          break;
+  const handleWebViewMessage = useCallback(
+    (event: WebViewMessageEvent) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        console.log('Enhanced Kick player message:', data);
+
+        switch (data.type) {
+          case 'loaded':
+            setIsLoading(false);
+            setError(null);
+            setHasLoaded(true);
+            setRetryCount(0);
+            streamHealthMonitor.recordSuccess(stream.id, data.loadTime);
+            break;
+
+          case 'error':
+            setIsLoading(false);
+            setError(data.message || 'Kick stream unavailable');
+            streamHealthMonitor.recordError(stream.id, data.message);
+            break;
+
+          case 'retry':
+            setRetryCount(prev => prev + 1);
+            streamHealthMonitor.recordError(stream.id, 'Retry attempt', true);
+            break;
+
+          case 'performance_update':
+            setStats(prev => ({ ...prev, ...data.stats }));
+            break;
+
+          case 'touch':
+            if (data.target === 'player') {
+              setControlsVisible(true);
+              onPress?.();
+            }
+            break;
+
+          case 'mute_toggle':
+            onMuteToggle?.();
+            break;
+
+          case 'play_toggle':
+            onPlayToggle?.();
+            break;
+
+          case 'stats_toggle':
+            setShowStats(data.visible);
+            break;
+
+          case 'open_external':
+            // Handle external link opening
+            break;
+        }
+      } catch (error) {
+        console.log('Kick WebView message parse error:', error);
       }
-    } catch (error) {
-      console.log('Kick WebView message parse error:', error);
-    }
-  }, [onPress, onMuteToggle, onPlayToggle, stream.id]);
+    },
+    [onPress, onMuteToggle, onPlayToggle, stream.id]
+  );
 
   // Handle quality change
-  const handleQualityChange = useCallback((newQuality: QualityLevel) => {
-    streamQualityManager.setStreamQuality(stream.id, newQuality, true);
-    onQualityChange?.(newQuality);
-    setShowQualityMenu(false);
-    webViewRef.current?.reload();
-  }, [stream.id, onQualityChange]);
+  const handleQualityChange = useCallback(
+    (newQuality: QualityLevel) => {
+      streamQualityManager.setStreamQuality(stream.id, newQuality, true);
+      onQualityChange?.(newQuality);
+      setShowQualityMenu(false);
+      webViewRef.current?.reload();
+    },
+    [stream.id, onQualityChange]
+  );
 
   const embedHtml = getEmbedHtml();
   const qualityOptions: QualityLevel[] = ['auto', 'source', '720p', '480p', '360p'];
@@ -747,10 +761,10 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
           source={{ html: embedHtml }}
           style={styles.video}
           onMessage={handleWebViewMessage}
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
           scalesPageToFit={false}
           bounces={false}
@@ -758,10 +772,10 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['*']}
-          mixedContentMode={'compatibility'}
-          allowsFullscreenVideo={true}
-          allowsProtectedMedia={true}
-          cacheEnabled={true}
+          mixedContentMode="compatibility"
+          allowsFullscreenVideo
+          allowsProtectedMedia
+          cacheEnabled
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
         />
 
@@ -781,15 +795,17 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
             <Text style={styles.errorText}>{error}</Text>
             <Text style={styles.errorPlatform}>Platform: Kick</Text>
             <View style={styles.errorButtons}>
-              <TouchableOpacity 
-                style={styles.retryButton} 
+              <TouchableOpacity
+                style={styles.retryButton}
                 onPress={() => webViewRef.current?.reload()}
               >
                 <Text style={styles.retryText}>Retry</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.platformButton, { backgroundColor: '#53FC18' }]} 
-                onPress={() => {/* Handle external opening */}}
+              <TouchableOpacity
+                style={[styles.platformButton, { backgroundColor: '#53FC18' }]}
+                onPress={() => {
+                  /* Handle external opening */
+                }}
               >
                 <Text style={[styles.platformText, { color: '#0f0f23' }]}>Open Kick</Text>
               </TouchableOpacity>
@@ -807,21 +823,25 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
                   <TouchableOpacity style={styles.controlButton} onPress={onMuteToggle}>
-                    {isMuted ? <VolumeX size={18} color="#fff" /> : <Volume2 size={18} color="#fff" />}
+                    {isMuted ? (
+                      <VolumeX size={18} color="#fff" />
+                    ) : (
+                      <Volume2 size={18} color="#fff" />
+                    )}
                   </TouchableOpacity>
-                  
+
                   <TouchableOpacity style={styles.controlButton} onPress={onPlayToggle}>
                     {isPlaying ? <Pause size={18} color="#fff" /> : <Play size={18} color="#fff" />}
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity 
+
+                  <TouchableOpacity
                     style={styles.controlButton}
                     onPress={() => setShowQualityMenu(!showQualityMenu)}
                   >
                     <Settings size={18} color="#fff" />
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity 
+
+                  <TouchableOpacity
                     style={styles.controlButton}
                     onPress={() => setShowStats(!showStats)}
                   >
@@ -842,26 +862,26 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
                   <TouchableOpacity style={styles.controlButton}>
                     <DollarSign size={18} color="#53FC18" />
                   </TouchableOpacity>
-                  
+
                   <TouchableOpacity style={styles.controlButton}>
                     <MessageSquare size={18} color="#fff" />
                   </TouchableOpacity>
-                  
+
                   {onPictureInPicture && (
                     <TouchableOpacity style={styles.controlButton} onPress={onPictureInPicture}>
                       <Minimize size={18} color="#fff" />
                     </TouchableOpacity>
                   )}
-                  
+
                   {onFullscreen && (
                     <TouchableOpacity style={styles.controlButton} onPress={onFullscreen}>
                       <Maximize size={18} color="#fff" />
                     </TouchableOpacity>
                   )}
-                  
+
                   {onRemove && (
-                    <TouchableOpacity 
-                      style={[styles.controlButton, styles.removeButton]} 
+                    <TouchableOpacity
+                      style={[styles.controlButton, styles.removeButton]}
                       onPress={onRemove}
                     >
                       <X size={18} color="#fff" />
@@ -877,7 +897,7 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
         {showQualityMenu && (
           <View style={styles.qualityMenu}>
             <Text style={styles.qualityTitle}>Video Quality</Text>
-            {qualityOptions.map((q) => (
+            {qualityOptions.map(q => (
               <TouchableOpacity
                 key={q}
                 style={[styles.qualityOption, quality === q && styles.qualityOptionActive]}
@@ -895,10 +915,7 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
         {/* Active Indicator */}
         {isActive && (
           <View style={styles.activeIndicator}>
-            <LinearGradient
-              colors={['#53FC18', '#42d613']}
-              style={styles.activeGradient}
-            />
+            <LinearGradient colors={['#53FC18', '#42d613']} style={styles.activeGradient} />
           </View>
         )}
 
@@ -915,16 +932,14 @@ export const EnhancedKickPlayer: React.FC<EnhancedKickPlayerProps> = ({
 
         {/* Health Status */}
         <View style={styles.healthIndicator}>
-          <View style={[
-            styles.healthDot,
-            { 
-              backgroundColor: hasLoaded 
-                ? '#53FC18' 
-                : isLoading 
-                  ? '#ffff00' 
-                  : '#ff0000' 
-            }
-          ]} />
+          <View
+            style={[
+              styles.healthDot,
+              {
+                backgroundColor: hasLoaded ? '#53FC18' : isLoading ? '#ffff00' : '#ff0000',
+              },
+            ]}
+          />
         </View>
       </View>
     </View>
@@ -941,17 +956,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(83, 252, 24, 0.2)',
   } as ViewStyle,
-  
+
   playerContainer: {
     flex: 1,
     position: 'relative',
   } as ViewStyle,
-  
+
   video: {
     flex: 1,
     backgroundColor: '#0f0f23',
   } as ViewStyle,
-  
+
   loadingOverlay: {
     position: 'absolute',
     top: 0,
@@ -962,14 +977,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   } as ViewStyle,
-  
+
   loadingText: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     marginTop: ModernTheme.spacing.sm,
     fontWeight: ModernTheme.typography.weights.medium,
   } as TextStyle,
-  
+
   loadingSubtext: {
     color: '#53FC18',
     fontSize: ModernTheme.typography.sizes.xs,
@@ -977,7 +992,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     fontWeight: ModernTheme.typography.weights.semibold,
   } as TextStyle,
-  
+
   errorOverlay: {
     position: 'absolute',
     top: 0,
@@ -989,7 +1004,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: ModernTheme.spacing.md,
   } as ViewStyle,
-  
+
   errorText: {
     color: '#ff6b6b',
     fontSize: ModernTheme.typography.sizes.md,
@@ -998,79 +1013,79 @@ const styles = StyleSheet.create({
     marginBottom: ModernTheme.spacing.xs,
     fontWeight: ModernTheme.typography.weights.semibold,
   } as TextStyle,
-  
+
   errorPlatform: {
     color: '#53FC18',
     fontSize: ModernTheme.typography.sizes.sm,
     textAlign: 'center',
     marginBottom: ModernTheme.spacing.md,
   } as TextStyle,
-  
+
   errorButtons: {
     flexDirection: 'row',
     gap: ModernTheme.spacing.sm,
   } as ViewStyle,
-  
+
   retryButton: {
     backgroundColor: ModernTheme.colors.primary[500],
     paddingHorizontal: ModernTheme.spacing.md,
     paddingVertical: ModernTheme.spacing.sm,
     borderRadius: ModernTheme.borderRadius.md,
   } as ViewStyle,
-  
+
   retryText: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
   } as TextStyle,
-  
+
   platformButton: {
     paddingHorizontal: ModernTheme.spacing.md,
     paddingVertical: ModernTheme.spacing.sm,
     borderRadius: ModernTheme.borderRadius.md,
   } as ViewStyle,
-  
+
   platformText: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
   } as TextStyle,
-  
+
   controlsOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
   } as ViewStyle,
-  
+
   controlsGradient: {
     padding: ModernTheme.spacing.md,
   } as ViewStyle,
-  
+
   controlsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   } as ViewStyle,
-  
+
   leftControls: {
     flexDirection: 'row',
     gap: ModernTheme.spacing.sm,
     flex: 1,
   } as ViewStyle,
-  
+
   centerControls: {
     flex: 2,
     alignItems: 'center',
   } as ViewStyle,
-  
+
   rightControls: {
     flexDirection: 'row',
     gap: ModernTheme.spacing.sm,
     flex: 1,
     justifyContent: 'flex-end',
   } as ViewStyle,
-  
+
   controlButton: {
     backgroundColor: 'rgba(15, 15, 35, 0.8)',
     width: 40,
@@ -1081,19 +1096,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(83, 252, 24, 0.3)',
   } as ViewStyle,
-  
+
   removeButton: {
     backgroundColor: 'rgba(239, 68, 68, 0.7)',
     borderColor: 'rgba(239, 68, 68, 0.5)',
   } as ViewStyle,
-  
+
   streamTitle: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
     textAlign: 'center',
   } as TextStyle,
-  
+
   streamGame: {
     color: '#53FC18',
     fontSize: ModernTheme.typography.sizes.xs,
@@ -1101,7 +1116,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontWeight: ModernTheme.typography.weights.medium,
   } as TextStyle,
-  
+
   qualityMenu: {
     position: 'absolute',
     bottom: 80,
@@ -1113,35 +1128,35 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#53FC18',
   } as ViewStyle,
-  
+
   qualityTitle: {
     color: ModernTheme.colors.text.primary,
     fontSize: ModernTheme.typography.sizes.sm,
     fontWeight: ModernTheme.typography.weights.semibold,
     marginBottom: ModernTheme.spacing.sm,
   } as TextStyle,
-  
+
   qualityOption: {
     paddingVertical: ModernTheme.spacing.xs,
     paddingHorizontal: ModernTheme.spacing.sm,
     borderRadius: ModernTheme.borderRadius.sm,
     marginBottom: ModernTheme.spacing.xs,
   } as ViewStyle,
-  
+
   qualityOptionActive: {
     backgroundColor: '#53FC18',
   } as ViewStyle,
-  
+
   qualityText: {
     color: ModernTheme.colors.text.secondary,
     fontSize: ModernTheme.typography.sizes.sm,
   } as TextStyle,
-  
+
   qualityTextActive: {
     color: '#0f0f23',
     fontWeight: ModernTheme.typography.weights.bold,
   } as TextStyle,
-  
+
   activeIndicator: {
     position: 'absolute',
     top: 0,
@@ -1152,12 +1167,12 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: 'transparent',
   } as ViewStyle,
-  
+
   activeGradient: {
     flex: 1,
     borderRadius: ModernTheme.borderRadius.lg,
   } as ViewStyle,
-  
+
   platformBadge: {
     position: 'absolute',
     top: ModernTheme.spacing.sm,
@@ -1170,13 +1185,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   } as ViewStyle,
-  
+
   platformBadgeText: {
     color: '#0f0f23',
     fontSize: 10,
     fontWeight: ModernTheme.typography.weights.bold,
   } as TextStyle,
-  
+
   latencyIndicator: {
     position: 'absolute',
     top: ModernTheme.spacing.sm,
@@ -1188,20 +1203,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#53FC18',
   } as ViewStyle,
-  
+
   latencyText: {
     color: '#53FC18',
     fontSize: 8,
     fontWeight: ModernTheme.typography.weights.bold,
   } as TextStyle,
-  
+
   healthIndicator: {
     position: 'absolute',
     bottom: ModernTheme.spacing.xs,
     right: ModernTheme.spacing.xs,
     zIndex: 1000,
   } as ViewStyle,
-  
+
   healthDot: {
     width: 10,
     height: 10,

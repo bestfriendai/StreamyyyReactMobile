@@ -40,35 +40,41 @@ const ResponsiveMultiStreamGrid: React.FC<ResponsiveMultiStreamGridProps> = ({
   const { webSettings, updateWebSettings } = useCrossPlatformStore();
 
   // Calculate optimal grid layout based on container size and stream count
-  const calculateGridLayout = (containerWidth: number, containerHeight: number, streamCount: number) => {
+  const calculateGridLayout = (
+    containerWidth: number,
+    containerHeight: number,
+    streamCount: number
+  ) => {
     const aspectRatio = 16 / 9; // Standard video aspect ratio
     const minStreamWidth = 320;
     const minStreamHeight = 180;
-    
+
     let bestLayout = { columns: 1, rows: 1 };
     let bestScore = 0;
-    
+
     // Try different grid configurations
     for (let cols = 1; cols <= Math.ceil(Math.sqrt(streamCount)); cols++) {
       const rows = Math.ceil(streamCount / cols);
       const streamWidth = containerWidth / cols;
       const streamHeight = containerHeight / rows;
-      
+
       // Check if streams fit with minimum dimensions
       if (streamWidth >= minStreamWidth && streamHeight >= minStreamHeight) {
         // Calculate how well this layout uses the available space
-        const usedSpace = (streamWidth * streamHeight * streamCount) / (containerWidth * containerHeight);
-        const aspectRatioFit = Math.min(streamWidth / streamHeight, streamHeight / streamWidth) / aspectRatio;
-        
+        const usedSpace =
+          (streamWidth * streamHeight * streamCount) / (containerWidth * containerHeight);
+        const aspectRatioFit =
+          Math.min(streamWidth / streamHeight, streamHeight / streamWidth) / aspectRatio;
+
         const score = usedSpace * aspectRatioFit;
-        
+
         if (score > bestScore) {
           bestScore = score;
           bestLayout = { columns: cols, rows };
         }
       }
     }
-    
+
     return bestLayout;
   };
 
@@ -78,7 +84,7 @@ const ResponsiveMultiStreamGrid: React.FC<ResponsiveMultiStreamGridProps> = ({
       if (gridRef.current) {
         const rect = gridRef.current.getBoundingClientRect();
         const layout = calculateGridLayout(rect.width, rect.height, streams.length);
-        
+
         setDimensions({
           width: rect.width,
           height: rect.height,
@@ -111,7 +117,7 @@ const ResponsiveMultiStreamGrid: React.FC<ResponsiveMultiStreamGridProps> = ({
 
   // Handle keyboard shortcuts (web-specific)
   useEffect(() => {
-    if (!platformDetection.isWeb || !webSettings.keyboardShortcuts) return;
+    if (!platformDetection.isWeb || !webSettings.keyboardShortcuts) {return;}
 
     const handleKeyPress = (event: KeyboardEvent) => {
       // Only handle shortcuts if not in an input field
@@ -172,7 +178,7 @@ const ResponsiveMultiStreamGrid: React.FC<ResponsiveMultiStreamGridProps> = ({
 
   // Toggle fullscreen for web
   const toggleFullscreen = async (streamId: string) => {
-    if (!platformDetection.isWeb) return;
+    if (!platformDetection.isWeb) {return;}
 
     try {
       if (fullscreenStream === streamId) {
@@ -251,33 +257,39 @@ const ResponsiveMultiStreamGrid: React.FC<ResponsiveMultiStreamGridProps> = ({
 
         {/* Loading state */}
         {isStreamLoading && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            color: '#fff',
-            fontSize: '14px',
-          }}>
-            <div style={{
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              gap: '8px',
-            }}>
-              <div style={{
-                width: '24px',
-                height: '24px',
-                border: '2px solid #333',
-                borderTop: '2px solid #fff',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-              }} />
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              color: '#fff',
+              fontSize: '14px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <div
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  border: '2px solid #333',
+                  borderTop: '2px solid #fff',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                }}
+              />
               Loading stream...
             </div>
           </div>
@@ -285,24 +297,26 @@ const ResponsiveMultiStreamGrid: React.FC<ResponsiveMultiStreamGridProps> = ({
 
         {/* Error state */}
         {hasError && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            color: '#fff',
-            fontSize: '14px',
-            flexDirection: 'column',
-            gap: '8px',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              color: '#fff',
+              fontSize: '14px',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
             <div>⚠️ Stream unavailable</div>
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 setHasError(false);
                 setIsStreamLoading(true);
@@ -323,27 +337,33 @@ const ResponsiveMultiStreamGrid: React.FC<ResponsiveMultiStreamGridProps> = ({
 
         {/* Stream info overlay */}
         {isHovered && !isFullscreen && (
-          <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: 'linear-gradient(transparent, rgba(0, 0, 0, 0.8))',
-            color: '#fff',
-            padding: '8px',
-            fontSize: '12px',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: 'linear-gradient(transparent, rgba(0, 0, 0, 0.8))',
+              color: '#fff',
+              padding: '8px',
+              fontSize: '12px',
+            }}
+          >
             <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>
               {stream.streamerDisplayName}
             </div>
             <div style={{ opacity: 0.8 }}>
-              {stream.title.length > 50 ? stream.title.substring(0, 50) + '...' : stream.title}
+              {stream.title.length > 50 ? `${stream.title.substring(0, 50)  }...` : stream.title}
             </div>
             <div style={{ marginTop: '4px', fontSize: '11px' }}>
-              <span style={{ 
-                color: stream.platform === 'twitch' ? '#9146FF' : 
-                      stream.platform === 'youtube' ? '#FF0000' : '#53FC18' 
-              }}>
+              <span
+                style={{
+                  color:
+                    stream.platform === 'twitch'
+                      ? '#9146FF'
+                  stream.platform === 'youtube' ? '#FF0000' : '#53FC18'
+                }}
+              >
                 {stream.platform.toUpperCase()}
               </span>
               {' • '}
@@ -354,15 +374,17 @@ const ResponsiveMultiStreamGrid: React.FC<ResponsiveMultiStreamGridProps> = ({
 
         {/* Control buttons */}
         {isHovered && (
-          <div style={{
-            position: 'absolute',
-            top: '8px',
-            right: '8px',
-            display: 'flex',
-            gap: '4px',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              display: 'flex',
+              gap: '4px',
+            }}
+          >
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 toggleFullscreen(stream.id);
               }}
@@ -383,9 +405,9 @@ const ResponsiveMultiStreamGrid: React.FC<ResponsiveMultiStreamGridProps> = ({
             >
               {isFullscreen ? '⊟' : '⊞'}
             </button>
-            
+
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 onStreamRemove?.(stream.id);
               }}
@@ -430,65 +452,75 @@ const ResponsiveMultiStreamGrid: React.FC<ResponsiveMultiStreamGridProps> = ({
       {/* Add CSS for animations */}
       <style jsx>{`
         @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
         }
       `}</style>
-      
+
       <div ref={gridRef} style={gridStyle}>
         {streams.map((stream, index) => (
           <StreamItem key={stream.id} stream={stream} index={index} />
         ))}
-        
+
         {/* Empty slots */}
         {streams.length < maxStreams && (
-          <div style={{
-            flex: 1,
-            minHeight: '180px',
-            border: '2px dashed #333',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#666',
-            fontSize: '14px',
-            cursor: 'pointer',
-          }}>
+          <div
+            style={{
+              flex: 1,
+              minHeight: '180px',
+              border: '2px dashed #333',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#666',
+              fontSize: '14px',
+              cursor: 'pointer',
+            }}
+          >
             + Add Stream
           </div>
         )}
       </div>
-      
+
       {/* Fullscreen controls */}
       {fullscreenStream && (
-        <div style={{
-          position: 'fixed',
-          top: '16px',
-          right: '16px',
-          zIndex: 1001,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          color: '#fff',
-          padding: '8px 12px',
-          borderRadius: '4px',
-          fontSize: '12px',
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: '16px',
+            right: '16px',
+            zIndex: 1001,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            color: '#fff',
+            padding: '8px 12px',
+            borderRadius: '4px',
+            fontSize: '12px',
+          }}
+        >
           Press ESC to exit fullscreen
         </div>
       )}
-      
+
       {/* Keyboard shortcuts help */}
       {webSettings.keyboardShortcuts && (
-        <div style={{
-          position: 'absolute',
-          bottom: '8px',
-          left: '8px',
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          color: '#fff',
-          padding: '4px 8px',
-          borderRadius: '4px',
-          fontSize: '10px',
-          opacity: 0.7,
-        }}>
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '8px',
+            left: '8px',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            color: '#fff',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            fontSize: '10px',
+            opacity: 0.7,
+          }}
+        >
           Ctrl+F: Fullscreen • Ctrl+1-9: Select stream
         </div>
       )}

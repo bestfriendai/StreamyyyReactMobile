@@ -1,4 +1,3 @@
-import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -26,6 +25,7 @@ import {
   Minimize2,
   Maximize2,
 } from 'lucide-react-native';
+import React, { useState, useRef, useEffect } from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -103,14 +103,16 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
   const [viewerCount, setViewerCount] = useState(1247);
   const [isTyping, setIsTyping] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<
+    'connecting' | 'connected' | 'disconnected'
+  >('disconnected');
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [chatModerators, setChatModerators] = useState<string[]>(['ChatMod']);
   const [bannedWords, setBannedWords] = useState<string[]>(['spam', 'hate']);
   const [slowMode, setSlowMode] = useState(false);
   const [slowModeDelay, setSlowModeDelay] = useState(0);
   const [lastMessageTime, setLastMessageTime] = useState(0);
-  
+
   const chatListRef = useRef<FlatList>(null);
   const scale = useSharedValue(isVisible ? 1 : 0);
   const opacity = useSharedValue(isVisible ? 1 : 0);
@@ -132,64 +134,68 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
 
   // Real-time chat connection simulation
   useEffect(() => {
-    if (!isVisible || !enableRealTimeChat) return;
-    
+    if (!isVisible || !enableRealTimeChat) {return;}
+
     // Simulate connection
     setConnectionStatus('connecting');
     const connectTimeout = setTimeout(() => {
       setConnectionStatus('connected');
       setIsConnected(true);
     }, 1000);
-    
+
     // Simulate new messages with more realistic patterns
-    const messageInterval = setInterval(() => {
-      const messageTemplates = [
-        'Nice stream!',
-        'PogChamp',
-        'Amazing play!',
-        'KEKW',
-        '5Head move',
-        'EZ Clap',
-        'LUL',
-        'Kreygasm',
-        'MonkaS',
-        'That was insane!',
-        'GG',
-        'What game is this?',
-        'First time here!',
-        'Followed!',
-        'Sub hype!',
-      ];
-      
+    const messageInterval = setInterval(
+      () => {
+        const messageTemplates = [
+          'Nice stream!',
+          'PogChamp',
+          'Amazing play!',
+          'KEKW',
+          '5Head move',
+          'EZ Clap',
+          'LUL',
+          'Kreygasm',
+          'MonkaS',
+          'That was insane!',
+          'GG',
+          'What game is this?',
+          'First time here!',
+          'Followed!',
+          'Sub hype!',
+        ];
+
       const randomTemplate = messageTemplates[Math.floor(Math.random() * messageTemplates.length)];
-      const username = `User${Math.floor(Math.random() * 1000)}`;
-      
+        const username = `User${Math.floor(Math.random() * 1000)}`;
+
       const newMsg: ChatMessage = {
-        id: Date.now().toString(),
-        username,
-        message: randomTemplate,
-        timestamp: new Date(),
-        type: Math.random() < 0.05 ? 'subscription' : 'normal',
-        color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`,
-        badges: Math.random() < 0.1 ? ['subscriber'] : undefined,
-      };
-      
+          id: Date.now().toString(),
+          username,
+          message: randomTemplate,
+          timestamp: new Date(),
+          type: Math.random() < 0.05 ? 'subscription' : 'normal',
+          color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`,
+          badges: Math.random() < 0.1 ? ['subscriber'] : undefined,
+        };
+
       setMessages(prev => [...prev.slice(-49), newMsg]);
-      
+
       // Simulate typing indicator
-      if (Math.random() < 0.3) {
-        const typingUser = `User${Math.floor(Math.random() * 100)}`;
-        setTypingUsers(prev => [...prev, typingUser]);
-        setTimeout(() => {
-          setTypingUsers(prev => prev.filter(u => u !== typingUser));
-        }, 2000);
-      }
-      
+        if (Math.random() < 0.3) {
+          const typingUser = `User${Math.floor(Math.random() * 100)}`;
+          setTypingUsers(prev => [...prev, typingUser]);
+          setTimeout(() => {
+            setTypingUsers(prev => prev.filter(u => u !== typingUser));
+          }, 2000);
+        }
+
+
       // Auto-scroll to bottom
-      setTimeout(() => {
-        chatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }, 2000 + Math.random() * 4000);
+        setTimeout(() => {
+          chatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      },
+      2000 + Math.random() * 4000
+    );
 
     // Simulate viewer count changes
     const viewerInterval = setInterval(() => {
@@ -211,22 +217,22 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
   // Enhanced message validation and moderation
   const validateMessage = (messageText: string): { isValid: boolean; reason?: string } => {
     const trimmedMessage = messageText.trim();
-    
+
     if (!trimmedMessage) {
       return { isValid: false, reason: 'Message cannot be empty' };
     }
-    
+
     if (trimmedMessage.length > 500) {
       return { isValid: false, reason: 'Message too long (max 500 characters)' };
     }
-    
+
     // Check for banned words
     const lowerMessage = trimmedMessage.toLowerCase();
     const containsBannedWord = bannedWords.some(word => lowerMessage.includes(word.toLowerCase()));
     if (containsBannedWord) {
       return { isValid: false, reason: 'Message contains inappropriate content' };
     }
-    
+
     // Check slow mode
     if (slowMode) {
       const now = Date.now();
@@ -235,18 +241,18 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
         return { isValid: false, reason: `Slow mode: wait ${remaining}s` };
       }
     }
-    
+
     return { isValid: true };
   };
 
   const handleSendMessage = () => {
     const validation = validateMessage(newMessage);
-    
+
     if (!validation.isValid) {
       Alert.alert('Cannot Send Message', validation.reason);
       return;
     }
-    
+
     const message: ChatMessage = {
       id: Date.now().toString(),
       username: 'You',
@@ -255,15 +261,15 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
       type: 'normal',
       color: '#8B5CF6',
     };
-    
+
     setMessages(prev => [...prev.slice(-49), message]);
     setNewMessage('');
     setIsTyping(false);
     setLastMessageTime(Date.now());
-    
+
     // Notify parent component
     onChatMessage?.(message);
-    
+
     setTimeout(() => {
       chatListRef.current?.scrollToEnd({ animated: true });
     }, 100);
@@ -272,7 +278,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
   const renderMessage = ({ item }: { item: ChatMessage }) => {
     const isSubscription = item.type === 'subscription';
     const isSystem = item.type === 'system';
-    
+
     return (
       <MotiView
         from={{ opacity: 0, translateY: 10 }}
@@ -289,33 +295,24 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
             style={styles.subscriptionGradient}
           />
         )}
-        
+
         <View style={styles.messageContent}>
           <View style={styles.messageHeader}>
             <View style={styles.userInfo}>
-              {item.badges?.includes('moderator') && (
-                <Crown size={12} color="#FFD700" />
-              )}
-              {item.badges?.includes('subscriber') && (
-                <Heart size={12} color="#FF6B6B" />
-              )}
-              <Text
-                style={[
-                  styles.username,
-                  { color: item.color || '#999' }
-                ]}
-              >
+              {item.badges?.includes('moderator') && <Crown size={12} color="#FFD700" />}
+              {item.badges?.includes('subscriber') && <Heart size={12} color="#FF6B6B" />}
+              <Text style={[styles.username, { color: item.color || '#999' }]}>
                 {item.username}
               </Text>
             </View>
             <Text style={styles.timestamp}>
               {item.timestamp.toLocaleTimeString('en-US', {
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
               })}
             </Text>
           </View>
-          
+
           <Text style={styles.messageText}>{item.message}</Text>
         </View>
       </MotiView>
@@ -328,7 +325,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
     height: chatHeight.value,
   }));
 
-  if (!isVisible) return null;
+  if (!isVisible) {return null;}
 
   return (
     <Animated.View
@@ -355,38 +352,37 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
             <View style={styles.headerLeft}>
               <MessageCircle size={18} color="#8B5CF6" />
               <Text style={styles.chatTitle}>Chat</Text>
-              
+
               {/* Connection Status */}
-              <View style={[
-                styles.connectionStatus,
-                { backgroundColor: connectionStatus === 'connected' ? '#10B981' : 
-                  connectionStatus === 'connecting' ? '#F59E0B' : '#EF4444' }
-              ]} />
-              
+              <View
+                style={[
+                  styles.connectionStatus,
+                  {
+                    backgroundColor:
+                      connectionStatus === 'connected'
+                        ? '#10B981'
+                        : connectionStatus === 'connecting'
+                          ? '#F59E0B'
+                          : '#EF4444',
+                  },
+                ]}
+
               <View style={styles.viewerBadge}>
                 <Users size={12} color="#10B981" />
-                <Text style={styles.viewerCount}>
-                  {viewerCount.toLocaleString()}
-                </Text>
+                <Text style={styles.viewerCount}>{viewerCount.toLocaleString()}</Text>
               </View>
             </View>
-            
+
             <View style={styles.headerControls}>
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={onToggleMinimize}
-              >
+              <TouchableOpacity style={styles.headerButton} onPress={onToggleMinimize}>
                 {isMinimized ? (
                   <Maximize2 size={16} color="#666" />
                 ) : (
                   <Minimize2 size={16} color="#666" />
                 )}
               </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={onToggleVisibility}
-              >
+
+              <TouchableOpacity style={styles.headerButton} onPress={onToggleVisibility}>
                 <X size={16} color="#666" />
               </TouchableOpacity>
             </View>
@@ -400,7 +396,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
                   ref={chatListRef}
                   data={messages}
                   renderItem={renderMessage}
-                  keyExtractor={(item) => item.id}
+                  keyExtractor={item => item.id}
                   showsVerticalScrollIndicator={false}
                   style={styles.messagesList}
                   contentContainerStyle={styles.messagesContent}
@@ -408,7 +404,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
                     chatListRef.current?.scrollToEnd({ animated: true });
                   }}
                 />
-                
+
                 {/* Typing Indicators */}
                 {typingUsers.length > 0 && (
                   <MotiView
@@ -435,8 +431,8 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
                       />
                     </View>
                     <Text style={styles.typingText}>
-                      {typingUsers.slice(0, 3).join(', ')} 
-                      {typingUsers.length > 3 && ` +${typingUsers.length - 3} more`} 
+                      {typingUsers.slice(0, 3).join(', ')}
+                      {typingUsers.length > 3 && ` +${typingUsers.length - 3} more`}
                       {typingUsers.length === 1 ? ' is' : ' are'} typing...
                     </Text>
                   </MotiView>
@@ -455,11 +451,11 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
                     <TouchableOpacity style={styles.emojiButton}>
                       <Smile size={18} color="#666" />
                     </TouchableOpacity>
-                    
+
                     <TextInput
                       style={styles.textInput}
                       value={newMessage}
-                      onChangeText={(text) => {
+                      onChangeText={text => {
                         setNewMessage(text);
                         setIsTyping(text.length > 0);
                       }}
@@ -470,28 +466,23 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({
                       onSubmitEditing={handleSendMessage}
                       blurOnSubmit={false}
                     />
-                    
+
                     <TouchableOpacity
-                      style={[
-                        styles.sendButton,
-                        newMessage.trim() && styles.sendButtonActive
-                      ]}
+                      style={[styles.sendButton, newMessage.trim() && styles.sendButtonActive]}
                       onPress={handleSendMessage}
                       disabled={!newMessage.trim()}
                     >
                       <Send size={16} color={newMessage.trim() ? '#8B5CF6' : '#666'} />
                     </TouchableOpacity>
                   </View>
-                  
+
                   {isTyping && (
                     <MotiView
                       from={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 20 }}
                       style={styles.typingIndicator}
                     >
-                      <Text style={styles.typingText}>
-                        {newMessage.length}/500
-                      </Text>
+                      <Text style={styles.typingText}>{newMessage.length}/500</Text>
                     </MotiView>
                   )}
                 </BlurView>

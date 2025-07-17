@@ -1,10 +1,10 @@
+import { Search, SortAsc } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 import { Alert, FlatList, View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { EnhancedFavoritesScreen } from '@/components/EnhancedFavoritesScreen';
 import { NavigationHeader } from '@/components/NavigationHeader';
 import { useStreamManager } from '@/hooks/useStreamManager';
-import { Search, SortAsc } from 'lucide-react-native';
 
 export default function Favorites() {
   const [searchQuery, setSearchQuery] = useState('');

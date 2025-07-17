@@ -1,21 +1,5 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  RefreshControl,
-  Dimensions,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
-  FlatList,
-  ScrollView,
-  Alert,
-  StatusBar,
-  Platform,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   Search,
   Filter,
@@ -39,11 +23,22 @@ import {
   Play,
   MoreHorizontal,
 } from 'lucide-react-native';
-import { TwitchStream, TwitchGame } from '@/services/twitchApi';
-import { ModernTheme } from '@/theme/modernTheme';
-import { ProfessionalStreamCard } from '@/components/ProfessionalStreamCard';
-import { SkeletonGrid, SkeletonStreamCard } from '@/components/SkeletonLoader';
-import { HapticFeedback } from '@/utils/haptics';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  RefreshControl,
+  Dimensions,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  FlatList,
+  ScrollView,
+  Alert,
+  StatusBar,
+  Platform,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -59,6 +54,11 @@ import Animated, {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
+import { ProfessionalStreamCard } from '@/components/ProfessionalStreamCard';
+import { SkeletonGrid, SkeletonStreamCard } from '@/components/SkeletonLoader';
+import { TwitchStream, TwitchGame } from '@/services/twitchApi';
+import { ModernTheme } from '@/theme/modernTheme';
+import { HapticFeedback } from '@/utils/haptics';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -162,9 +162,8 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
   // Calculate responsive dimensions
   const numColumns = viewMode === 'grid' ? 2 : 1;
   const cardPadding = 16;
-  const cardWidth = viewMode === 'grid' 
-    ? (SCREEN_WIDTH - (cardPadding * 3)) / 2 
-    : SCREEN_WIDTH - (cardPadding * 2);
+  const cardWidth =
+    viewMode === 'grid' ? (SCREEN_WIDTH - cardPadding * 3) / 2 : SCREEN_WIDTH - cardPadding * 2;
 
   // Enhanced stream processing with better categorization
   const processedStreams = useMemo(() => {
@@ -173,10 +172,11 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(stream =>
-        stream.title.toLowerCase().includes(query) ||
-        stream.user_name.toLowerCase().includes(query) ||
-        stream.game_name.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        stream =>
+          stream.title.toLowerCase().includes(query) ||
+          stream.user_name.toLowerCase().includes(query) ||
+          stream.game_name.toLowerCase().includes(query)
       );
     }
 
@@ -184,28 +184,29 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
     if (selectedCategory !== 'all') {
       switch (selectedCategory) {
         case 'gaming':
-          filtered = filtered.filter(stream => 
-            !stream.game_name.toLowerCase().includes('just chatting') &&
-            !stream.game_name.toLowerCase().includes('music') &&
-            !stream.game_name.toLowerCase().includes('art') &&
-            stream.game_name !== 'Special Events'
+          filtered = filtered.filter(
+            stream =>
+              !stream.game_name.toLowerCase().includes('just chatting') &&
+              !stream.game_name.toLowerCase().includes('music') &&
+              !stream.game_name.toLowerCase().includes('art') &&
+              stream.game_name !== 'Special Events'
           );
           break;
         case 'irl':
-          filtered = filtered.filter(stream => 
-            stream.game_name.toLowerCase().includes('just chatting') ||
-            stream.game_name === 'Special Events'
+          filtered = filtered.filter(
+            stream =>
+              stream.game_name.toLowerCase().includes('just chatting') ||
+              stream.game_name === 'Special Events'
           );
           break;
         case 'music':
-          filtered = filtered.filter(stream => 
-            stream.game_name.toLowerCase().includes('music')
-          );
+          filtered = filtered.filter(stream => stream.game_name.toLowerCase().includes('music'));
           break;
         case 'art':
-          filtered = filtered.filter(stream => 
-            stream.game_name.toLowerCase().includes('art') ||
-            stream.game_name.toLowerCase().includes('creative')
+          filtered = filtered.filter(
+            stream =>
+              stream.game_name.toLowerCase().includes('art') ||
+              stream.game_name.toLowerCase().includes('creative')
           );
           break;
       }
@@ -217,15 +218,17 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
         filtered.sort((a, b) => b.viewer_count - a.viewer_count);
         break;
       case 'recent':
-        filtered.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
+        filtered.sort(
+          (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+        );
         break;
       case 'alphabetical':
         filtered.sort((a, b) => a.title.localeCompare(b.title));
         break;
       case 'trending':
         filtered.sort((a, b) => {
-          const aScore = ((a as any).trendingScore || 0);
-          const bScore = ((b as any).trendingScore || 0);
+          const aScore = (a as any).trendingScore || 0;
+          const bScore = (b as any).trendingScore || 0;
           return bScore - aScore;
         });
         break;
@@ -243,7 +246,7 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
       const hotStreams = processedStreams
         .filter(stream => (stream as any).isHot || stream.viewer_count > 15000)
         .slice(0, 4);
-      
+
       if (hotStreams.length > 0) {
         sections.push({
           id: 'hot',
@@ -261,7 +264,7 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
         .filter(stream => (stream as any).isTrending && !(stream as any).isHot)
         .sort((a, b) => ((b as any).trendingScore || 0) - ((a as any).trendingScore || 0))
         .slice(0, 6);
-      
+
       if (trendingStreams.length > 0) {
         sections.push({
           id: 'trending',
@@ -294,7 +297,10 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
 
       // Rising Stars
       const risingStreams = processedStreams
-        .filter(stream => (stream as any).isRising && !(stream as any).isTrending && !(stream as any).isHot)
+        .filter(
+          stream =>
+            (stream as any).isRising && !(stream as any).isTrending && !(stream as any).isHot
+        )
         .slice(0, 4);
 
       if (risingStreams.length > 0) {
@@ -313,7 +319,8 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
       if (selectedCategory !== 'all') {
         const categoryStreams = processedStreams.slice(0, 8);
         if (categoryStreams.length > 0) {
-          const categoryName = PREMIUM_CATEGORIES.find(cat => cat.id === selectedCategory)?.name || 'Category';
+          const categoryName =
+            PREMIUM_CATEGORIES.find(cat => cat.id === selectedCategory)?.name || 'Category';
           sections.push({
             id: 'category',
             title: `Best in ${categoryName}`,
@@ -343,41 +350,40 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
   }, [processedStreams, selectedCategory, searchQuery]);
 
   // Enhanced interaction handlers
-  const handleAddStream = useCallback(async (stream: TwitchStream) => {
-    try {
-      const result = await onAddStream(stream);
-      if (result.success) {
-        HapticFeedback.success();
-        Alert.alert(
-          '✨ Stream Added!',
-          `${stream.user_name} is now in your multi-view`,
-          [
+  const handleAddStream = useCallback(
+    async (stream: TwitchStream) => {
+      try {
+        const result = await onAddStream(stream);
+        if (result.success) {
+          HapticFeedback.success();
+          Alert.alert('✨ Stream Added!', `${stream.user_name} is now in your multi-view`, [
             { text: 'Continue Browsing', style: 'default' },
-            { text: 'View Grid', style: 'default', onPress: () => {} }
-          ]
-        );
-      } else {
+            { text: 'View Grid', style: 'default', onPress: () => {} },
+          ]);
+        } else {
+          HapticFeedback.error();
+          Alert.alert('Unable to Add', result.message);
+        }
+        return result;
+      } catch (error) {
         HapticFeedback.error();
-        Alert.alert('Unable to Add', result.message);
+        return { success: false, message: 'Failed to add stream' };
       }
-      return result;
-    } catch (error) {
-      HapticFeedback.error();
-      return { success: false, message: 'Failed to add stream' };
-    }
-  }, [onAddStream]);
+    },
+    [onAddStream]
+  );
 
   // Enhanced UI handlers
   const toggleSearch = useCallback(() => {
     HapticFeedback.light();
     const newShowSearch = !showSearch;
     setShowSearch(newShowSearch);
-    
-    searchBarHeight.value = withTiming(newShowSearch ? 70 : 0, { 
-      duration: 400, 
-      easing: Easing.bezier(0.4, 0, 0.2, 1) 
+
+    searchBarHeight.value = withTiming(newShowSearch ? 70 : 0, {
+      duration: 400,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
     });
-    
+
     if (!newShowSearch) {
       setSearchQuery('');
     }
@@ -387,20 +393,17 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
     HapticFeedback.light();
     const newShowFilters = !showFilters;
     setShowFilters(newShowFilters);
-    
-    filtersHeight.value = withTiming(newShowFilters ? 160 : 0, { 
-      duration: 400, 
-      easing: Easing.bezier(0.4, 0, 0.2, 1) 
+
+    filtersHeight.value = withTiming(newShowFilters ? 160 : 0, {
+      duration: 400,
+      easing: Easing.bezier(0.4, 0, 0.2, 1),
     });
   }, [showFilters]);
 
   // Floating action button animation
   useEffect(() => {
     floatingButtonScale.value = withRepeat(
-      withSequence(
-        withTiming(1.05, { duration: 2000 }),
-        withTiming(1, { duration: 2000 })
-      ),
+      withSequence(withTiming(1.05, { duration: 2000 }), withTiming(1, { duration: 2000 })),
       -1,
       true
     );
@@ -433,7 +436,7 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
   const renderPremiumHeader = () => (
     <Animated.View style={[styles.header, headerAnimatedStyle]}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      
+
       {/* Main Header */}
       <LinearGradient
         colors={['rgba(0, 0, 0, 0.95)', 'rgba(0, 0, 0, 0.8)', 'rgba(0, 0, 0, 0.6)']}
@@ -443,10 +446,7 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
           <View style={styles.headerLeft}>
             <View style={styles.titleSection}>
               <View style={styles.titleContainer}>
-                <LinearGradient
-                  colors={['#667eea', '#764ba2']}
-                  style={styles.titleIcon}
-                >
+                <LinearGradient colors={['#667eea', '#764ba2']} style={styles.titleIcon}>
                   <Sparkles size={28} color="#fff" />
                 </LinearGradient>
                 <View style={styles.titleText}>
@@ -454,7 +454,7 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
                   <Text style={styles.headerSubtitle}>Premium Content</Text>
                 </View>
               </View>
-              
+
               <Animated.View style={[styles.statsContainer, statsAnimatedStyle]}>
                 <BlurView intensity={20} style={styles.statsBlur}>
                   <View style={styles.statItem}>
@@ -466,7 +466,11 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
                   <View style={styles.statItem}>
                     <Eye size={14} color="#667eea" />
                     <Text style={styles.statText}>
-                      {Math.floor(processedStreams.reduce((acc, stream) => acc + stream.viewer_count, 0) / 1000)}K
+                      {Math.floor(
+                        processedStreams.reduce((acc, stream) => acc + stream.viewer_count, 0) /
+                          1000
+                      )}
+                      K
                     </Text>
                     <Text style={styles.statLabel}>viewers</Text>
                   </View>
@@ -476,33 +480,37 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
           </View>
 
           <View style={styles.headerActions}>
-            <AnimatedTouchableOpacity 
-              style={styles.actionButton} 
+            <AnimatedTouchableOpacity
+              style={styles.actionButton}
               onPress={toggleSearch}
               entering={SlideInRight.delay(100)}
             >
               <BlurView intensity={80} style={styles.actionBlur}>
                 <LinearGradient
-                  colors={showSearch ? ['#667eea', '#764ba2'] : ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.05)']}
+                  colors={
+                    showSearch
+                      ? ['#667eea', '#764ba2']
+                      : ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.05)']
+                  }
                   style={styles.actionGradient}
                 >
-                  {showSearch ? (
-                    <X size={22} color="#fff" />
-                  ) : (
-                    <Search size={22} color="#fff" />
-                  )}
+                  {showSearch ? <X size={22} color="#fff" /> : <Search size={22} color="#fff" />}
                 </LinearGradient>
               </BlurView>
             </AnimatedTouchableOpacity>
 
-            <AnimatedTouchableOpacity 
-              style={styles.actionButton} 
+            <AnimatedTouchableOpacity
+              style={styles.actionButton}
               onPress={toggleFilters}
               entering={SlideInRight.delay(200)}
             >
               <BlurView intensity={80} style={styles.actionBlur}>
                 <LinearGradient
-                  colors={showFilters ? ['#f093fb', '#f5576c'] : ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.05)']}
+                  colors={
+                    showFilters
+                      ? ['#f093fb', '#f5576c']
+                      : ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.05)']
+                  }
                   style={styles.actionGradient}
                 >
                   <SlidersHorizontal size={22} color="#fff" />
@@ -510,8 +518,8 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
               </BlurView>
             </AnimatedTouchableOpacity>
 
-            <AnimatedTouchableOpacity 
-              style={styles.actionButton} 
+            <AnimatedTouchableOpacity
+              style={styles.actionButton}
               onPress={() => {
                 HapticFeedback.selection();
                 setViewMode(viewMode === 'grid' ? 'list' : 'grid');
@@ -566,12 +574,12 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
                 {/* Categories */}
                 <View style={styles.filterGroup}>
                   <Text style={styles.filterGroupLabel}>Categories</Text>
-                  <ScrollView 
-                    horizontal 
+                  <ScrollView
+                    horizontal
                     showsHorizontalScrollIndicator={false}
                     style={styles.categoriesScroll}
                   >
-                    {PREMIUM_CATEGORIES.map((category) => (
+                    {PREMIUM_CATEGORIES.map(category => (
                       <TouchableOpacity
                         key={category.id}
                         style={styles.categoryChip}
@@ -581,14 +589,20 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
                         }}
                       >
                         <LinearGradient
-                          colors={selectedCategory === category.id ? category.gradient : ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+                          colors={
+                            selectedCategory === category.id
+                              ? category.gradient
+                              : ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']
+                          }
                           style={styles.categoryChipGradient}
                         >
                           {category.icon}
-                          <Text style={[
-                            styles.categoryChipText,
-                            selectedCategory === category.id && styles.categoryChipTextActive
-                          ]}>
+                          <Text
+                            style={[
+                              styles.categoryChipText,
+                              selectedCategory === category.id && styles.categoryChipTextActive,
+                            ]}
+                          >
                             {category.name}
                           </Text>
                         </LinearGradient>
@@ -600,12 +614,12 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
                 {/* Sort Options */}
                 <View style={styles.filterGroup}>
                   <Text style={styles.filterGroupLabel}>Sort By</Text>
-                  <ScrollView 
-                    horizontal 
+                  <ScrollView
+                    horizontal
                     showsHorizontalScrollIndicator={false}
                     style={styles.sortScroll}
                   >
-                    {(['viewers', 'trending', 'recent', 'alphabetical'] as SortBy[]).map((sort) => (
+                    {(['viewers', 'trending', 'recent', 'alphabetical'] as SortBy[]).map(sort => (
                       <TouchableOpacity
                         key={sort}
                         style={styles.sortChip}
@@ -614,14 +628,15 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
                           setSortBy(sort);
                         }}
                       >
-                        <View style={[
-                          styles.sortChipContent,
-                          sortBy === sort && styles.sortChipActive
-                        ]}>
-                          <Text style={[
-                            styles.sortChipText,
-                            sortBy === sort && styles.sortChipTextActive
-                          ]}>
+                        <View
+                          style={[styles.sortChipContent, sortBy === sort && styles.sortChipActive]}
+                        >
+                          <Text
+                            style={[
+                              styles.sortChipText,
+                              sortBy === sort && styles.sortChipTextActive,
+                            ]}
+                          >
                             {sort.charAt(0).toUpperCase() + sort.slice(1)}
                           </Text>
                         </View>
@@ -639,10 +654,7 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
 
   // Premium Section Header Component
   const renderPremiumSectionHeader = (section: StreamSection) => (
-    <Animated.View 
-      style={styles.sectionContainer}
-      entering={FadeIn.delay(100)}
-    >
+    <Animated.View style={styles.sectionContainer} entering={FadeIn.delay(100)}>
       <LinearGradient
         colors={[...section.gradient, 'transparent']}
         start={{ x: 0, y: 0 }}
@@ -652,19 +664,14 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
         <BlurView intensity={60} style={styles.sectionBlur}>
           <View style={styles.sectionHeaderContent}>
             <View style={styles.sectionHeaderLeft}>
-              <View style={styles.sectionIconContainer}>
-                {section.icon}
-              </View>
+              <View style={styles.sectionIconContainer}>{section.icon}</View>
               <View style={styles.sectionHeaderText}>
                 <Text style={styles.sectionTitle}>{section.title}</Text>
                 <Text style={styles.sectionSubtitle}>{section.subtitle}</Text>
               </View>
             </View>
             {!section.showAll && section.streams.length > 4 && (
-              <TouchableOpacity 
-                style={styles.seeAllButton}
-                onPress={() => HapticFeedback.light()}
-              >
+              <TouchableOpacity style={styles.seeAllButton} onPress={() => HapticFeedback.light()}>
                 <Text style={styles.seeAllText}>See All</Text>
                 <ArrowRight size={16} color="#fff" />
               </TouchableOpacity>
@@ -676,9 +683,13 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
   );
 
   // Enhanced Stream Grid Component
-  const renderPremiumStreamGrid = (streams: TwitchStream[], sectionId: string, showAll: boolean = false) => {
+  const renderPremiumStreamGrid = (
+    streams: TwitchStream[],
+    sectionId: string,
+    showAll: boolean = false
+  ) => {
     const displayStreams = showAll ? streams : streams.slice(0, 6);
-    
+
     return (
       <View style={styles.streamGridContainer}>
         <FlatList
@@ -717,10 +728,7 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
             <Animated.View entering={FadeIn.delay(200)}>
-              <LinearGradient
-                colors={['#667eea', '#764ba2']}
-                style={styles.loadingSectionHeader}
-              >
+              <LinearGradient colors={['#667eea', '#764ba2']} style={styles.loadingSectionHeader}>
                 <BlurView intensity={60} style={styles.loadingSectionBlur}>
                   <View style={styles.loadingSectionContent}>
                     <Sparkles size={20} color="#fff" />
@@ -739,7 +747,7 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
   return (
     <View style={styles.container}>
       {renderPremiumHeader()}
-      
+
       <ScrollView
         style={styles.content}
         refreshControl={
@@ -755,15 +763,15 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
           />
         }
         showsVerticalScrollIndicator={false}
-        onScroll={(event) => {
+        onScroll={event => {
           scrollY.value = event.nativeEvent.contentOffset.y;
         }}
         scrollEventThrottle={16}
       >
         {streamSections.length > 0 ? (
           streamSections.map((section, index) => (
-            <Animated.View 
-              key={section.id} 
+            <Animated.View
+              key={section.id}
               style={styles.section}
               entering={FadeIn.delay(index * 100)}
             >
@@ -790,10 +798,7 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
         {hasMore && streams.length > 0 && (
           <Animated.View entering={FadeIn.delay(400)}>
             <TouchableOpacity style={styles.loadMoreContainer} onPress={onLoadMore}>
-              <LinearGradient
-                colors={['#667eea', '#764ba2']}
-                style={styles.loadMoreGradient}
-              >
+              <LinearGradient colors={['#667eea', '#764ba2']} style={styles.loadMoreGradient}>
                 <BlurView intensity={60} style={styles.loadMoreBlur}>
                   <View style={styles.loadMoreContent}>
                     <Text style={styles.loadMoreText}>Discover More Streams</Text>
@@ -809,7 +814,7 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
       </ScrollView>
 
       {/* Floating Action Button */}
-      <Animated.View 
+      <Animated.View
         style={[styles.floatingButton, floatingButtonAnimatedStyle]}
         entering={SlideInUp.delay(800)}
       >
@@ -821,10 +826,7 @@ export const ProfessionalDiscoverScreen: React.FC<ProfessionalDiscoverScreenProp
           style={styles.floatingButtonTouchable}
         >
           <BlurView intensity={80} style={styles.floatingButtonBlur}>
-            <LinearGradient
-              colors={['#667eea', '#764ba2']}
-              style={styles.floatingButtonGradient}
-            >
+            <LinearGradient colors={['#667eea', '#764ba2']} style={styles.floatingButtonGradient}>
               <Sparkles size={24} color="#fff" />
             </LinearGradient>
           </BlurView>

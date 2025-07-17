@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Play, Pause, Volume2, VolumeX, X, Eye, ExternalLink } from 'lucide-react-native';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
@@ -9,25 +11,15 @@ import {
   TextStyle,
   Alert,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  X,
-  Eye,
-  ExternalLink,
-} from 'lucide-react-native';
-import { TwitchStream } from '@/services/twitchApi';
-import { ModernTheme } from '@/theme/modernTheme';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { WebView } from 'react-native-webview';
+import { TwitchStream } from '@/services/twitchApi';
+import { ModernTheme } from '@/theme/modernTheme';
 
 interface FixedVideoPlayerProps {
   stream: TwitchStream;
@@ -60,7 +52,7 @@ export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
   const [controlsVisible, setControlsVisible] = useState(false);
   const webViewRef = useRef<WebView>(null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Generate proper Twitch embed URL with comprehensive mobile support
   const getTwitchEmbedUrl = useCallback(() => {
     // For mobile apps, we need to use a different approach
@@ -142,33 +134,33 @@ export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
     // Convert HTML to data URL
     return `data:text/html;charset=utf-8,${encodeURIComponent(embedHtml)}`;
   }, [stream.user_login, stream.user_name, isMuted]);
-  
+
   // Animation values
   const scale = useSharedValue(1);
   const controlsOpacity = useSharedValue(0);
-  
+
   // Animated styles
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
-  
+
   const controlsStyle = useAnimatedStyle(() => ({
     opacity: controlsOpacity.value,
   }));
-  
+
   // Handle press with animation
   const handlePress = useCallback(() => {
     scale.value = withSpring(0.98, { damping: 15 }, () => {
       scale.value = withSpring(1);
     });
-    
+
     // Toggle controls visibility
     setControlsVisible(!controlsVisible);
     controlsOpacity.value = withTiming(controlsVisible ? 0 : 1, { duration: 200 });
-    
+
     onPress?.();
   }, [controlsVisible, onPress]);
-  
+
   // Handle long press
   const handleLongPress = useCallback(() => {
     Alert.alert(
@@ -176,23 +168,23 @@ export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
       `${stream.user_name} - ${stream.game_name}`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Open in Twitch', 
+        {
+          text: 'Open in Twitch',
           onPress: () => {
             // TODO: Open in Twitch app or browser
             console.log('Open in Twitch:', stream.user_login);
-          }
+          },
         },
-        onRemove && { 
-          text: 'Remove', 
+        onRemove && {
+          text: 'Remove',
           style: 'destructive',
-          onPress: onRemove
-        }
+          onPress: onRemove,
+        },
       ].filter(Boolean)
     );
     onLongPress?.();
   }, [stream, onRemove, onLongPress]);
-  
+
   // WebView event handlers
   const handleWebViewLoad = useCallback(() => {
     console.log('✅ Stream loaded successfully:', stream.user_login);
@@ -206,23 +198,26 @@ export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
     }
   }, [stream.user_login]);
 
-  const handleWebViewError = useCallback((syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.error('❌ Stream load error:', stream.user_login, nativeEvent);
+  const handleWebViewError = useCallback(
+    (syntheticEvent: any) => {
+      const { nativeEvent } = syntheticEvent;
+      console.error('❌ Stream load error:', stream.user_login, nativeEvent);
 
-    // Provide more specific error messages
-    let errorMessage = 'Failed to load stream';
-    if (nativeEvent.description?.includes('network')) {
-      errorMessage = 'Network error - Check connection';
-    } else if (nativeEvent.description?.includes('parent')) {
-      errorMessage = 'Twitch embed error - Try refreshing';
-    } else if (nativeEvent.code === -1009) {
-      errorMessage = 'No internet connection';
-    }
+      // Provide more specific error messages
+      let errorMessage = 'Failed to load stream';
+      if (nativeEvent.description?.includes('network')) {
+        errorMessage = 'Network error - Check connection';
+      } else if (nativeEvent.description?.includes('parent')) {
+        errorMessage = 'Twitch embed error - Try refreshing';
+      } else if (nativeEvent.code === -1009) {
+        errorMessage = 'No internet connection';
+      }
 
-    setError(errorMessage);
-    setIsLoading(false);
-  }, [stream.user_login]);
+      setError(errorMessage);
+      setIsLoading(false);
+    },
+    [stream.user_login]
+  );
 
   const handleWebViewLoadStart = useCallback(() => {
     console.log('🔄 Stream loading started:', stream.user_login);
@@ -241,19 +236,19 @@ export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
       }
     }, 15000); // 15 second timeout
   }, [stream.user_login, isLoading]);
-  
+
   // Handle retry
   const handleRetry = useCallback(() => {
     setError(null);
     setIsLoading(true);
     webViewRef.current?.reload();
   }, []);
-  
+
   // Handle mute toggle
   const handleMuteToggle = useCallback(() => {
     onMuteToggle?.();
   }, [onMuteToggle]);
-  
+
   const embedUrl = getTwitchEmbedUrl();
 
   // Cleanup timeout on unmount
@@ -281,10 +276,10 @@ export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
           onLoad={handleWebViewLoad}
           onError={handleWebViewError}
           onLoadStart={handleWebViewLoadStart}
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
           scalesPageToFit={false}
           bounces={false}
@@ -292,16 +287,16 @@ export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['https://*', 'http://*', 'data:']}
-          mixedContentMode={'compatibility'}
+          mixedContentMode="compatibility"
           allowsFullscreenVideo={false}
-          allowsProtectedMedia={true}
-          thirdPartyCookiesEnabled={true}
-          sharedCookiesEnabled={true}
+          allowsProtectedMedia
+          thirdPartyCookiesEnabled
+          sharedCookiesEnabled
           cacheEnabled={false}
           incognito={false}
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
         />
-        
+
         {/* Loading Overlay */}
         {isLoading && (
           <View style={styles.loadingOverlay}>
@@ -309,7 +304,7 @@ export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
             <Text style={styles.loadingText}>Loading {stream.user_name}...</Text>
           </View>
         )}
-        
+
         {/* Error Overlay */}
         {error && (
           <View style={styles.errorOverlay}>
@@ -319,14 +314,11 @@ export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
             </TouchableOpacity>
           </View>
         )}
-        
+
         {/* Stream Info Overlay */}
         {!isLoading && !error && (
           <View style={styles.infoOverlay}>
-            <LinearGradient
-              colors={['rgba(0,0,0,0.8)', 'transparent']}
-              style={styles.infoGradient}
-            >
+            <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.infoGradient}>
               <View style={styles.streamInfo}>
                 <View style={styles.platformBadge}>
                   <Text style={styles.platformText}>LIVE</Text>
@@ -347,7 +339,7 @@ export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
             </LinearGradient>
           </View>
         )}
-        
+
         {/* Controls Overlay */}
         {showControls && !isLoading && !error && (
           <Animated.View style={[styles.controlsOverlay, controlsStyle]}>
@@ -357,10 +349,7 @@ export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
             >
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handleMuteToggle}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={handleMuteToggle}>
                     <LinearGradient
                       colors={ModernTheme.colors.gradients.primary}
                       style={styles.controlButtonGradient}
@@ -373,7 +362,7 @@ export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
                     </LinearGradient>
                   </TouchableOpacity>
                 </View>
-                
+
                 <View style={styles.rightControls}>
                   <TouchableOpacity
                     style={styles.controlButton}
@@ -386,12 +375,9 @@ export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
                       <ExternalLink size={16} color="#fff" />
                     </LinearGradient>
                   </TouchableOpacity>
-                  
+
                   {onRemove && (
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={onRemove}
-                    >
+                    <TouchableOpacity style={styles.controlButton} onPress={onRemove}>
                       <LinearGradient
                         colors={ModernTheme.colors.gradients.danger}
                         style={styles.controlButtonGradient}
@@ -405,7 +391,7 @@ export const FixedVideoPlayer: React.FC<FixedVideoPlayerProps> = ({
             </LinearGradient>
           </Animated.View>
         )}
-        
+
         {/* Active Stream Indicator */}
         {isActive && (
           <View style={styles.activeIndicator}>

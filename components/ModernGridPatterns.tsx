@@ -1,12 +1,3 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  Platform,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Grid3X3,
@@ -21,6 +12,8 @@ import {
   Volume2,
   Wifi,
 } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -37,8 +30,8 @@ import Animated, {
   Layout,
   Easing,
 } from 'react-native-reanimated';
-import { BlurViewFallback as BlurView } from './BlurViewFallback';
 import { ModernTheme } from '@/theme/modernTheme';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
@@ -50,12 +43,12 @@ export const FloatingActionButton: React.FC<{
   size?: number;
   color?: string;
   position?: { bottom?: number; right?: number; top?: number; left?: number };
-}> = ({ 
-  onPress, 
-  icon: Icon, 
-  size = 56, 
+}> = ({
+  onPress,
+  icon: Icon,
+  size = 56,
   color = ModernTheme.colors.accent[500],
-  position = { bottom: 20, right: 20 }
+  position = { bottom: 20, right: 20 },
 }) => {
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
@@ -67,24 +60,21 @@ export const FloatingActionButton: React.FC<{
       withSpring(1.1, { damping: 12 }),
       withSpring(1, { damping: 20 })
     );
-    
+
     rotation.value = withSpring(360, { damping: 15 }, () => {
       rotation.value = 0;
     });
-    
+
     glowIntensity.value = withSequence(
       withTiming(1, { duration: 200 }),
       withTiming(0, { duration: 800 })
     );
-    
+
     onPress();
   };
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: scale.value },
-      { rotate: `${rotation.value}deg` }
-    ],
+    transform: [{ scale: scale.value }, { rotate: `${rotation.value}deg` }],
     shadowOpacity: interpolate(glowIntensity.value, [0, 1], [0.3, 0.8]),
     shadowRadius: interpolate(glowIntensity.value, [0, 1], [8, 20]),
   }));
@@ -117,13 +107,7 @@ export const GridStats: React.FC<{
   totalViewers: number;
   networkQuality: 'excellent' | 'good' | 'fair' | 'poor';
   isVisible: boolean;
-}> = ({ 
-  streamCount, 
-  activeStreamName, 
-  totalViewers, 
-  networkQuality,
-  isVisible 
-}) => {
+}> = ({ streamCount, activeStreamName, totalViewers, networkQuality, isVisible }) => {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(-20);
   const viewerCountScale = useSharedValue(1);
@@ -143,11 +127,16 @@ export const GridStats: React.FC<{
 
   const getQualityColor = () => {
     switch (networkQuality) {
-      case 'excellent': return ModernTheme.colors.success[400];
-      case 'good': return ModernTheme.colors.success[500];
-      case 'fair': return ModernTheme.colors.status.loading;
-      case 'poor': return ModernTheme.colors.error[400];
-      default: return ModernTheme.colors.text.secondary;
+      case 'excellent':
+        return ModernTheme.colors.success[400];
+      case 'good':
+        return ModernTheme.colors.success[500];
+      case 'fair':
+        return ModernTheme.colors.status.loading;
+      case 'poor':
+        return ModernTheme.colors.error[400];
+      default:
+        return ModernTheme.colors.text.secondary;
     }
   };
 
@@ -185,18 +174,14 @@ export const GridStats: React.FC<{
           {/* Total Viewers */}
           <Animated.View style={[styles.statItem, viewerCountStyle]}>
             <Eye size={16} color={ModernTheme.colors.text.secondary} />
-            <Text style={styles.statValue}>
-              {totalViewers.toLocaleString()}
-            </Text>
+            <Text style={styles.statValue}>{totalViewers.toLocaleString()}</Text>
             <Text style={styles.statLabel}>viewers</Text>
           </Animated.View>
 
           {/* Network Quality */}
           <View style={styles.statItem}>
             <Wifi size={16} color={getQualityColor()} />
-            <Text style={[styles.statValue, { color: getQualityColor() }]}>
-              {networkQuality}
-            </Text>
+            <Text style={[styles.statValue, { color: getQualityColor() }]}>{networkQuality}</Text>
             <Text style={styles.statLabel}>quality</Text>
           </View>
         </View>
@@ -207,14 +192,14 @@ export const GridStats: React.FC<{
 
 // Contextual Toolbar with Smart Suggestions
 export const SmartToolbar: React.FC<{
-  suggestions: Array<{
+  suggestions: {
     id: string;
     title: string;
     description: string;
     icon: React.ComponentType<any>;
     action: () => void;
     priority: 'high' | 'medium' | 'low';
-  }>;
+  }[];
   isVisible: boolean;
 }> = ({ suggestions, isVisible }) => {
   const translateY = useSharedValue(100);
@@ -237,10 +222,14 @@ export const SmartToolbar: React.FC<{
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return ModernTheme.colors.error[400];
-      case 'medium': return ModernTheme.colors.status.loading;
-      case 'low': return ModernTheme.colors.success[400];
-      default: return ModernTheme.colors.text.secondary;
+      case 'high':
+        return ModernTheme.colors.error[400];
+      case 'medium':
+        return ModernTheme.colors.status.loading;
+      case 'low':
+        return ModernTheme.colors.success[400];
+      default:
+        return ModernTheme.colors.text.secondary;
     }
   };
 
@@ -263,21 +252,16 @@ export const SmartToolbar: React.FC<{
               <TouchableOpacity
                 style={[
                   styles.suggestionItem,
-                  { borderLeftColor: getPriorityColor(suggestion.priority) }
+                  { borderLeftColor: getPriorityColor(suggestion.priority) },
                 ]}
                 onPress={suggestion.action}
               >
                 <View style={styles.suggestionIcon}>
-                  <suggestion.icon 
-                    size={20} 
-                    color={ModernTheme.colors.accent[400]} 
-                  />
+                  <suggestion.icon size={20} color={ModernTheme.colors.accent[400]} />
                 </View>
                 <View style={styles.suggestionText}>
                   <Text style={styles.suggestionTitle}>{suggestion.title}</Text>
-                  <Text style={styles.suggestionDescription}>
-                    {suggestion.description}
-                  </Text>
+                  <Text style={styles.suggestionDescription}>{suggestion.description}</Text>
                 </View>
               </TouchableOpacity>
             </Animated.View>
@@ -333,33 +317,45 @@ export const PerformanceIndicator: React.FC<{
         <View style={styles.performanceContent}>
           <View style={styles.performanceItem}>
             <Activity size={12} color={ModernTheme.colors.text.secondary} />
-            <Animated.Text style={[styles.performanceValue, fpsColorStyle]}>
-              {fps}
-            </Animated.Text>
+            <Animated.Text style={[styles.performanceValue, fpsColorStyle]}>{fps}</Animated.Text>
             <Text style={styles.performanceLabel}>FPS</Text>
           </View>
-          
+
           <View style={styles.performanceDivider} />
-          
+
           <View style={styles.performanceItem}>
             <TrendingUp size={12} color={ModernTheme.colors.text.secondary} />
-            <Text style={[
-              styles.performanceValue,
-              { color: memoryUsage > 80 ? ModernTheme.colors.error[400] : ModernTheme.colors.text.primary }
-            ]}>
+            <Text
+              style={[
+                styles.performanceValue,
+                {
+                  color:
+                    memoryUsage > 80
+                      ? ModernTheme.colors.error[400]
+                      : ModernTheme.colors.text.primary,
+                },
+              ]}
+            >
               {memoryUsage}%
             </Text>
             <Text style={styles.performanceLabel}>MEM</Text>
           </View>
-          
+
           <View style={styles.performanceDivider} />
-          
+
           <View style={styles.performanceItem}>
             <Wifi size={12} color={ModernTheme.colors.text.secondary} />
-            <Text style={[
-              styles.performanceValue,
-              { color: networkLatency > 100 ? ModernTheme.colors.status.loading : ModernTheme.colors.success[400] }
-            ]}>
+            <Text
+              style={[
+                styles.performanceValue,
+                {
+                  color:
+                    networkLatency > 100
+                      ? ModernTheme.colors.status.loading
+                      : ModernTheme.colors.success[400],
+                },
+              ]}
+            >
               {networkLatency}
             </Text>
             <Text style={styles.performanceLabel}>MS</Text>
@@ -394,19 +390,27 @@ export const QualityBadge: React.FC<{
 
   const getQualityColor = () => {
     switch (quality) {
-      case '4K': return ModernTheme.colors.accent[400];
-      case 'HD': return ModernTheme.colors.success[400];
-      case 'SD': return ModernTheme.colors.status.loading;
-      case 'AUTO': return ModernTheme.colors.text.secondary;
-      default: return ModernTheme.colors.text.secondary;
+      case '4K':
+        return ModernTheme.colors.accent[400];
+      case 'HD':
+        return ModernTheme.colors.success[400];
+      case 'SD':
+        return ModernTheme.colors.status.loading;
+      case 'AUTO':
+        return ModernTheme.colors.text.secondary;
+      default:
+        return ModernTheme.colors.text.secondary;
     }
   };
 
   const getSizeProps = () => {
     switch (size) {
-      case 'small': return { fontSize: 8, padding: 3 };
-      case 'large': return { fontSize: 12, padding: 6 };
-      default: return { fontSize: 10, padding: 4 };
+      case 'small':
+        return { fontSize: 8, padding: 3 };
+      case 'large':
+        return { fontSize: 12, padding: 6 };
+      default:
+        return { fontSize: 10, padding: 4 };
     }
   };
 
@@ -421,16 +425,12 @@ export const QualityBadge: React.FC<{
   return (
     <Animated.View style={[styles.qualityBadge, animatedStyle]}>
       <LinearGradient
-        colors={[
-          `${getQualityColor()}20`,
-          `${getQualityColor()}40`,
-        ]}
+        colors={[`${getQualityColor()}20`, `${getQualityColor()}40`]}
         style={[styles.qualityGradient, { padding: sizeProps.padding }]}
       >
-        <Text style={[
-          styles.qualityText,
-          { fontSize: sizeProps.fontSize, color: getQualityColor() }
-        ]}>
+        <Text
+          style={[styles.qualityText, { fontSize: sizeProps.fontSize, color: getQualityColor() }]}
+        >
           {quality}
         </Text>
       </LinearGradient>
@@ -450,30 +450,27 @@ export const ViewerCounter: React.FC<{
 
   useEffect(() => {
     // Animate count changes
-    scale.value = withSequence(
-      withSpring(1.2, { damping: 15 }),
-      withSpring(1, { damping: 20 })
-    );
-    
+    scale.value = withSequence(withSpring(1.2, { damping: 15 }), withSpring(1, { damping: 20 }));
+
     // Animate to new count
     const duration = 1000;
     const startCount = displayCount;
     const diff = count - startCount;
-    
+
     if (diff !== 0) {
       const startTime = Date.now();
       const timer = setInterval(() => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        const currentCount = Math.floor(startCount + (diff * progress));
+        const currentCount = Math.floor(startCount + diff * progress);
         setDisplayCount(currentCount);
-        
+
         if (progress >= 1) {
           clearInterval(timer);
           setDisplayCount(count);
         }
       }, 16);
-      
+
       return () => clearInterval(timer);
     }
   }, [count]);
@@ -497,9 +494,12 @@ export const ViewerCounter: React.FC<{
 
   const getTrendColor = () => {
     switch (trend) {
-      case 'up': return ModernTheme.colors.success[400];
-      case 'down': return ModernTheme.colors.error[400];
-      default: return ModernTheme.colors.text.secondary;
+      case 'up':
+        return ModernTheme.colors.success[400];
+      case 'down':
+        return ModernTheme.colors.error[400];
+      default:
+        return ModernTheme.colors.text.secondary;
     }
   };
 
@@ -510,11 +510,11 @@ export const ViewerCounter: React.FC<{
       </Animated.Text>
       {showTrend && trend !== 'stable' && (
         <Animated.View style={[styles.trendIndicator, trendStyle]}>
-          <TrendingUp 
-            size={12} 
+          <TrendingUp
+            size={12}
             color={getTrendColor()}
             style={{
-              transform: [{ rotate: trend === 'down' ? '180deg' : '0deg' }]
+              transform: [{ rotate: trend === 'down' ? '180deg' : '0deg' }],
             }}
           />
         </Animated.View>

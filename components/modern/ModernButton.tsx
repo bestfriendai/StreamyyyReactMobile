@@ -1,20 +1,14 @@
-import React from 'react';
-import {
-  TouchableOpacity,
-  Text,
-  ViewStyle,
-  TextStyle,
-  ActivityIndicator,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ModernTheme } from '@/theme/modernTheme';
-import { HapticFeedback } from '@/utils/haptics';
+import React from 'react';
+import { TouchableOpacity, Text, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { ModernTheme } from '@/theme/modernTheme';
+import { HapticFeedback } from '@/utils/haptics';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success';
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -54,7 +48,7 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
 }) => {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
-  
+
   // Get variant styles
   const getVariantStyles = () => {
     switch (variant) {
@@ -109,7 +103,7 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
         };
     }
   };
-  
+
   // Get size styles
   const getSizeStyles = () => {
     switch (size) {
@@ -147,36 +141,38 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
         };
     }
   };
-  
+
   const variantStyles = getVariantStyles();
   const sizeStyles = getSizeStyles();
-  
+
   // Handle press with animation
   const handlePress = () => {
-    if (isDisabled || isLoading) return;
-    
+    if (isDisabled || isLoading) {
+      return;
+    }
+
     scale.value = withSpring(0.95, { damping: 15 }, () => {
       scale.value = withSpring(1);
     });
-    
+
     if (hapticFeedback) {
       HapticFeedback.light();
     }
-    
+
     onPress();
   };
-  
+
   // Animated styles
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
     opacity: opacity.value,
   }));
-  
+
   // Disabled state
   React.useEffect(() => {
     opacity.value = withTiming(isDisabled ? 0.5 : 1, { duration: 200 });
   }, [isDisabled]);
-  
+
   const buttonStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
@@ -191,7 +187,7 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
     width: fullWidth ? '100%' : undefined,
     ...ModernTheme.shadows.sm,
   };
-  
+
   const textStyleCombined: TextStyle = {
     color: variantStyles.textColor,
     fontSize: sizeStyles.fontSize,
@@ -199,7 +195,7 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
     fontFamily: ModernTheme.typography.fonts.primary,
     ...textStyle,
   };
-  
+
   const renderContent = () => (
     <>
       {isLoading && (
@@ -209,36 +205,32 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
           style={{ marginRight: ModernTheme.spacing.sm }}
         />
       )}
-      
+
       {icon && iconPosition === 'left' && !isLoading && (
-        <div style={{ marginRight: ModernTheme.spacing.sm }}>
-          {icon}
-        </div>
+        <div style={{ marginRight: ModernTheme.spacing.sm }}>{icon}</div>
       )}
-      
-      <Text style={textStyleCombined}>
-        {isLoading ? 'Loading...' : title}
-      </Text>
-      
+
+      <Text style={textStyleCombined}>{isLoading ? 'Loading...' : title}</Text>
+
       {icon && iconPosition === 'right' && !isLoading && (
-        <div style={{ marginLeft: ModernTheme.spacing.sm }}>
-          {icon}
-        </div>
+        <div style={{ marginLeft: ModernTheme.spacing.sm }}>{icon}</div>
       )}
     </>
   );
-  
+
   return (
     <Animated.View style={[animatedStyle, style]}>
       {gradient && !isDisabled ? (
-        <LinearGradient
-          colors={variantStyles.gradientColors}
-          style={buttonStyle}
-        >
+        <LinearGradient colors={variantStyles.gradientColors} style={buttonStyle}>
           <TouchableOpacity
             onPress={handlePress}
             disabled={isDisabled || isLoading}
-            style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
             activeOpacity={0.8}
           >
             {renderContent()}

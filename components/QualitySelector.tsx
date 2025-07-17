@@ -3,6 +3,17 @@
  * Manual quality selection dropdown with intelligent recommendations
  */
 
+import {
+  ChevronDown,
+  ChevronUp,
+  Zap,
+  Wifi,
+  Battery,
+  Monitor,
+  AlertTriangle,
+  CheckCircle,
+  Circle,
+} from 'lucide-react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -24,26 +35,15 @@ import Animated, {
   SlideInDown,
   SlideOutDown,
 } from 'react-native-reanimated';
-import {
-  ChevronDown,
-  ChevronUp,
-  Zap,
-  Wifi,
-  Battery,
-  Monitor,
-  AlertTriangle,
-  CheckCircle,
-  Circle,
-} from 'lucide-react-native';
-import { BlurViewFallback as BlurView } from './BlurViewFallback';
-import { ModernTheme } from '@/theme/modernTheme';
-import { HapticFeedback } from '@/utils/haptics';
+import { bandwidthMonitor, getConnectionQuality } from '@/services/bandwidthMonitor';
 import {
   QualityLevel,
   streamQualityManager,
   getQualityPreset,
 } from '@/services/streamQualityManager';
-import { bandwidthMonitor, getConnectionQuality } from '@/services/bandwidthMonitor';
+import { ModernTheme } from '@/theme/modernTheme';
+import { HapticFeedback } from '@/utils/haptics';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
 
 interface QualityOption {
   level: QualityLevel;
@@ -164,17 +164,22 @@ export const QualitySelector: React.FC<QualitySelectorProps> = ({
   ];
 
   const handleToggleDropdown = useCallback(() => {
-    if (disabled) return;
+    if (disabled) {
+      return;
+    }
 
     HapticFeedback.light();
     setIsOpen(!isOpen);
   }, [disabled, isOpen]);
 
-  const handleQualitySelect = useCallback((quality: QualityLevel) => {
-    HapticFeedback.medium();
-    onQualityChange(quality);
-    setIsOpen(false);
-  }, [onQualityChange]);
+  const handleQualitySelect = useCallback(
+    (quality: QualityLevel) => {
+      HapticFeedback.medium();
+      onQualityChange(quality);
+      setIsOpen(false);
+    },
+    [onQualityChange]
+  );
 
   // Animated styles
   const dropdownStyle = useAnimatedStyle(() => ({
@@ -245,13 +250,10 @@ export const QualitySelector: React.FC<QualitySelectorProps> = ({
         <View style={styles.buttonContent}>
           <Animated.View style={[styles.qualityIndicator, indicatorStyle]}>
             <View
-              style={[
-                styles.qualityDot,
-                { backgroundColor: getQualityColor(currentQuality) },
-              ]}
+              style={[styles.qualityDot, { backgroundColor: getQualityColor(currentQuality) }]}
             />
           </Animated.View>
-          
+
           <View style={styles.qualityInfo}>
             <Text style={[styles.qualityLabel, compact && styles.compactLabel]}>
               {currentOption.label}
@@ -262,13 +264,9 @@ export const QualitySelector: React.FC<QualitySelectorProps> = ({
               </Text>
             )}
           </View>
-          
-          {showBandwidthInfo && (
-            <View style={styles.connectionInfo}>
-              {getConnectionIcon()}
-            </View>
-          )}
-          
+
+          {showBandwidthInfo && <View style={styles.connectionInfo}>{getConnectionIcon()}</View>}
+
           <Animated.View style={chevronStyle}>
             {isOpen ? (
               <ChevronUp size={16} color={ModernTheme.colors.text.secondary} />
@@ -303,17 +301,14 @@ export const QualitySelector: React.FC<QualitySelectorProps> = ({
                       </Text>
                     </View>
                     <Text style={styles.connectionStatus}>
-                      {connectionQuality.charAt(0).toUpperCase() + connectionQuality.slice(1)} connection
+                      {connectionQuality.charAt(0).toUpperCase() + connectionQuality.slice(1)}{' '}
+                      connection
                     </Text>
                   </View>
                 )}
 
-                {qualityOptions.map((option) => (
-                  <Animated.View
-                    key={option.level}
-                    entering={FadeIn.delay(150)}
-                    exiting={FadeOut}
-                  >
+                {qualityOptions.map(option => (
+                  <Animated.View key={option.level} entering={FadeIn.delay(150)} exiting={FadeOut}>
                     <TouchableOpacity
                       style={[
                         styles.option,
@@ -335,10 +330,7 @@ export const QualitySelector: React.FC<QualitySelectorProps> = ({
                           <View style={styles.optionText}>
                             <View style={styles.optionHeader}>
                               <Text
-                                style={[
-                                  styles.optionLabel,
-                                  option.disabled && styles.disabledText,
-                                ]}
+                                style={[styles.optionLabel, option.disabled && styles.disabledText]}
                               >
                                 {option.label}
                               </Text>
@@ -365,7 +357,7 @@ export const QualitySelector: React.FC<QualitySelectorProps> = ({
                             )}
                           </View>
                         </View>
-                        
+
                         <View style={styles.optionRight}>
                           {currentQuality === option.level ? (
                             <CheckCircle size={16} color={ModernTheme.colors.primary[400]} />

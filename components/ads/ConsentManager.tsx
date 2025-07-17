@@ -2,19 +2,10 @@
  * GDPR Consent Manager Component
  * Handles user consent for ads and privacy compliance
  */
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  Modal,
-  ScrollView,
-  Alert,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Shield, Settings, Check, X } from 'lucide-react-native';
-
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Text, TouchableOpacity, Modal, ScrollView, Alert } from 'react-native';
 import { adMobService } from '@/services/adMobService';
 import { logDebug, logError } from '@/utils/errorHandler';
 
@@ -41,12 +32,12 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
 
       // In real implementation, this would interact with UMP SDK
       const canRequestAds = choice === 'accept';
-      
+
       logDebug('User consent choice', { choice, canRequestAds });
-      
+
       // Simulate consent processing
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       onConsentGiven(canRequestAds);
       onClose();
     } catch (error) {
@@ -61,7 +52,7 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
   const handleLearnMore = () => {
     Alert.alert(
       'Privacy Information',
-      'We use Google AdMob to show you relevant ads. This helps us keep the app free. You can change your preferences at any time in the app settings.\n\nPersonalized ads use your app activity to show more relevant advertisements. Non-personalized ads are still relevant but don\'t use your personal information.',
+      "We use Google AdMob to show you relevant ads. This helps us keep the app free. You can change your preferences at any time in the app settings.\n\nPersonalized ads use your app activity to show more relevant advertisements. Non-personalized ads are still relevant but don't use your personal information.",
       [{ text: 'Got it' }]
     );
   };
@@ -81,10 +72,7 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <LinearGradient
-        colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']}
-        style={styles.container}
-      >
+      <LinearGradient colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']} style={styles.container}>
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.header}>
@@ -97,8 +85,7 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
             <Text style={styles.subtitle}>
               {mode === 'initial'
                 ? 'Help us keep Streamyyy free by allowing relevant ads'
-                : 'Manage your advertising preferences'
-              }
+                : 'Manage your advertising preferences'}
             </Text>
           </View>
 
@@ -106,35 +93,30 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
           <View style={styles.infoSection}>
             <Text style={styles.sectionTitle}>How we use ads</Text>
             <Text style={styles.description}>
-              Streamyyy shows ads to keep the app free for everyone. We partner with Google AdMob to display relevant advertisements.
+              Streamyyy shows ads to keep the app free for everyone. We partner with Google AdMob to
+              display relevant advertisements.
             </Text>
 
             <View style={styles.featureList}>
               <View style={styles.featureItem}>
                 <Check size={16} color="#10B981" />
-                <Text style={styles.featureText}>
-                  Supports free app development
-                </Text>
+                <Text style={styles.featureText}>Supports free app development</Text>
               </View>
               <View style={styles.featureItem}>
                 <Check size={16} color="#10B981" />
-                <Text style={styles.featureText}>
-                  Non-intrusive ad placement
-                </Text>
+                <Text style={styles.featureText}>Non-intrusive ad placement</Text>
               </View>
               <View style={styles.featureItem}>
                 <Check size={16} color="#10B981" />
-                <Text style={styles.featureText}>
-                  Respects your privacy choices
-                </Text>
+                <Text style={styles.featureText}>Respects your privacy choices</Text>
               </View>
             </View>
 
             <Text style={styles.sectionTitle}>Your choices</Text>
             <Text style={styles.description}>
-              • <Text style={styles.bold}>Accept:</Text> See personalized ads based on your interests{'\n'}
-              • <Text style={styles.bold}>Reject:</Text> See generic ads not based on your personal data{'\n'}
-              • You can change this anytime in Settings
+              • <Text style={styles.bold}>Accept:</Text> See personalized ads based on your
+              interests{'\n'}• <Text style={styles.bold}>Reject:</Text> See generic ads not based on
+              your personal data{'\n'}• You can change this anytime in Settings
             </Text>
           </View>
 
@@ -147,10 +129,7 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
                   onPress={() => handleConsentChoice('accept')}
                   disabled={loading}
                 >
-                  <LinearGradient
-                    colors={['#10B981', '#059669']}
-                    style={styles.buttonGradient}
-                  >
+                  <LinearGradient colors={['#10B981', '#059669']} style={styles.buttonGradient}>
                     {loading && consentChoice === 'accept' ? (
                       <Text style={styles.buttonText}>Processing...</Text>
                     ) : (
@@ -182,10 +161,7 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
             )}
 
             {mode === 'settings' && (
-              <TouchableOpacity
-                style={styles.settingsButton}
-                onPress={handleManageSettings}
-              >
+              <TouchableOpacity style={styles.settingsButton} onPress={handleManageSettings}>
                 <View style={styles.settingsButtonContent}>
                   <Settings size={20} color="#8B5CF6" />
                   <Text style={styles.settingsButtonText}>Manage Ad Preferences</Text>
@@ -193,10 +169,7 @@ export const ConsentManager: React.FC<ConsentManagerProps> = ({
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity
-              style={styles.learnMoreButton}
-              onPress={handleLearnMore}
-            >
+            <TouchableOpacity style={styles.learnMoreButton} onPress={handleLearnMore}>
               <Text style={styles.learnMoreText}>Learn More About Privacy</Text>
             </TouchableOpacity>
           </View>

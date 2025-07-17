@@ -1,25 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  Modal,
-  Dimensions,
-} from 'react-native';
-import { MotiView, MotiText } from 'moti';
 import { BlurView } from '@react-native-community/blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Settings,
-  Monitor,
-  Wifi,
-  Zap,
-  Check,
-  X,
-  Gauge,
-  Activity,
-} from 'lucide-react-native';
+import { Settings, Monitor, Wifi, Zap, Check, X, Gauge, Activity } from 'lucide-react-native';
+import { MotiView, MotiText } from 'moti';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, Modal, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -129,7 +113,7 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
   const [bandwidth, setBandwidth] = useState<number>(0);
   const [latency, setLatency] = useState<number>(0);
   const [adaptiveEnabled, setAdaptiveEnabled] = useState(false);
-  
+
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
 
@@ -148,26 +132,26 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
     const detectNetworkSpeed = async () => {
       try {
         const startTime = Date.now();
-        
+
         // Use a small test image to measure download speed
         const testImage = new Image();
         testImage.crossOrigin = 'anonymous';
-        
+
         const testPromise = new Promise((resolve, reject) => {
           testImage.onload = () => resolve(Date.now() - startTime);
           testImage.onerror = () => reject(new Error('Network test failed'));
-          testImage.src = 'https://via.placeholder.com/100x100.jpg?t=' + Date.now();
+          testImage.src = `https://via.placeholder.com/100x100.jpg?t=${Date.now()}`;
         });
 
-        const downloadTime = await testPromise as number;
-        
+        const downloadTime = (await testPromise) as number;
+
         // Calculate approximate bandwidth (very rough estimate)
         const imageSize = 1024; // approximately 1KB
         const speedKbps = (imageSize * 8) / (downloadTime / 1000);
-        
+
         setBandwidth(Math.round(speedKbps));
         setLatency(downloadTime);
-        
+
         // Categorize network speed
         if (speedKbps > 2000) {
           setNetworkSpeed('fast');
@@ -179,7 +163,7 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
           setNetworkSpeed('slow');
           setConnectionType('cellular');
         }
-        
+
         console.log(`Network speed: ${speedKbps.toFixed(0)} kbps, Latency: ${downloadTime}ms`);
       } catch (error) {
         console.warn('Network speed detection failed:', error);
@@ -199,7 +183,7 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
   const handleQualitySelect = (qualityId: string) => {
     setSelectedQuality(qualityId);
     onQualityChange(streamId, qualityId);
-    
+
     // Auto-close after selection with a delay
     setTimeout(onClose, 500);
   };
@@ -242,27 +226,24 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
 
   const getNetworkSpeedColor = () => {
     switch (networkSpeed) {
-      case 'fast': return '#10B981';
-      case 'medium': return '#F59E0B';
-      case 'slow': return '#EF4444';
-      default: return '#6366F1';
+      case 'fast':
+        return '#10B981';
+      case 'medium':
+        return '#F59E0B';
+      case 'slow':
+        return '#EF4444';
+      default:
+        return '#6366F1';
     }
   };
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return null;
+  }
 
   return (
-    <Modal
-      transparent
-      visible={isVisible}
-      animationType="none"
-      onRequestClose={onClose}
-    >
-      <TouchableOpacity
-        style={styles.overlay}
-        activeOpacity={1}
-        onPress={onClose}
-      >
+    <Modal transparent visible={isVisible} animationType="none" onRequestClose={onClose}>
+      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
         <Animated.View
           style={[
             styles.controllerContainer,
@@ -289,7 +270,7 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
                     <Settings size={20} color="#8B5CF6" />
                     <MotiText style={styles.title}>Stream Quality</MotiText>
                   </View>
-                  
+
                   <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                     <X size={18} color="#666" />
                   </TouchableOpacity>
@@ -305,10 +286,7 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
                   <BlurView style={styles.networkBlur} blurType="light" blurAmount={5}>
                     <View style={styles.networkInfo}>
                       <View
-                        style={[
-                          styles.networkDot,
-                          { backgroundColor: getNetworkSpeedColor() }
-                        ]}
+                        style={[styles.networkDot, { backgroundColor: getNetworkSpeedColor() }]}
                       />
                       <View style={styles.networkDetails}>
                         <View style={styles.networkRow}>
@@ -320,7 +298,8 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
                           </Text>
                         </View>
                         <Text style={styles.recommendedText}>
-                          Recommended: {qualityOptions.find(q => q.id === getRecommendedQuality())?.name}
+                          Recommended:{' '}
+                          {qualityOptions.find(q => q.id === getRecommendedQuality())?.name}
                         </Text>
                       </View>
                     </View>
@@ -332,7 +311,7 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
                   {qualityOptions.map((option, index) => {
                     const isSelected = selectedQuality === option.id;
                     const isRecommended = option.id === getRecommendedQuality();
-                    
+
                     return (
                       <MotiView
                         key={option.id}
@@ -350,8 +329,8 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
                         >
                           <LinearGradient
                             colors={
-                              isSelected 
-                                ? [option.color + '20', option.color + '10']
+                              isSelected
+                                ? [`${option.color}20`, `${option.color}10`]
                                 : ['rgba(42, 42, 42, 0.8)', 'rgba(58, 58, 58, 0.6)']
                             }
                             style={styles.optionGradient}
@@ -361,18 +340,18 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
                                 <View
                                   style={[
                                     styles.optionIcon,
-                                    { backgroundColor: option.color + '20' }
+                                    { backgroundColor: `${option.color}20` },
                                   ]}
                                 >
                                   {option.icon}
                                 </View>
-                                
+
                                 <View style={styles.optionInfo}>
                                   <View style={styles.optionHeader}>
                                     <Text
                                       style={[
                                         styles.optionName,
-                                        isSelected && { color: option.color }
+                                        isSelected && { color: option.color },
                                       ]}
                                     >
                                       {option.name}
@@ -383,29 +362,20 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
                                       </View>
                                     )}
                                   </View>
-                                  
-                                  <Text style={styles.optionResolution}>
-                                    {option.resolution}
-                                  </Text>
-                                  <Text style={styles.optionDescription}>
-                                    {option.description}
-                                  </Text>
+
+                                  <Text style={styles.optionResolution}>{option.resolution}</Text>
+                                  <Text style={styles.optionDescription}>{option.description}</Text>
                                 </View>
                               </View>
-                              
+
                               <View style={styles.optionRight}>
-                                <Text style={styles.optionBitrate}>
-                                  {option.bitrate}
-                                </Text>
+                                <Text style={styles.optionBitrate}>{option.bitrate}</Text>
                                 {isSelected && (
                                   <MotiView
                                     from={{ scale: 0 }}
                                     animate={{ scale: 1 }}
                                     transition={{ type: 'spring', damping: 12 }}
-                                    style={[
-                                      styles.checkIcon,
-                                      { backgroundColor: option.color }
-                                    ]}
+                                    style={[styles.checkIcon, { backgroundColor: option.color }]}
                                   >
                                     <Check size={14} color="#fff" />
                                   </MotiView>
@@ -426,9 +396,7 @@ export const StreamQualityController: React.FC<StreamQualityControllerProps> = (
                   transition={{ delay: 600 }}
                   style={styles.footer}
                 >
-                  <Text style={styles.footerText}>
-                    Higher quality uses more bandwidth
-                  </Text>
+                  <Text style={styles.footerText}>Higher quality uses more bandwidth</Text>
                 </MotiView>
               </LinearGradient>
             </BlurView>

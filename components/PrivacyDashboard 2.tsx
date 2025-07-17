@@ -14,15 +14,15 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { encryptionService } from '../services/encryptionService';
-import { zeroKnowledgeService, PrivacyLevel } from '../services/zeroKnowledgeService';
-import { threatDetectionService } from '../services/threatDetectionService';
-import { decentralizedIdentityService } from '../services/decentralizedIdentityService';
-import { quantumCryptographyService } from '../services/quantumCryptographyService';
 import { advancedAuditService } from '../services/advancedAuditService';
+import { decentralizedIdentityService } from '../services/decentralizedIdentityService';
+import { encryptionService } from '../services/encryptionService';
+import { quantumCryptographyService } from '../services/quantumCryptographyService';
+import { threatDetectionService } from '../services/threatDetectionService';
+import { zeroKnowledgeService, PrivacyLevel } from '../services/zeroKnowledgeService';
 
 interface PrivacySettings {
   dataMinimization: boolean;
@@ -98,7 +98,7 @@ const PrivacyDashboard: React.FC = () => {
     rightToErasure: true,
     dataPortability: true,
     transparencyReports: true,
-    privacyAlerts: true
+    privacyAlerts: true,
   });
 
   const [dataCategories, setDataCategories] = useState<DataCategory[]>([]);
@@ -110,7 +110,7 @@ const PrivacyDashboard: React.FC = () => {
     consentCompliance: 0,
     auditTrailCoverage: 0,
     threatProtectionLevel: 0,
-    quantumReadiness: 0
+    quantumReadiness: 0,
   });
 
   const [consentRecords, setConsentRecords] = useState<ConsentRecord[]>([]);
@@ -127,19 +127,18 @@ const PrivacyDashboard: React.FC = () => {
   const loadPrivacyData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Load privacy settings
       await loadPrivacySettings();
-      
+
       // Load data categories
       await loadDataCategories();
-      
+
       // Load privacy metrics
       await loadPrivacyMetrics();
-      
+
       // Load consent records
       await loadConsentRecords();
-      
     } catch (error) {
       console.error('Failed to load privacy data:', error);
       Alert.alert('Error', 'Failed to load privacy dashboard data');
@@ -163,13 +162,13 @@ const PrivacyDashboard: React.FC = () => {
         description: 'Basic account and profile data',
         dataTypes: ['email', 'username', 'profile_picture'],
         size: 1024 * 50, // 50KB
-        lastAccessed: Date.now() - (24 * 60 * 60 * 1000),
+        lastAccessed: Date.now() - 24 * 60 * 60 * 1000,
         retentionPeriod: 365 * 2, // 2 years
         encrypted: true,
         anonymized: false,
         shared: false,
         purpose: ['account_management', 'authentication'],
-        legalBasis: 'contract'
+        legalBasis: 'contract',
       },
       {
         id: '2',
@@ -177,13 +176,13 @@ const PrivacyDashboard: React.FC = () => {
         description: 'Application usage patterns and statistics',
         dataTypes: ['page_views', 'feature_usage', 'session_duration'],
         size: 1024 * 200, // 200KB
-        lastAccessed: Date.now() - (60 * 60 * 1000),
+        lastAccessed: Date.now() - 60 * 60 * 1000,
         retentionPeriod: 365, // 1 year
         encrypted: true,
         anonymized: true,
         shared: false,
         purpose: ['service_improvement', 'analytics'],
-        legalBasis: 'legitimate_interest'
+        legalBasis: 'legitimate_interest',
       },
       {
         id: '3',
@@ -191,14 +190,14 @@ const PrivacyDashboard: React.FC = () => {
         description: 'Messages and communication data',
         dataTypes: ['messages', 'call_logs', 'media_files'],
         size: 1024 * 1024 * 5, // 5MB
-        lastAccessed: Date.now() - (30 * 60 * 1000),
+        lastAccessed: Date.now() - 30 * 60 * 1000,
         retentionPeriod: 365 * 3, // 3 years
         encrypted: true,
         anonymized: false,
         shared: false,
         purpose: ['communication', 'backup'],
-        legalBasis: 'consent'
-      }
+        legalBasis: 'consent',
+      },
     ];
 
     setDataCategories(categories);
@@ -221,7 +220,7 @@ const PrivacyDashboard: React.FC = () => {
         consentCompliance: 92,
         auditTrailCoverage: auditMetrics.total_events > 0 ? 98 : 0,
         threatProtectionLevel: threatMetrics.threats_detected > 0 ? 94 : 100,
-        quantumReadiness: quantumMetrics.quantumReadinessScore || 0
+        quantumReadiness: quantumMetrics.quantumReadinessScore || 0,
       };
 
       setPrivacyMetrics(metrics);
@@ -238,32 +237,32 @@ const PrivacyDashboard: React.FC = () => {
         purpose: 'Essential Services',
         dataTypes: ['account', 'authentication'],
         granted: true,
-        timestamp: Date.now() - (30 * 24 * 60 * 60 * 1000),
+        timestamp: Date.now() - 30 * 24 * 60 * 60 * 1000,
         granular: false,
         withdrawable: false,
-        source: 'registration'
+        source: 'registration',
       },
       {
         id: '2',
         purpose: 'Analytics and Improvement',
         dataTypes: ['usage_analytics', 'performance_metrics'],
         granted: true,
-        timestamp: Date.now() - (15 * 24 * 60 * 60 * 1000),
-        expiresAt: Date.now() + (365 * 24 * 60 * 60 * 1000),
+        timestamp: Date.now() - 15 * 24 * 60 * 60 * 1000,
+        expiresAt: Date.now() + 365 * 24 * 60 * 60 * 1000,
         granular: true,
         withdrawable: true,
-        source: 'privacy_dashboard'
+        source: 'privacy_dashboard',
       },
       {
         id: '3',
         purpose: 'Marketing Communications',
         dataTypes: ['email', 'preferences'],
         granted: false,
-        timestamp: Date.now() - (7 * 24 * 60 * 60 * 1000),
+        timestamp: Date.now() - 7 * 24 * 60 * 60 * 1000,
         granular: true,
         withdrawable: true,
-        source: 'opt_in_prompt'
-      }
+        source: 'opt_in_prompt',
+      },
     ];
 
     setConsentRecords(records);
@@ -274,14 +273,30 @@ const PrivacyDashboard: React.FC = () => {
     const settings = privacySettings;
 
     // Base privacy settings (40 points)
-    if (settings.dataMinimization) score += 5;
-    if (settings.anonymousAnalytics) score += 5;
-    if (settings.encryptedCommunications) score += 8;
-    if (settings.biometricAuth) score += 6;
-    if (!settings.locationTracking) score += 4;
-    if (!settings.behaviorAnalysis) score += 3;
-    if (!settings.thirdPartySharing) score += 6;
-    if (settings.consentManagement) score += 3;
+    if (settings.dataMinimization) {
+      score += 5;
+    }
+    if (settings.anonymousAnalytics) {
+      score += 5;
+    }
+    if (settings.encryptedCommunications) {
+      score += 8;
+    }
+    if (settings.biometricAuth) {
+      score += 6;
+    }
+    if (!settings.locationTracking) {
+      score += 4;
+    }
+    if (!settings.behaviorAnalysis) {
+      score += 3;
+    }
+    if (!settings.thirdPartySharing) {
+      score += 6;
+    }
+    if (settings.consentManagement) {
+      score += 3;
+    }
 
     // Privacy level bonus (20 points)
     switch (settings.privacyLevel) {
@@ -300,16 +315,29 @@ const PrivacyDashboard: React.FC = () => {
     }
 
     // Data retention (20 points)
-    if (settings.dataRetention <= 90) score += 20;
-    else if (settings.dataRetention <= 365) score += 15;
-    else if (settings.dataRetention <= 730) score += 10;
-    else score += 5;
+    if (settings.dataRetention <= 90) {
+      score += 20;
+    } else if (settings.dataRetention <= 365) {
+      score += 15;
+    } else if (settings.dataRetention <= 730) {
+      score += 10;
+    } else {
+      score += 5;
+    }
 
     // User rights (20 points)
-    if (settings.rightToErasure) score += 7;
-    if (settings.dataPortability) score += 6;
-    if (settings.transparencyReports) score += 4;
-    if (settings.privacyAlerts) score += 3;
+    if (settings.rightToErasure) {
+      score += 7;
+    }
+    if (settings.dataPortability) {
+      score += 6;
+    }
+    if (settings.transparencyReports) {
+      score += 4;
+    }
+    if (settings.privacyAlerts) {
+      score += 3;
+    }
 
     return Math.min(100, score);
   };
@@ -321,10 +349,10 @@ const PrivacyDashboard: React.FC = () => {
     try {
       // Apply setting changes to services
       await applyPrivacySettings(setting, value);
-      
+
       // Recalculate privacy metrics
       await loadPrivacyMetrics();
-      
+
       // Log privacy setting change
       await advancedAuditService.logEvent(
         'user_action',
@@ -335,7 +363,6 @@ const PrivacyDashboard: React.FC = () => {
         { setting, new_value: value, old_value: privacySettings[setting] },
         { severity: 'medium', complianceTags: ['privacy', 'gdpr'] }
       );
-
     } catch (error) {
       console.error(`Failed to update ${setting}:`, error);
       Alert.alert('Error', `Failed to update ${setting} setting`);
@@ -353,7 +380,7 @@ const PrivacyDashboard: React.FC = () => {
           await encryptionService.updateConfig({
             ...config,
             enableForwardSecrecy: true,
-            enablePostQuantumSecurity: true
+            enablePostQuantumSecurity: true,
           });
         }
         break;
@@ -363,7 +390,7 @@ const PrivacyDashboard: React.FC = () => {
         const policies = zeroKnowledgeService.getPrivacyPolicies();
         for (const policy of policies) {
           await zeroKnowledgeService.updatePrivacyPolicy(policy.id, {
-            privacyLevel: value
+            privacyLevel: value,
           });
         }
         break;
@@ -381,7 +408,7 @@ const PrivacyDashboard: React.FC = () => {
   const handleDataExport = async (format: 'json' | 'csv' | 'xml' = 'json') => {
     try {
       setLoading(true);
-      
+
       // Export data from all services
       const exportData = {
         timestamp: new Date().toISOString(),
@@ -391,9 +418,9 @@ const PrivacyDashboard: React.FC = () => {
           encryption: encryptionService.getStats(),
           privacy: zeroKnowledgeService.getMetrics(),
           audit: await advancedAuditService.searchEvents('', {
-            startDate: Date.now() - (30 * 24 * 60 * 60 * 1000) // Last 30 days
-          })
-        }
+            startDate: Date.now() - 30 * 24 * 60 * 60 * 1000, // Last 30 days
+          }),
+        },
       };
 
       // In a real app, this would trigger a download or email
@@ -413,7 +440,6 @@ const PrivacyDashboard: React.FC = () => {
         { format, export_size: JSON.stringify(exportData).length },
         { severity: 'medium', complianceTags: ['gdpr', 'data_portability'] }
       );
-
     } catch (error) {
       console.error('Data export failed:', error);
       Alert.alert('Error', 'Failed to export data');
@@ -465,11 +491,10 @@ const PrivacyDashboard: React.FC = () => {
                 console.error('Data deletion failed:', error);
                 Alert.alert('Error', 'Failed to delete data');
               }
-            }
-          }
+            },
+          },
         ]
       );
-
     } catch (error) {
       console.error('Data deletion failed:', error);
       Alert.alert('Error', 'Failed to delete data');
@@ -481,12 +506,10 @@ const PrivacyDashboard: React.FC = () => {
 
   const handleConsentUpdate = async (consentId: string, granted: boolean) => {
     try {
-      const updatedRecords = consentRecords.map(record => 
-        record.id === consentId 
-          ? { ...record, granted, timestamp: Date.now() }
-          : record
+      const updatedRecords = consentRecords.map(record =>
+        record.id === consentId ? { ...record, granted, timestamp: Date.now() } : record
       );
-      
+
       setConsentRecords(updatedRecords);
 
       // Log consent change
@@ -552,7 +575,7 @@ const PrivacyDashboard: React.FC = () => {
   const renderPrivacySettings = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Privacy Settings</Text>
-      
+
       {Object.entries(privacySettings).map(([key, value]) => {
         if (typeof value === 'boolean') {
           return (
@@ -563,7 +586,9 @@ const PrivacyDashboard: React.FC = () => {
               </View>
               <Switch
                 value={value}
-                onValueChange={(newValue) => handleSettingChange(key as keyof PrivacySettings, newValue)}
+                onValueChange={newValue =>
+                  handleSettingChange(key as keyof PrivacySettings, newValue)
+                }
                 trackColor={{ false: '#767577', true: '#2196F3' }}
                 thumbColor={value ? '#ffffff' : '#f4f3f4'}
               />
@@ -577,19 +602,21 @@ const PrivacyDashboard: React.FC = () => {
                 <Text style={styles.settingDescription}>Overall privacy protection level</Text>
               </View>
               <View style={styles.privacyLevelContainer}>
-                {Object.values(PrivacyLevel).map((level) => (
+                {Object.values(PrivacyLevel).map(level => (
                   <TouchableOpacity
                     key={level}
                     style={[
                       styles.privacyLevelButton,
-                      value === level && styles.privacyLevelButtonActive
+                      value === level && styles.privacyLevelButtonActive,
                     ]}
                     onPress={() => handleSettingChange('privacyLevel', level)}
                   >
-                    <Text style={[
-                      styles.privacyLevelText,
-                      value === level && styles.privacyLevelTextActive
-                    ]}>
+                    <Text
+                      style={[
+                        styles.privacyLevelText,
+                        value === level && styles.privacyLevelTextActive,
+                      ]}
+                    >
                       {level.toUpperCase()}
                     </Text>
                   </TouchableOpacity>
@@ -606,7 +633,7 @@ const PrivacyDashboard: React.FC = () => {
   const renderDataCategories = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Your Data</Text>
-      {dataCategories.map((category) => (
+      {dataCategories.map(category => (
         <View key={category.id} style={styles.dataCategoryCard}>
           <View style={styles.dataCategoryHeader}>
             <Text style={styles.dataCategoryName}>{category.name}</Text>
@@ -643,14 +670,14 @@ const PrivacyDashboard: React.FC = () => {
       >
         <Text style={styles.actionButtonText}>Export My Data</Text>
       </TouchableOpacity>
-      
+
       <TouchableOpacity
         style={[styles.actionButton, styles.deleteButton]}
         onPress={() => setShowDataDeletion(true)}
       >
         <Text style={styles.actionButtonText}>Delete Data</Text>
       </TouchableOpacity>
-      
+
       <TouchableOpacity
         style={[styles.actionButton, styles.consentButton]}
         onPress={() => setShowConsentManager(true)}
@@ -661,15 +688,25 @@ const PrivacyDashboard: React.FC = () => {
   );
 
   const getScoreColor = (score: number): string => {
-    if (score >= 80) return '#4CAF50';
-    if (score >= 60) return '#FF9800';
+    if (score >= 80) {
+      return '#4CAF50';
+    }
+    if (score >= 60) {
+      return '#FF9800';
+    }
     return '#F44336';
   };
 
   const getScoreDescription = (score: number): string => {
-    if (score >= 90) return 'Excellent privacy protection';
-    if (score >= 80) return 'Good privacy protection';
-    if (score >= 60) return 'Fair privacy protection';
+    if (score >= 90) {
+      return 'Excellent privacy protection';
+    }
+    if (score >= 80) {
+      return 'Good privacy protection';
+    }
+    if (score >= 60) {
+      return 'Fair privacy protection';
+    }
     return 'Poor privacy protection';
   };
 
@@ -692,17 +729,19 @@ const PrivacyDashboard: React.FC = () => {
       rightToErasure: 'Allow data deletion requests',
       dataPortability: 'Enable data export and portability',
       transparencyReports: 'Receive transparency reports about data usage',
-      privacyAlerts: 'Receive alerts about privacy-related events'
+      privacyAlerts: 'Receive alerts about privacy-related events',
     };
     return descriptions[key] || '';
   };
 
   const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) {
+      return '0 Bytes';
+    }
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   };
 
   if (loading) {
@@ -720,9 +759,7 @@ const PrivacyDashboard: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <View style={styles.header}>
           <Text style={styles.title}>Privacy Dashboard</Text>
@@ -737,11 +774,7 @@ const PrivacyDashboard: React.FC = () => {
       </ScrollView>
 
       {/* Data Export Modal */}
-      <Modal
-        visible={showDataExport}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
+      <Modal visible={showDataExport} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Export Your Data</Text>
@@ -776,11 +809,7 @@ const PrivacyDashboard: React.FC = () => {
       </Modal>
 
       {/* Consent Manager Modal */}
-      <Modal
-        visible={showConsentManager}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
+      <Modal visible={showConsentManager} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Consent Management</Text>
@@ -789,13 +818,13 @@ const PrivacyDashboard: React.FC = () => {
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.modalContent}>
-            {consentRecords.map((record) => (
+            {consentRecords.map(record => (
               <View key={record.id} style={styles.consentRecord}>
                 <View style={styles.consentHeader}>
                   <Text style={styles.consentPurpose}>{record.purpose}</Text>
                   <Switch
                     value={record.granted}
-                    onValueChange={(value) => handleConsentUpdate(record.id, value)}
+                    onValueChange={value => handleConsentUpdate(record.id, value)}
                     disabled={!record.withdrawable}
                   />
                 </View>
@@ -803,7 +832,8 @@ const PrivacyDashboard: React.FC = () => {
                   Data types: {record.dataTypes.join(', ')}
                 </Text>
                 <Text style={styles.consentTimestamp}>
-                  {record.granted ? 'Granted' : 'Withdrawn'}: {new Date(record.timestamp).toLocaleDateString()}
+                  {record.granted ? 'Granted' : 'Withdrawn'}:{' '}
+                  {new Date(record.timestamp).toLocaleDateString()}
                 </Text>
                 {record.expiresAt && (
                   <Text style={styles.consentExpiry}>

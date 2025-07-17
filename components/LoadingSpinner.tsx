@@ -1,4 +1,5 @@
 import React from 'react';
+import { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -7,7 +8,6 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { useEffect } from 'react';
 
 interface LoadingSpinnerProps {
   size?: number;
@@ -18,11 +18,7 @@ export function LoadingSpinner({ size = 24, color = '#8B5CF6' }: LoadingSpinnerP
   const rotation = useSharedValue(0);
 
   useEffect(() => {
-    rotation.value = withRepeat(
-      withTiming(360, { duration: 1000 }),
-      -1,
-      false
-    );
+    rotation.value = withRepeat(withTiming(360, { duration: 1000 }), -1, false);
   }, [rotation]);
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -59,12 +55,12 @@ export interface LoadingStateProps {
   children?: React.ReactNode;
 }
 
-export function LoadingState({ 
-  isLoading, 
-  text = 'Loading...', 
+export function LoadingState({
+  isLoading,
+  text = 'Loading...',
   size = 'medium',
   variant = 'spinner',
-  children 
+  children,
 }: LoadingStateProps) {
   const sizes = {
     small: 24,
@@ -78,33 +74,26 @@ export function LoadingState({
 
   return (
     <View style={styles.loadingStateContainer}>
-      <LoadingSpinner 
-        size={sizes[size]} 
-        variant="gradient" 
-        text={text}
-      />
+      <LoadingSpinner size={sizes[size]} variant="gradient" text={text} />
     </View>
   );
 }
 
 // Skeleton Loader Component
-export function SkeletonLoader({ 
-  width, 
-  height, 
-  borderRadius = 8 
-}: { 
-  width: number | string; 
-  height: number; 
-  borderRadius?: number; 
+export function SkeletonLoader({
+  width,
+  height,
+  borderRadius = 8,
+}: {
+  width: number | string;
+  height: number;
+  borderRadius?: number;
 }) {
   const opacity = useSharedValue(0.3);
 
   useEffect(() => {
     opacity.value = withRepeat(
-      withSequence(
-        withTiming(0.7, { duration: 800 }),
-        withTiming(0.3, { duration: 800 })
-      ),
+      withSequence(withTiming(0.7, { duration: 800 }), withTiming(0.3, { duration: 800 })),
       -1,
       true
     );

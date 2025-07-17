@@ -4,7 +4,7 @@ interface TwitchTokenResponse {
   token_type: string;
 }
 
-interface TwitchStream {
+export interface TwitchStream {
   id: string;
   user_id: string;
   user_login: string;
@@ -34,7 +34,7 @@ interface TwitchUser {
   created_at: string;
 }
 
-interface TwitchGame {
+export interface TwitchGame {
   id: string;
   name: string;
   box_art_url: string;

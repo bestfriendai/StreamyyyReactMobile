@@ -1,17 +1,4 @@
-import React, { useState, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  Switch,
-  Alert,
-  Platform,
-  Linking,
-  Pressable,
-} from 'react-native';
-import { MotiView, AnimatePresence } from 'moti';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Settings,
@@ -41,7 +28,20 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react-native';
-import { ModernTheme } from '@/theme/modernTheme';
+import { MotiView, AnimatePresence } from 'moti';
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  Switch,
+  Alert,
+  Platform,
+  Linking,
+  Pressable,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -52,9 +52,9 @@ import Animated, {
   SlideInRight,
   SlideInDown,
 } from 'react-native-reanimated';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ErrorTestComponent } from './ErrorTestComponent';
+import { ModernTheme } from '@/theme/modernTheme';
 import { HapticFeedback } from '@/utils/haptics';
+import { ErrorTestComponent } from './ErrorTestComponent';
 
 interface SettingsItem {
   id: string;
@@ -86,85 +86,82 @@ export const EnhancedSettingsScreen: React.FC = () => {
     hapticFeedback: true,
     analytics: false,
   });
-  
+
   const [expandedSections, setExpandedSections] = useState<string[]>(['account', 'streaming']);
   const [showErrorTesting, setShowErrorTesting] = useState(false);
-  
+
   // Animation values
   const headerScale = useSharedValue(1);
-  
+
   // Handle setting toggle
   const handleToggle = useCallback((key: string, value: boolean) => {
     HapticFeedback.light();
-    
+
     setSettings(prev => ({ ...prev, [key]: value }));
-    
+
     // Save to AsyncStorage
     AsyncStorage.setItem(`setting_${key}`, JSON.stringify(value));
-    
+
     // Special feedback for important toggles
     if (key === 'hapticFeedback' && value) {
       setTimeout(() => HapticFeedback.success(), 200);
     }
   }, []);
-  
+
   // Handle section toggle
   const handleSectionToggle = useCallback((sectionId: string) => {
     HapticFeedback.light();
-    
-    setExpandedSections(prev => 
-      prev.includes(sectionId) 
-        ? prev.filter(id => id !== sectionId)
-        : [...prev, sectionId]
+
+    setExpandedSections(prev =>
+      prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]
     );
   }, []);
-  
+
   // Handle actions
   const handleRateApp = useCallback(() => {
-    Alert.alert(
-      'Rate Our App',
-      'Would you like to rate our app on the App Store?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Rate', onPress: () => {
+    Alert.alert('Rate Our App', 'Would you like to rate our app on the App Store?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Rate',
+        onPress: () => {
           // TODO: Open app store rating
           Linking.openURL('https://apps.apple.com');
-        }}
-      ]
-    );
+        },
+      },
+    ]);
   }, []);
-  
+
   const handleShareApp = useCallback(() => {
     // TODO: Implement share functionality
     Alert.alert('Share App', 'Share functionality coming soon!');
   }, []);
-  
+
   const handleClearCache = useCallback(() => {
     HapticFeedback.warning();
-    
-    Alert.alert(
-      'Clear Cache',
-      'This will clear all cached data. Are you sure?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Clear', style: 'destructive', onPress: () => {
+
+    Alert.alert('Clear Cache', 'This will clear all cached data. Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Clear',
+        style: 'destructive',
+        onPress: () => {
           HapticFeedback.success();
           // TODO: Implement cache clearing
           Alert.alert('Success', 'Cache cleared successfully!');
-        }}
-      ]
-    );
+        },
+      },
+    ]);
   }, []);
-  
+
   const handleResetSettings = useCallback(() => {
     HapticFeedback.warning();
-    
-    Alert.alert(
-      'Reset Settings',
-      'This will reset all settings to default values. Are you sure?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Reset', style: 'destructive', onPress: () => {
+
+    Alert.alert('Reset Settings', 'This will reset all settings to default values. Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reset',
+        style: 'destructive',
+        onPress: () => {
           HapticFeedback.success();
           setSettings({
             notifications: true,
@@ -177,11 +174,11 @@ export const EnhancedSettingsScreen: React.FC = () => {
             analytics: false,
           });
           Alert.alert('Success', 'Settings reset to defaults!');
-        }}
-      ]
-    );
+        },
+      },
+    ]);
   }, []);
-  
+
   // Settings sections configuration
   const settingsSections: SettingsSection[] = [
     {
@@ -203,7 +200,7 @@ export const EnhancedSettingsScreen: React.FC = () => {
           icon: Bell,
           type: 'toggle',
           value: settings.notifications,
-          onToggle: (value) => handleToggle('notifications', value),
+          onToggle: value => handleToggle('notifications', value),
         },
         {
           id: 'privacy',
@@ -226,7 +223,7 @@ export const EnhancedSettingsScreen: React.FC = () => {
           icon: Volume2,
           type: 'toggle',
           value: settings.autoplay,
-          onToggle: (value) => handleToggle('autoplay', value),
+          onToggle: value => handleToggle('autoplay', value),
         },
         {
           id: 'highQuality',
@@ -235,7 +232,7 @@ export const EnhancedSettingsScreen: React.FC = () => {
           icon: Monitor,
           type: 'toggle',
           value: settings.highQuality,
-          onToggle: (value) => handleToggle('highQuality', value),
+          onToggle: value => handleToggle('highQuality', value),
         },
         {
           id: 'cellularStreaming',
@@ -244,7 +241,7 @@ export const EnhancedSettingsScreen: React.FC = () => {
           icon: Wifi,
           type: 'toggle',
           value: settings.cellularStreaming,
-          onToggle: (value) => handleToggle('cellularStreaming', value),
+          onToggle: value => handleToggle('cellularStreaming', value),
         },
         {
           id: 'backgroundAudio',
@@ -253,7 +250,7 @@ export const EnhancedSettingsScreen: React.FC = () => {
           icon: Headphones,
           type: 'toggle',
           value: settings.backgroundAudio,
-          onToggle: (value) => handleToggle('backgroundAudio', value),
+          onToggle: value => handleToggle('backgroundAudio', value),
         },
       ],
     },
@@ -268,7 +265,7 @@ export const EnhancedSettingsScreen: React.FC = () => {
           icon: settings.darkMode ? Moon : Sun,
           type: 'toggle',
           value: settings.darkMode,
-          onToggle: (value) => handleToggle('darkMode', value),
+          onToggle: value => handleToggle('darkMode', value),
         },
         {
           id: 'hapticFeedback',
@@ -277,7 +274,7 @@ export const EnhancedSettingsScreen: React.FC = () => {
           icon: Smartphone,
           type: 'toggle',
           value: settings.hapticFeedback,
-          onToggle: (value) => handleToggle('hapticFeedback', value),
+          onToggle: value => handleToggle('hapticFeedback', value),
         },
         {
           id: 'theme',
@@ -300,7 +297,7 @@ export const EnhancedSettingsScreen: React.FC = () => {
           icon: Eye,
           type: 'toggle',
           value: settings.analytics,
-          onToggle: (value) => handleToggle('analytics', value),
+          onToggle: value => handleToggle('analytics', value),
         },
         {
           id: 'clearCache',
@@ -355,7 +352,8 @@ export const EnhancedSettingsScreen: React.FC = () => {
           subtitle: 'Version 1.0.0 • Terms & Privacy',
           icon: Info,
           type: 'navigation',
-          onPress: () => Alert.alert('About', 'Multi-Stream Viewer v1.0.0\n\nBuilt with React Native'),
+          onPress: () =>
+            Alert.alert('About', 'Multi-Stream Viewer v1.0.0\n\nBuilt with React Native'),
         },
       ],
     },
@@ -376,23 +374,23 @@ export const EnhancedSettingsScreen: React.FC = () => {
       ],
     },
   ];
-  
+
   // Animated styles
   const headerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: headerScale.value }],
   }));
-  
+
   // Render setting item
   const renderSettingItem = useCallback((item: SettingsItem) => {
     const IconComponent = item.icon;
-    
+
     return (
       <Pressable
         key={item.id}
         style={({ pressed }) => [
           styles.settingItem,
           item.destructive && styles.destructiveItem,
-          pressed && { transform: [{ scale: 0.98 }] }
+          pressed && { transform: [{ scale: 0.98 }] },
         ]}
         onPress={() => {
           HapticFeedback.light();
@@ -400,49 +398,41 @@ export const EnhancedSettingsScreen: React.FC = () => {
         }}
       >
         <LinearGradient
-          colors={item.destructive 
-            ? ModernTheme.colors.gradients.danger 
-            : ModernTheme.colors.gradients.card
+          colors={
+            item.destructive
+              ? ModernTheme.colors.gradients.danger
+              : ModernTheme.colors.gradients.card
           }
           style={styles.settingItemGradient}
         >
           <View style={styles.settingItemLeft}>
-            <View style={[
-              styles.settingIcon,
-              item.destructive && styles.destructiveIcon,
-            ]}>
+            <View style={[styles.settingIcon, item.destructive && styles.destructiveIcon]}>
               <LinearGradient
-                colors={item.destructive 
-                  ? ModernTheme.colors.gradients.danger 
-                  : ModernTheme.colors.gradients.primary
+                colors={
+                  item.destructive
+                    ? ModernTheme.colors.gradients.danger
+                    : ModernTheme.colors.gradients.primary
                 }
                 style={styles.settingIconGradient}
               >
-                <IconComponent 
-                  size={20} 
-                  color={ModernTheme.colors.text.primary} 
-                />
+                <IconComponent size={20} color={ModernTheme.colors.text.primary} />
               </LinearGradient>
             </View>
-            
+
             <View style={styles.settingContent}>
-              <Text style={[
-                styles.settingTitle,
-                item.destructive && styles.destructiveText,
-              ]}>
+              <Text style={[styles.settingTitle, item.destructive && styles.destructiveText]}>
                 {item.title}
               </Text>
               {item.subtitle && (
-                <Text style={[
-                  styles.settingSubtitle,
-                  item.destructive && styles.destructiveSubtitle,
-                ]}>
+                <Text
+                  style={[styles.settingSubtitle, item.destructive && styles.destructiveSubtitle]}
+                >
                   {item.subtitle}
                 </Text>
               )}
             </View>
           </View>
-          
+
           <View style={styles.settingItemRight}>
             {item.type === 'toggle' && (
               <Switch
@@ -456,14 +446,15 @@ export const EnhancedSettingsScreen: React.FC = () => {
                 ios_backgroundColor="rgba(255, 255, 255, 0.2)"
               />
             )}
-            
+
             {(item.type === 'navigation' || item.type === 'action') && (
-              <ChevronRight 
-                size={20} 
-                color={item.destructive 
-                  ? ModernTheme.colors.text.error 
-                  : ModernTheme.colors.text.secondary
-                } 
+              <ChevronRight
+                size={20}
+                color={
+                  item.destructive
+                    ? ModernTheme.colors.text.error
+                    : ModernTheme.colors.text.secondary
+                }
               />
             )}
           </View>
@@ -471,49 +462,46 @@ export const EnhancedSettingsScreen: React.FC = () => {
       </Pressable>
     );
   }, []);
-  
+
   // Render settings section
-  const renderSettingsSection = useCallback((section: SettingsSection) => {
-    const isExpanded = expandedSections.includes(section.id);
-    
-    return (
-      <View key={section.id} style={styles.section}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.sectionHeader,
-            pressed && { transform: [{ scale: 0.98 }] }
-          ]}
-          onPress={() => handleSectionToggle(section.id)}
-        >
-          <Text style={styles.sectionTitle}>{section.title}</Text>
-          <Animated.View
-            style={{
-              transform: [{ rotate: isExpanded ? '90deg' : '0deg' }],
-            }}
+  const renderSettingsSection = useCallback(
+    (section: SettingsSection) => {
+      const isExpanded = expandedSections.includes(section.id);
+
+      return (
+        <View key={section.id} style={styles.section}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.sectionHeader,
+              pressed && { transform: [{ scale: 0.98 }] },
+            ]}
+            onPress={() => handleSectionToggle(section.id)}
           >
-            <ChevronRight size={20} color={ModernTheme.colors.text.secondary} />
-          </Animated.View>
-        </Pressable>
-        
-        {isExpanded && (
-          <Animated.View 
-            entering={SlideInDown.delay(100)}
-            style={styles.sectionContent}
-          >
-            {section.items.map((item, index) => (
-              <Animated.View 
-                key={item.id}
-                entering={FadeIn.delay(index * 50)}
-              >
-                {renderSettingItem(item)}
-              </Animated.View>
-            ))}
-          </Animated.View>
-        )}
-      </View>
-    );
-  }, [expandedSections, renderSettingItem, handleSectionToggle]);
-  
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+            <Animated.View
+              style={{
+                transform: [{ rotate: isExpanded ? '90deg' : '0deg' }],
+              }}
+            >
+              <ChevronRight size={20} color={ModernTheme.colors.text.secondary} />
+            </Animated.View>
+          </Pressable>
+
+          {isExpanded && (
+            <Animated.View entering={SlideInDown.delay(100)} style={styles.sectionContent}>
+              {section.items.map((item, index) => (
+                <Animated.View key={item.id} entering={FadeIn.delay(index * 50)}>
+                  {renderSettingItem(item)}
+                </Animated.View>
+              ))}
+            </Animated.View>
+          )}
+        </View>
+      );
+    },
+    [expandedSections, renderSettingItem, handleSectionToggle]
+  );
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -537,7 +525,7 @@ export const EnhancedSettingsScreen: React.FC = () => {
           </View>
         </LinearGradient>
       </Animated.View>
-      
+
       {/* Settings Content */}
       <ScrollView
         style={styles.scrollView}
@@ -545,7 +533,7 @@ export const EnhancedSettingsScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {settingsSections.map(renderSettingsSection)}
-        
+
         {/* Error Testing Component */}
         {showErrorTesting && (
           <MotiView
@@ -557,15 +545,11 @@ export const EnhancedSettingsScreen: React.FC = () => {
             <ErrorTestComponent />
           </MotiView>
         )}
-        
+
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Multi-Stream Viewer v1.0.0
-          </Text>
-          <Text style={styles.footerSubtext}>
-            Made with ❤️ for streamers and viewers
-          </Text>
+          <Text style={styles.footerText}>Multi-Stream Viewer v1.0.0</Text>
+          <Text style={styles.footerSubtext}>Made with ❤️ for streamers and viewers</Text>
         </View>
       </ScrollView>
     </View>

@@ -3,6 +3,7 @@
  * Uses unified theme system for consistent styling
  */
 
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect } from 'react';
 import { View, ViewStyle } from 'react-native';
 import Animated, {
@@ -14,7 +15,6 @@ import Animated, {
   interpolate,
   Easing,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface LoadingSpinnerProps {
@@ -74,7 +74,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
           false
         );
         break;
-      
+
       case 'pulse':
         scale.value = withRepeat(
           withSequence(
@@ -98,10 +98,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
   // Animated styles
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { rotate: `${rotation.value}deg` },
-      { scale: scale.value },
-    ],
+    transform: [{ rotate: `${rotation.value}deg` }, { scale: scale.value }],
     opacity: opacity.value,
   }));
 
@@ -237,7 +234,7 @@ const DotsSpinner: React.FC<{
         -1,
         false
       );
-      
+
       opacity.value = withRepeat(
         withSequence(
           withTiming(1, { duration: duration / 3 }),
@@ -343,16 +340,16 @@ const BarsSpinner: React.FC<{
 };
 
 // Specialized loading components
-export const StreamLoadingSpinner: React.FC<Omit<LoadingSpinnerProps, 'variant'>> = (props) => (
+export const StreamLoadingSpinner: React.FC<Omit<LoadingSpinnerProps, 'variant'>> = props => (
   <LoadingSpinner {...props} variant="gradient" />
 );
 
-export const ButtonLoadingSpinner: React.FC<Omit<LoadingSpinnerProps, 'size' | 'variant'>> = (props) => (
-  <LoadingSpinner {...props} size="sm" variant="default" />
-);
+export const ButtonLoadingSpinner: React.FC<
+  Omit<LoadingSpinnerProps, 'size' | 'variant'>
+> = props => <LoadingSpinner {...props} size="sm" variant="default" />;
 
-export const PageLoadingSpinner: React.FC<Omit<LoadingSpinnerProps, 'size' | 'variant'>> = (props) => (
-  <LoadingSpinner {...props} size="lg" variant="pulse" />
-);
+export const PageLoadingSpinner: React.FC<
+  Omit<LoadingSpinnerProps, 'size' | 'variant'>
+> = props => <LoadingSpinner {...props} size="lg" variant="pulse" />;
 
 export default LoadingSpinner;

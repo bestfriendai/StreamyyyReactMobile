@@ -32,50 +32,50 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
   const initializeDesktopFeatures = async () => {
     if (typeof window !== 'undefined' && (window as any).electron) {
       const electron = (window as any).electron;
-      
+
       try {
         // Get system info
         const info = await electron.system.getInfo();
         setSystemInfo(info);
-        
+
         // Set up IPC listeners
         electron.ipcRenderer.on('navigate-to-settings', () => {
           // Navigate to settings - this would be handled by the router
           console.log('Navigate to settings requested');
         });
-        
+
         electron.ipcRenderer.on('create-new-layout', () => {
           // Create new layout
           console.log('Create new layout requested');
         });
-        
+
         electron.ipcRenderer.on('save-current-layout', () => {
           // Save current layout
           console.log('Save current layout requested');
         });
-        
-        electron.ipcRenderer.on('update-available', (info) => {
+
+        electron.ipcRenderer.on('update-available', info => {
           addNotification(`Update available: ${info.version}`);
         });
-        
-        electron.ipcRenderer.on('download-progress', (progress) => {
+
+        electron.ipcRenderer.on('download-progress', progress => {
           addNotification(`Download progress: ${Math.round(progress.percent)}%`);
         });
-        
-        electron.ipcRenderer.on('update-downloaded', (info) => {
+
+        electron.ipcRenderer.on('update-downloaded', info => {
           addNotification(`Update downloaded: ${info.version}. Restart to apply.`);
         });
-        
+
         // Set up system tray if enabled
         if (desktopSettings.systemTrayEnabled) {
           electron.systemTray.setup();
         }
-        
+
         // Set up auto-start if enabled
         if (desktopSettings.autoStart) {
           electron.autoStart.setup();
         }
-        
+
         console.log('Desktop features initialized');
       } catch (error) {
         console.error('Error initializing desktop features:', error);
@@ -85,12 +85,12 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
 
   const addNotification = (message: string) => {
     setNotifications(prev => [...prev, message]);
-    
+
     // Auto-remove notification after 5 seconds
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n !== message));
     }, 5000);
-    
+
     // Show native notification if enabled
     if (desktopSettings.nativeNotifications && (window as any).electron) {
       (window as any).electron.notification.show({
@@ -105,7 +105,7 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
     if (typeof window !== 'undefined' && (window as any).electron) {
       const newValue = !isAlwaysOnTop;
       setIsAlwaysOnTop(newValue);
-      
+
       try {
         await (window as any).electron.window.setAlwaysOnTop(newValue);
         updateDesktopSettings({ alwaysOnTop: newValue });
@@ -125,7 +125,7 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
   const toggleAutoStart = async () => {
     if (typeof window !== 'undefined' && (window as any).electron) {
       const newValue = !desktopSettings.autoStart;
-      
+
       try {
         (window as any).electron.autoStart.toggle();
         updateDesktopSettings({ autoStart: newValue });
@@ -139,18 +139,20 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
   const toggleSystemTray = () => {
     const newValue = !desktopSettings.systemTrayEnabled;
     updateDesktopSettings({ systemTrayEnabled: newValue });
-    
+
     if (newValue && (window as any).electron) {
       (window as any).electron.systemTray.setup();
     }
-    
+
     addNotification(`System tray ${newValue ? 'enabled' : 'disabled'}`);
   };
 
   const toggleHardwareAcceleration = () => {
     const newValue = !desktopSettings.hardwareAcceleration;
     updateDesktopSettings({ hardwareAcceleration: newValue });
-    addNotification(`Hardware acceleration ${newValue ? 'enabled' : 'disabled'}. Restart required.`);
+    addNotification(
+      `Hardware acceleration ${newValue ? 'enabled' : 'disabled'}. Restart required.`
+    );
   };
 
   const toggleNativeNotifications = () => {
@@ -160,7 +162,10 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
   };
 
   // Stream component optimized for desktop
-  const DesktopStreamItem: React.FC<{ stream: UnifiedStream; index: number }> = ({ stream, index }) => {
+  const DesktopStreamItem: React.FC<{ stream: UnifiedStream; index: number }> = ({
+    stream,
+    index,
+  }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [hasError, setHasError] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -244,33 +249,39 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
 
         {/* Loading overlay */}
         {isLoading && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            color: '#fff',
-            fontSize: '14px',
-          }}>
-            <div style={{
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              gap: '8px',
-            }}>
-              <div style={{
-                width: '32px',
-                height: '32px',
-                border: '3px solid #333',
-                borderTop: '3px solid #007bff',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-              }} />
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              color: '#fff',
+              fontSize: '14px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <div
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  border: '3px solid #333',
+                  borderTop: '3px solid #007bff',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                }}
+              />
               Loading stream...
             </div>
           </div>
@@ -278,25 +289,27 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
 
         {/* Error overlay */}
         {hasError && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            color: '#fff',
-            fontSize: '14px',
-            flexDirection: 'column',
-            gap: '12px',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              color: '#fff',
+              fontSize: '14px',
+              flexDirection: 'column',
+              gap: '12px',
+            }}
+          >
             <div style={{ fontSize: '24px' }}>⚠️</div>
             <div>Stream unavailable</div>
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 setHasError(false);
                 setIsLoading(true);
@@ -317,18 +330,20 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
 
         {/* Desktop-specific controls */}
         {isHovered && (
-          <div style={{
-            position: 'absolute',
-            top: '8px',
-            right: '8px',
-            display: 'flex',
-            gap: '4px',
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            padding: '4px',
-            borderRadius: '4px',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              display: 'flex',
+              gap: '4px',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              padding: '4px',
+              borderRadius: '4px',
+            }}
+          >
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 togglePictureInPicture();
               }}
@@ -349,9 +364,9 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
             >
               📺
             </button>
-            
+
             <button
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 handleStreamRemove();
               }}
@@ -377,27 +392,33 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
 
         {/* Stream info */}
         {isHovered && (
-          <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: 'linear-gradient(transparent, rgba(0, 0, 0, 0.8))',
-            color: '#fff',
-            padding: '12px',
-            fontSize: '12px',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: 'linear-gradient(transparent, rgba(0, 0, 0, 0.8))',
+              color: '#fff',
+              padding: '12px',
+              fontSize: '12px',
+            }}
+          >
             <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
               {stream.streamerDisplayName}
             </div>
             <div style={{ opacity: 0.8, marginBottom: '4px' }}>
-              {stream.title.length > 60 ? stream.title.substring(0, 60) + '...' : stream.title}
+              {stream.title.length > 60 ? `${stream.title.substring(0, 60)  }...` : stream.title}
             </div>
             <div style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ 
-                color: stream.platform === 'twitch' ? '#9146FF' : 
-                      stream.platform === 'youtube' ? '#FF0000' : '#53FC18' 
-              }}>
+              <span
+                style={{
+                  color:
+                    stream.platform === 'twitch'
+                      ? '#9146FF'
+                  stream.platform === 'youtube' ? '#FF0000' : '#53FC18'
+                }}
+              >
                 {stream.platform.toUpperCase()}
               </span>
               <span>{stream.viewerCount.toLocaleString()} viewers</span>
@@ -407,17 +428,19 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
 
         {/* Selection indicator */}
         {isSelected && (
-          <div style={{
-            position: 'absolute',
-            top: '8px',
-            left: '8px',
-            backgroundColor: '#007bff',
-            color: '#fff',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '10px',
-            fontWeight: 'bold',
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              top: '8px',
+              left: '8px',
+              backgroundColor: '#007bff',
+              color: '#fff',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '10px',
+              fontWeight: 'bold',
+            }}
+          >
             SELECTED
           </div>
         )}
@@ -430,20 +453,26 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
       {/* Add spin animation */}
       <style jsx>{`
         @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
         }
       `}</style>
 
       {/* Desktop toolbar */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '8px 16px',
-        backgroundColor: '#1a1a1a',
-        borderBottom: '1px solid #333',
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '8px 16px',
+          backgroundColor: '#1a1a1a',
+          borderBottom: '1px solid #333',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
             Desktop Multi-Stream Viewer
@@ -471,7 +500,7 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
           >
             📌
           </button>
-          
+
           <button
             onClick={minimizeToTray}
             style={{
@@ -491,15 +520,17 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
       </div>
 
       {/* Desktop settings panel */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        padding: '8px 16px',
-        backgroundColor: '#222',
-        borderBottom: '1px solid #333',
-        gap: '12px',
-        fontSize: '12px',
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '8px 16px',
+          backgroundColor: '#222',
+          borderBottom: '1px solid #333',
+          gap: '12px',
+          fontSize: '12px',
+        }}
+      >
         <label style={{ display: 'flex', alignItems: 'center', color: '#ccc' }}>
           <input
             type="checkbox"
@@ -509,7 +540,7 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
           />
           System Tray
         </label>
-        
+
         <label style={{ display: 'flex', alignItems: 'center', color: '#ccc' }}>
           <input
             type="checkbox"
@@ -519,7 +550,7 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
           />
           Auto Start
         </label>
-        
+
         <label style={{ display: 'flex', alignItems: 'center', color: '#ccc' }}>
           <input
             type="checkbox"
@@ -529,7 +560,7 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
           />
           Hardware Acceleration
         </label>
-        
+
         <label style={{ display: 'flex', alignItems: 'center', color: '#ccc' }}>
           <input
             type="checkbox"
@@ -542,7 +573,7 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
       </div>
 
       {/* Stream viewer */}
-      <div 
+      <div
         ref={viewerRef}
         style={{
           flex: 1,
@@ -557,20 +588,22 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
         {streams.map((stream, index) => (
           <DesktopStreamItem key={stream.id} stream={stream} index={index} />
         ))}
-        
+
         {/* Empty state */}
         {streams.length === 0 && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-            height: '100%',
-            color: '#666',
-            fontSize: '16px',
-            flexDirection: 'column',
-            gap: '8px',
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              height: '100%',
+              color: '#666',
+              fontSize: '16px',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
             <div style={{ fontSize: '48px' }}>📺</div>
             <div>No streams added yet</div>
             <div style={{ fontSize: '12px', opacity: 0.7 }}>
@@ -582,15 +615,17 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
 
       {/* Notifications */}
       {notifications.length > 0 && (
-        <div style={{
-          position: 'fixed',
-          top: '16px',
-          right: '16px',
-          zIndex: 1000,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: '16px',
+            right: '16px',
+            zIndex: 1000,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+          }}
+        >
           {notifications.map((notification, index) => (
             <div
               key={index}
@@ -611,13 +646,15 @@ const DesktopMultiStreamViewer: React.FC<DesktopMultiStreamViewerProps> = ({
       )}
 
       {/* Desktop shortcuts help */}
-      <div style={{
-        padding: '8px 16px',
-        backgroundColor: '#1a1a1a',
-        borderTop: '1px solid #333',
-        fontSize: '11px',
-        color: '#666',
-      }}>
+      <div
+        style={{
+          padding: '8px 16px',
+          backgroundColor: '#1a1a1a',
+          borderTop: '1px solid #333',
+          fontSize: '11px',
+          color: '#666',
+        }}
+      >
         Desktop shortcuts: Ctrl+Shift+S Show/Hide • Ctrl+Shift+F Fullscreen • Double-click for PiP
       </div>
     </div>

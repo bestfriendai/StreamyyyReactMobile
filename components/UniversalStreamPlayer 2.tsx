@@ -1,15 +1,3 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  ActivityIndicator,
-  ViewStyle,
-  TextStyle,
-  Linking,
-} from 'react-native';
-import { WebView } from 'react-native-webview';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Volume2,
@@ -22,12 +10,24 @@ import {
   Pause,
   RotateCcw,
 } from 'lucide-react-native';
-import { 
-  UniversalStream, 
-  getPlatformColor, 
-  getPlatformIcon, 
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle,
+  Linking,
+} from 'react-native';
+import { WebView } from 'react-native-webview';
+import {
+  UniversalStream,
+  getPlatformColor,
+  getPlatformIcon,
   getPlatformDisplayName,
-  multiPlatformApi 
+  multiPlatformApi,
 } from '@/services/multiPlatformStreamingApi';
 import { ModernTheme } from '@/theme/modernTheme';
 
@@ -310,7 +310,9 @@ export const UniversalStreamPlayer: React.FC<UniversalStreamPlayerProps> = ({
         document.addEventListener('selectstart', e => e.preventDefault());
         
         // Platform-specific initialization
-        ${stream.platform === 'youtube' ? `
+        ${
+  stream.platform === 'youtube'
+    ? `
         // YouTube-specific event handling
         window.addEventListener('message', function(event) {
             if (event.data && typeof event.data === 'string') {
@@ -324,7 +326,9 @@ export const UniversalStreamPlayer: React.FC<UniversalStreamPlayerProps> = ({
                 }
             }
         });
-        ` : ''}
+        `
+    : ''
+}
         
         // Try to focus iframe for better interaction
         setTimeout(() => {
@@ -342,12 +346,15 @@ export const UniversalStreamPlayer: React.FC<UniversalStreamPlayerProps> = ({
     console.log(`✅ ${platformName} player WebView loaded:`, stream.streamerName);
   }, [stream.streamerName, platformName]);
 
-  const handleWebViewError = useCallback((syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.error(`❌ ${platformName} player error:`, stream.streamerName, nativeEvent);
-    setError(`Failed to load ${platformName} player`);
-    setIsLoading(false);
-  }, [stream.streamerName, platformName]);
+  const handleWebViewError = useCallback(
+    (syntheticEvent: any) => {
+      const { nativeEvent } = syntheticEvent;
+      console.error(`❌ ${platformName} player error:`, stream.streamerName, nativeEvent);
+      setError(`Failed to load ${platformName} player`);
+      setIsLoading(false);
+    },
+    [stream.streamerName, platformName]
+  );
 
   const handleWebViewLoadStart = useCallback(() => {
     console.log(`🔄 ${platformName} player loading:`, stream.streamerName);
@@ -357,36 +364,39 @@ export const UniversalStreamPlayer: React.FC<UniversalStreamPlayerProps> = ({
   }, [stream.streamerName, platformName]);
 
   // Handle WebView messages
-  const handleWebViewMessage = useCallback((event: any) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      console.log(`${platformName} player message:`, data);
-      
-      switch (data.type) {
-        case 'loaded':
-          console.log(`✅ ${platformName} iframe loaded successfully:`, data.streamer);
-          setIsLoading(false);
-          setError(null);
-          setHasLoaded(true);
-          setRetryCount(0);
-          break;
-        case 'error':
-          console.log(`❌ ${platformName} iframe error:`, data.message);
-          setIsLoading(false);
-          setError(data.message || `${platformName} stream unavailable`);
-          break;
-        case 'retry':
-          console.log(`🔄 ${platformName} player retrying...`);
-          setRetryCount(prev => prev + 1);
-          break;
-        case 'touch':
-          onPress?.();
-          break;
+  const handleWebViewMessage = useCallback(
+    (event: any) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data);
+        console.log(`${platformName} player message:`, data);
+
+        switch (data.type) {
+          case 'loaded':
+            console.log(`✅ ${platformName} iframe loaded successfully:`, data.streamer);
+            setIsLoading(false);
+            setError(null);
+            setHasLoaded(true);
+            setRetryCount(0);
+            break;
+          case 'error':
+            console.log(`❌ ${platformName} iframe error:`, data.message);
+            setIsLoading(false);
+            setError(data.message || `${platformName} stream unavailable`);
+            break;
+          case 'retry':
+            console.log(`🔄 ${platformName} player retrying...`);
+            setRetryCount(prev => prev + 1);
+            break;
+          case 'touch':
+            onPress?.();
+            break;
+        }
+      } catch (error) {
+        console.log('WebView message parse error:', error);
       }
-    } catch (error) {
-      console.log('WebView message parse error:', error);
-    }
-  }, [onPress, platformName]);
+    },
+    [onPress, platformName]
+  );
 
   // Handle retry
   const handleRetry = useCallback(() => {
@@ -407,12 +417,15 @@ export const UniversalStreamPlayer: React.FC<UniversalStreamPlayerProps> = ({
   // Auto-hide loading after extended timeout
   useEffect(() => {
     if (isLoading && !hasLoaded) {
-      const timeout = setTimeout(() => {
-        if (!hasLoaded) {
-          setError(`Loading timeout - ${platformName} stream may be offline`);
-          setIsLoading(false);
-        }
-      }, stream.platform === 'youtube' ? 30000 : 25000); // Longer timeout for YouTube
+      const timeout = setTimeout(
+        () => {
+          if (!hasLoaded) {
+            setError(`Loading timeout - ${platformName} stream may be offline`);
+            setIsLoading(false);
+          }
+        },
+        stream.platform === 'youtube' ? 30000 : 25000
+      ); // Longer timeout for YouTube
 
       return () => clearTimeout(timeout);
     }
@@ -436,10 +449,10 @@ export const UniversalStreamPlayer: React.FC<UniversalStreamPlayerProps> = ({
           onError={handleWebViewError}
           onLoadStart={handleWebViewLoadStart}
           onMessage={handleWebViewMessage}
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
           scalesPageToFit={false}
           bounces={false}
@@ -447,11 +460,11 @@ export const UniversalStreamPlayer: React.FC<UniversalStreamPlayerProps> = ({
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['*']}
-          mixedContentMode={'compatibility'}
-          allowsFullscreenVideo={true}
-          allowsProtectedMedia={true}
-          thirdPartyCookiesEnabled={true}
-          sharedCookiesEnabled={true}
+          mixedContentMode="compatibility"
+          allowsFullscreenVideo
+          allowsProtectedMedia
+          thirdPartyCookiesEnabled
+          sharedCookiesEnabled
           cacheEnabled={false}
           incognito={false}
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
@@ -462,7 +475,9 @@ export const UniversalStreamPlayer: React.FC<UniversalStreamPlayerProps> = ({
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color={platformColor} />
             <Text style={styles.loadingText}>Loading {stream.streamerDisplayName}...</Text>
-            <Text style={styles.loadingSubtext}>{platformName} • Please wait for video to start</Text>
+            <Text style={styles.loadingSubtext}>
+              {platformName} • Please wait for video to start
+            </Text>
             {retryCount > 0 && (
               <Text style={styles.retryCountText}>Retry attempt: {retryCount}</Text>
             )}
@@ -479,8 +494,8 @@ export const UniversalStreamPlayer: React.FC<UniversalStreamPlayerProps> = ({
               <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
                 <Text style={styles.retryText}>Retry</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.platformButton, { backgroundColor: platformColor }]} 
+              <TouchableOpacity
+                style={[styles.platformButton, { backgroundColor: platformColor }]}
                 onPress={handleOpenExternal}
               >
                 <Text style={styles.platformText}>Open {platformName}</Text>
@@ -492,10 +507,7 @@ export const UniversalStreamPlayer: React.FC<UniversalStreamPlayerProps> = ({
         {/* Stream Info Overlay */}
         {!error && (
           <View style={styles.infoOverlay}>
-            <LinearGradient
-              colors={['rgba(0,0,0,0.8)', 'transparent']}
-              style={styles.infoGradient}
-            >
+            <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.infoGradient}>
               <View style={styles.streamInfo}>
                 <View style={[styles.platformBadge, { backgroundColor: platformColor }]}>
                   <Text style={styles.platformBadgeText}>{platformIcon} LIVE</Text>
@@ -526,22 +538,16 @@ export const UniversalStreamPlayer: React.FC<UniversalStreamPlayerProps> = ({
             >
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={onMuteToggle}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={onMuteToggle}>
                     {isMuted ? (
                       <VolumeX size={16} color="#fff" />
                     ) : (
                       <Volume2 size={16} color="#fff" />
                     )}
                   </TouchableOpacity>
-                  
+
                   {onPlayToggle && (
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={onPlayToggle}
-                    >
+                    <TouchableOpacity style={styles.controlButton} onPress={onPlayToggle}>
                       {isPlaying ? (
                         <Pause size={16} color="#fff" />
                       ) : (
@@ -549,25 +555,19 @@ export const UniversalStreamPlayer: React.FC<UniversalStreamPlayerProps> = ({
                       )}
                     </TouchableOpacity>
                   )}
-                  
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handleOpenExternal}
-                  >
+
+                  <TouchableOpacity style={styles.controlButton} onPress={handleOpenExternal}>
                     <ExternalLink size={16} color="#fff" />
                   </TouchableOpacity>
                 </View>
 
                 <View style={styles.rightControls}>
                   {retryCount > 0 && (
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={handleRetry}
-                    >
+                    <TouchableOpacity style={styles.controlButton} onPress={handleRetry}>
                       <RotateCcw size={16} color="#fff" />
                     </TouchableOpacity>
                   )}
-                  
+
                   {onRemove && (
                     <TouchableOpacity
                       style={[styles.controlButton, styles.removeButton]}
@@ -587,10 +587,12 @@ export const UniversalStreamPlayer: React.FC<UniversalStreamPlayerProps> = ({
 
         {/* Status Indicator */}
         <View style={styles.statusIndicator}>
-          <View style={[
-            styles.statusDot,
-            { backgroundColor: hasLoaded ? '#00ff00' : isLoading ? '#ffff00' : '#ff0000' }
-          ]} />
+          <View
+            style={[
+              styles.statusDot,
+              { backgroundColor: hasLoaded ? '#00ff00' : isLoading ? '#ffff00' : '#ff0000' },
+            ]}
+          />
         </View>
       </TouchableOpacity>
     </View>

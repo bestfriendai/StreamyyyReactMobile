@@ -1,3 +1,19 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  ArrowRight,
+  Sparkles,
+  User,
+  CheckCircle,
+  ArrowLeft,
+  Shield,
+  Smartphone,
+  Globe,
+} from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -12,23 +28,6 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { 
-  Eye, 
-  EyeOff, 
-  Mail, 
-  Lock, 
-  ArrowRight, 
-  Sparkles,
-  User,
-  CheckCircle,
-  ArrowLeft,
-  Shield,
-  Smartphone,
-  Globe,
-} from 'lucide-react-native';
-import { router } from 'expo-router';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -37,13 +36,20 @@ import Animated, {
   interpolate,
   runOnJS,
 } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { navigationService } from '@/services/NavigationService';
 import { useGlobalStore } from '@/services/SimpleStateManager';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-type AuthStep = 'welcome' | 'sign-in' | 'sign-up' | 'forgot-password' | 'verify-email' | 'social-login';
+type AuthStep =
+  | 'welcome'
+  | 'sign-in'
+  | 'sign-up'
+  | 'forgot-password'
+  | 'verify-email'
+  | 'social-login';
 
 interface SocialProvider {
   id: string;
@@ -80,7 +86,7 @@ const socialProviders: SocialProvider[] = [
 export const AuthenticationFlow: React.FC = () => {
   const { signIn, signUp, isLoading, continueAsGuest } = useAuth();
   const globalStore = useGlobalStore();
-  
+
   const [currentStep, setCurrentStep] = useState<AuthStep>('welcome');
   const [formData, setFormData] = useState({
     email: '',
@@ -103,7 +109,7 @@ export const AuthenticationFlow: React.FC = () => {
     // Initial animations
     logoScale.value = withSpring(1, { damping: 15 });
     contentOpacity.value = withTiming(1, { duration: 800 });
-    
+
     // Sparkle rotation
     const rotateSparkle = () => {
       sparkleRotation.value = withTiming(360, { duration: 3000 }, () => {
@@ -121,13 +127,13 @@ export const AuthenticationFlow: React.FC = () => {
 
   const validateForm = () => {
     const errors: { [key: string]: string } = {};
-    
+
     if (!formData.email.trim()) {
       errors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       errors.email = 'Please enter a valid email';
     }
-    
+
     if (!formData.password.trim()) {
       errors.password = 'Password is required';
     } else if (formData.password.length < 8) {
@@ -138,25 +144,27 @@ export const AuthenticationFlow: React.FC = () => {
       if (!formData.name.trim()) {
         errors.name = 'Name is required';
       }
-      
+
       if (formData.password !== formData.confirmPassword) {
         errors.confirmPassword = 'Passwords do not match';
       }
-      
+
       if (!agreedToTerms) {
         errors.terms = 'Please agree to the terms and conditions';
       }
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSignIn = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      return;
+    }
 
     const result = await signIn(formData.email, formData.password);
-    
+
     if (result.error) {
       Alert.alert('Sign In Failed', result.error.message);
     } else {
@@ -165,10 +173,12 @@ export const AuthenticationFlow: React.FC = () => {
   };
 
   const handleSignUp = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      return;
+    }
 
     const result = await signUp(formData.email, formData.password, formData.name);
-    
+
     if (result.error) {
       Alert.alert('Sign Up Failed', result.error.message);
     } else {
@@ -216,10 +226,7 @@ export const AuthenticationFlow: React.FC = () => {
     <Animated.View style={[styles.stepContainer, animatedContentStyle]}>
       <View style={styles.logoSection}>
         <Animated.View style={[styles.logoContainer, animatedLogoStyle]}>
-          <LinearGradient
-            colors={['#8B5CF6', '#A855F7', '#C084FC']}
-            style={styles.logo}
-          >
+          <LinearGradient colors={['#8B5CF6', '#A855F7', '#C084FC']} style={styles.logo}>
             <Animated.View style={[styles.sparkle, animatedSparkleStyle]}>
               <Sparkles size={32} color="#fff" />
             </Animated.View>
@@ -232,8 +239,8 @@ export const AuthenticationFlow: React.FC = () => {
       <View style={styles.welcomeContent}>
         <Text style={styles.welcomeTitle}>Welcome to the Future of Streaming</Text>
         <Text style={styles.welcomeDescription}>
-          Experience multiple streams like never before. Create custom layouts, 
-          discover new content, and enjoy seamless multi-streaming.
+          Experience multiple streams like never before. Create custom layouts, discover new
+          content, and enjoy seamless multi-streaming.
         </Text>
 
         <View style={styles.featuresContainer}>
@@ -249,30 +256,18 @@ export const AuthenticationFlow: React.FC = () => {
           ))}
         </View>
 
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={() => navigateToStep('sign-up')}
-        >
-          <LinearGradient
-            colors={['#8B5CF6', '#7C3AED']}
-            style={styles.buttonGradient}
-          >
+        <TouchableOpacity style={styles.primaryButton} onPress={() => navigateToStep('sign-up')}>
+          <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.buttonGradient}>
             <Text style={styles.primaryButtonText}>Get Started</Text>
             <ArrowRight size={20} color="#fff" />
           </LinearGradient>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => navigateToStep('sign-in')}
-        >
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigateToStep('sign-in')}>
           <Text style={styles.secondaryButtonText}>I already have an account</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.ghostButton}
-          onPress={handleGuestContinue}
-        >
+        <TouchableOpacity style={styles.ghostButton} onPress={handleGuestContinue}>
           <Text style={styles.ghostButtonText}>Continue as Guest</Text>
         </TouchableOpacity>
       </View>
@@ -282,10 +277,7 @@ export const AuthenticationFlow: React.FC = () => {
   const renderSignInStep = () => (
     <Animated.View style={[styles.stepContainer, animatedContentStyle]}>
       <View style={styles.headerWithBack}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigateToStep('welcome')}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigateToStep('welcome')}>
           <ArrowLeft size={24} color="#8B5CF6" />
         </TouchableOpacity>
         <Text style={styles.stepTitle}>Welcome Back</Text>
@@ -298,7 +290,7 @@ export const AuthenticationFlow: React.FC = () => {
       <View style={styles.formContainer}>
         {/* Social Login Options */}
         <View style={styles.socialContainer}>
-          {socialProviders.map((provider) => (
+          {socialProviders.map(provider => (
             <TouchableOpacity
               key={provider.id}
               style={[styles.socialButton, { backgroundColor: provider.color }]}
@@ -326,15 +318,13 @@ export const AuthenticationFlow: React.FC = () => {
               placeholder="Email address"
               placeholderTextColor="#666"
               value={formData.email}
-              onChangeText={(email) => setFormData({ ...formData, email })}
+              onChangeText={email => setFormData({ ...formData, email })}
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
             />
           </View>
-          {formErrors.email && (
-            <Text style={styles.errorText}>{formErrors.email}</Text>
-          )}
+          {formErrors.email && <Text style={styles.errorText}>{formErrors.email}</Text>}
         </View>
 
         {/* Password Input */}
@@ -346,7 +336,7 @@ export const AuthenticationFlow: React.FC = () => {
               placeholder="Password"
               placeholderTextColor="#666"
               value={formData.password}
-              onChangeText={(password) => setFormData({ ...formData, password })}
+              onChangeText={password => setFormData({ ...formData, password })}
               secureTextEntry={!showPassword}
               autoComplete="password"
             />
@@ -354,16 +344,10 @@ export const AuthenticationFlow: React.FC = () => {
               onPress={() => setShowPassword(!showPassword)}
               style={styles.eyeButton}
             >
-              {showPassword ? (
-                <EyeOff size={20} color="#666" />
-              ) : (
-                <Eye size={20} color="#666" />
-              )}
+              {showPassword ? <EyeOff size={20} color="#666" /> : <Eye size={20} color="#666" />}
             </TouchableOpacity>
           </View>
-          {formErrors.password && (
-            <Text style={styles.errorText}>{formErrors.password}</Text>
-          )}
+          {formErrors.password && <Text style={styles.errorText}>{formErrors.password}</Text>}
         </View>
 
         <TouchableOpacity
@@ -373,15 +357,8 @@ export const AuthenticationFlow: React.FC = () => {
           <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={handleSignIn}
-          disabled={isLoading}
-        >
-          <LinearGradient
-            colors={['#8B5CF6', '#7C3AED']}
-            style={styles.buttonGradient}
-          >
+        <TouchableOpacity style={styles.primaryButton} onPress={handleSignIn} disabled={isLoading}>
+          <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.buttonGradient}>
             {isLoading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
@@ -393,10 +370,7 @@ export const AuthenticationFlow: React.FC = () => {
           </LinearGradient>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.switchAuthButton}
-          onPress={() => navigateToStep('sign-up')}
-        >
+        <TouchableOpacity style={styles.switchAuthButton} onPress={() => navigateToStep('sign-up')}>
           <Text style={styles.switchAuthText}>
             Don't have an account? <Text style={styles.switchAuthLink}>Sign Up</Text>
           </Text>
@@ -408,10 +382,7 @@ export const AuthenticationFlow: React.FC = () => {
   const renderSignUpStep = () => (
     <Animated.View style={[styles.stepContainer, animatedContentStyle]}>
       <View style={styles.headerWithBack}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigateToStep('welcome')}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigateToStep('welcome')}>
           <ArrowLeft size={24} color="#8B5CF6" />
         </TouchableOpacity>
         <Text style={styles.stepTitle}>Create Account</Text>
@@ -424,7 +395,7 @@ export const AuthenticationFlow: React.FC = () => {
       <ScrollView style={styles.formContainer} showsVerticalScrollIndicator={false}>
         {/* Social Signup Options */}
         <View style={styles.socialContainer}>
-          {socialProviders.slice(0, 2).map((provider) => (
+          {socialProviders.slice(0, 2).map(provider => (
             <TouchableOpacity
               key={provider.id}
               style={[styles.socialButton, { backgroundColor: provider.color }]}
@@ -452,13 +423,11 @@ export const AuthenticationFlow: React.FC = () => {
               placeholder="Full name"
               placeholderTextColor="#666"
               value={formData.name}
-              onChangeText={(name) => setFormData({ ...formData, name })}
+              onChangeText={name => setFormData({ ...formData, name })}
               autoComplete="name"
             />
           </View>
-          {formErrors.name && (
-            <Text style={styles.errorText}>{formErrors.name}</Text>
-          )}
+          {formErrors.name && <Text style={styles.errorText}>{formErrors.name}</Text>}
         </View>
 
         {/* Email Input */}
@@ -470,15 +439,13 @@ export const AuthenticationFlow: React.FC = () => {
               placeholder="Email address"
               placeholderTextColor="#666"
               value={formData.email}
-              onChangeText={(email) => setFormData({ ...formData, email })}
+              onChangeText={email => setFormData({ ...formData, email })}
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
             />
           </View>
-          {formErrors.email && (
-            <Text style={styles.errorText}>{formErrors.email}</Text>
-          )}
+          {formErrors.email && <Text style={styles.errorText}>{formErrors.email}</Text>}
         </View>
 
         {/* Password Input */}
@@ -490,7 +457,7 @@ export const AuthenticationFlow: React.FC = () => {
               placeholder="Password (8+ characters)"
               placeholderTextColor="#666"
               value={formData.password}
-              onChangeText={(password) => setFormData({ ...formData, password })}
+              onChangeText={password => setFormData({ ...formData, password })}
               secureTextEntry={!showPassword}
               autoComplete="new-password"
             />
@@ -498,16 +465,10 @@ export const AuthenticationFlow: React.FC = () => {
               onPress={() => setShowPassword(!showPassword)}
               style={styles.eyeButton}
             >
-              {showPassword ? (
-                <EyeOff size={20} color="#666" />
-              ) : (
-                <Eye size={20} color="#666" />
-              )}
+              {showPassword ? <EyeOff size={20} color="#666" /> : <Eye size={20} color="#666" />}
             </TouchableOpacity>
           </View>
-          {formErrors.password && (
-            <Text style={styles.errorText}>{formErrors.password}</Text>
-          )}
+          {formErrors.password && <Text style={styles.errorText}>{formErrors.password}</Text>}
         </View>
 
         {/* Confirm Password Input */}
@@ -519,7 +480,7 @@ export const AuthenticationFlow: React.FC = () => {
               placeholder="Confirm password"
               placeholderTextColor="#666"
               value={formData.confirmPassword}
-              onChangeText={(confirmPassword) => setFormData({ ...formData, confirmPassword })}
+              onChangeText={confirmPassword => setFormData({ ...formData, confirmPassword })}
               secureTextEntry={!showConfirmPassword}
             />
             <TouchableOpacity
@@ -547,25 +508,14 @@ export const AuthenticationFlow: React.FC = () => {
             {agreedToTerms && <CheckCircle size={16} color="#8B5CF6" />}
           </View>
           <Text style={styles.termsText}>
-            I agree to the{' '}
-            <Text style={styles.termsLink}>Terms of Service</Text>
-            {' '}and{' '}
+            I agree to the <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
             <Text style={styles.termsLink}>Privacy Policy</Text>
           </Text>
         </TouchableOpacity>
-        {formErrors.terms && (
-          <Text style={styles.errorText}>{formErrors.terms}</Text>
-        )}
+        {formErrors.terms && <Text style={styles.errorText}>{formErrors.terms}</Text>}
 
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={handleSignUp}
-          disabled={isLoading}
-        >
-          <LinearGradient
-            colors={['#8B5CF6', '#7C3AED']}
-            style={styles.buttonGradient}
-          >
+        <TouchableOpacity style={styles.primaryButton} onPress={handleSignUp} disabled={isLoading}>
+          <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.buttonGradient}>
             {isLoading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
@@ -577,10 +527,7 @@ export const AuthenticationFlow: React.FC = () => {
           </LinearGradient>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.switchAuthButton}
-          onPress={() => navigateToStep('sign-in')}
-        >
+        <TouchableOpacity style={styles.switchAuthButton} onPress={() => navigateToStep('sign-in')}>
           <Text style={styles.switchAuthText}>
             Already have an account? <Text style={styles.switchAuthLink}>Sign In</Text>
           </Text>
@@ -592,10 +539,7 @@ export const AuthenticationFlow: React.FC = () => {
   const renderForgotPasswordStep = () => (
     <Animated.View style={[styles.stepContainer, animatedContentStyle]}>
       <View style={styles.headerWithBack}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigateToStep('sign-in')}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigateToStep('sign-in')}>
           <ArrowLeft size={24} color="#8B5CF6" />
         </TouchableOpacity>
         <Text style={styles.stepTitle}>Reset Password</Text>
@@ -614,7 +558,7 @@ export const AuthenticationFlow: React.FC = () => {
               placeholder="Email address"
               placeholderTextColor="#666"
               value={formData.email}
-              onChangeText={(email) => setFormData({ ...formData, email })}
+              onChangeText={email => setFormData({ ...formData, email })}
               keyboardType="email-address"
               autoCapitalize="none"
             />
@@ -623,12 +567,11 @@ export const AuthenticationFlow: React.FC = () => {
 
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={() => Alert.alert('Reset Link Sent', 'Check your email for password reset instructions.')}
+          onPress={() =>
+            Alert.alert('Reset Link Sent', 'Check your email for password reset instructions.')
+          }
         >
-          <LinearGradient
-            colors={['#8B5CF6', '#7C3AED']}
-            style={styles.buttonGradient}
-          >
+          <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.buttonGradient}>
             <Text style={styles.primaryButtonText}>Send Reset Link</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -642,18 +585,15 @@ export const AuthenticationFlow: React.FC = () => {
         <CheckCircle size={64} color="#10B981" />
         <Text style={styles.successTitle}>Check Your Email</Text>
         <Text style={styles.successDescription}>
-          We've sent a verification link to {formData.email}. 
-          Click the link to activate your account.
+          We've sent a verification link to {formData.email}. Click the link to activate your
+          account.
         </Text>
 
         <TouchableOpacity
           style={styles.primaryButton}
           onPress={() => navigationService.navigate('/(tabs)')}
         >
-          <LinearGradient
-            colors={['#8B5CF6', '#7C3AED']}
-            style={styles.buttonGradient}
-          >
+          <LinearGradient colors={['#8B5CF6', '#7C3AED']} style={styles.buttonGradient}>
             <Text style={styles.primaryButtonText}>Continue to App</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -687,11 +627,8 @@ export const AuthenticationFlow: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']}
-        style={styles.background}
-      />
-      
+      <LinearGradient colors={['#0f0f0f', '#1a1a1a', '#0f0f0f']} style={styles.background} />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardContainer}

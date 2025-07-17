@@ -1,24 +1,3 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  Text,
-  Platform,
-  ScrollView,
-  Alert,
-} from 'react-native';
-import { WebView } from 'react-native-webview';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  interpolate,
-} from 'react-native-reanimated';
-import { MotiView, MotiText } from 'moti';
-import { BlurViewFallback as BlurView } from './BlurViewFallback';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Play,
@@ -31,10 +10,31 @@ import {
   Maximize,
   MoreVertical,
   Settings,
-  Eye
+  Eye,
 } from 'lucide-react-native';
+import { MotiView, MotiText } from 'moti';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+  Text,
+  Platform,
+  ScrollView,
+  Alert,
+} from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  interpolate,
+} from 'react-native-reanimated';
+import { WebView } from 'react-native-webview';
 import { useStreamManager } from '@/hooks/useStreamManager';
 import { TwitchStream, twitchApi } from '@/services/twitchApi';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -47,19 +47,19 @@ interface StreamCellProps {
   onPress?: () => void;
 }
 
-const StreamCell: React.FC<StreamCellProps> = ({ 
-  stream, 
-  width, 
-  height, 
-  onRemove, 
-  isActive = false, 
-  onPress 
+const StreamCell: React.FC<StreamCellProps> = ({
+  stream,
+  width,
+  height,
+  onRemove,
+  isActive = false,
+  onPress,
 }) => {
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showControls, setShowControls] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const webViewRef = useRef<WebView>(null);
   const scale = useSharedValue(1);
   const controlsOpacity = useSharedValue(0);
@@ -75,12 +75,12 @@ const StreamCell: React.FC<StreamCellProps> = ({
 
   useEffect(() => {
     controlsOpacity.value = withTiming(showControls ? 1 : 0, { duration: 200 });
-    
+
     let timeout: NodeJS.Timeout;
     if (showControls) {
       timeout = setTimeout(() => setShowControls(false), 3000);
     }
-    
+
     return () => clearTimeout(timeout);
   }, [showControls]);
 
@@ -102,7 +102,7 @@ const StreamCell: React.FC<StreamCellProps> = ({
 
   // Generate clean Twitch embed HTML that prevents fullscreen
   const embedUrl = `https://player.twitch.tv/?channel=${stream.user_login}&parent=localhost&muted=${isMuted}&autoplay=true&allowfullscreen=false&controls=true&time=0s`;
-  
+
   const twitchEmbedHtml = `
     <!DOCTYPE html>
     <html>
@@ -178,11 +178,8 @@ const StreamCell: React.FC<StreamCellProps> = ({
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    borderColor: interpolate(
-      borderGlow.value,
-      [0, 1],
-      [0, 1]
-    ) > 0.5 ? '#8B5CF6' : 'rgba(255, 255, 255, 0.1)',
+    borderColor:
+      interpolate(borderGlow.value, [0, 1], [0, 1]) > 0.5 ? '#8B5CF6' : 'rgba(255, 255, 255, 0.1)',
     borderWidth: interpolate(borderGlow.value, [0, 1], [1, 2]),
   }));
 
@@ -192,11 +189,7 @@ const StreamCell: React.FC<StreamCellProps> = ({
 
   return (
     <Animated.View style={[styles.streamCell, { width, height }, animatedStyle]}>
-      <TouchableOpacity
-        style={StyleSheet.absoluteFill}
-        onPress={handlePress}
-        activeOpacity={1}
-      >
+      <TouchableOpacity style={StyleSheet.absoluteFill} onPress={handlePress} activeOpacity={1}>
         {/* WebView */}
         <WebView
           ref={webViewRef}
@@ -204,17 +197,17 @@ const StreamCell: React.FC<StreamCellProps> = ({
           style={StyleSheet.absoluteFill}
           onLoadStart={() => setIsLoading(true)}
           onLoadEnd={() => setIsLoading(false)}
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           allowsFullscreenVideo={false}
           mediaPlaybackRequiresUserAction={false}
           scrollEnabled={false}
           bounces={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           mixedContentMode="compatibility"
-          startInLoadingState={true}
+          startInLoadingState
         />
-        
+
         {/* Loading overlay */}
         {isLoading && (
           <View style={styles.loadingOverlay}>
@@ -234,18 +227,13 @@ const StreamCell: React.FC<StreamCellProps> = ({
         )}
 
         {/* Stream info overlay */}
-        <LinearGradient
-          colors={['rgba(0,0,0,0.7)', 'transparent']}
-          style={styles.infoOverlay}
-        >
+        <LinearGradient colors={['rgba(0,0,0,0.7)', 'transparent']} style={styles.infoOverlay}>
           <View style={styles.streamHeader}>
             <View style={styles.liveIndicator}>
               <View style={styles.liveDot} />
               <Text style={styles.liveText}>LIVE</Text>
             </View>
-            <Text style={styles.viewerCount}>
-              {(stream.viewer_count || 0).toLocaleString()}
-            </Text>
+            <Text style={styles.viewerCount}>{(stream.viewer_count || 0).toLocaleString()}</Text>
           </View>
           <Text style={styles.streamTitle} numberOfLines={1}>
             {stream.user_name}
@@ -260,21 +248,11 @@ const StreamCell: React.FC<StreamCellProps> = ({
           <BlurView style={styles.controlsContainer} blurType="dark" blurAmount={20}>
             <View style={styles.controlsRow}>
               <View style={styles.leftControls}>
-                <TouchableOpacity
-                  style={styles.controlButton}
-                  onPress={togglePlayPause}
-                >
-                  {isPlaying ? (
-                    <Pause size={14} color="#fff" />
-                  ) : (
-                    <Play size={14} color="#fff" />
-                  )}
+                <TouchableOpacity style={styles.controlButton} onPress={togglePlayPause}>
+                  {isPlaying ? <Pause size={14} color="#fff" /> : <Play size={14} color="#fff" />}
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.controlButton}
-                  onPress={toggleMute}
-                >
+                <TouchableOpacity style={styles.controlButton} onPress={toggleMute}>
                   {isMuted ? (
                     <VolumeX size={14} color="#fff" />
                   ) : (
@@ -283,10 +261,7 @@ const StreamCell: React.FC<StreamCellProps> = ({
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity
-                style={styles.removeButton}
-                onPress={onRemove}
-              >
+              <TouchableOpacity style={styles.removeButton} onPress={onRemove}>
                 <X size={14} color="#fff" />
               </TouchableOpacity>
             </View>
@@ -301,24 +276,28 @@ interface MultiViewGridProps {
   layout?: '2x2' | '3x3' | '4x4' | 'auto';
 }
 
-export const MultiViewGrid: React.FC<MultiViewGridProps> = ({ 
-  layout = 'auto' 
-}) => {
+export const MultiViewGrid: React.FC<MultiViewGridProps> = ({ layout = 'auto' }) => {
   const { activeStreams, removeStream } = useStreamManager();
   const [activeStreamId, setActiveStreamId] = useState<string | null>(null);
 
   const getGridLayout = () => {
     const streamCount = activeStreams.length;
-    
+
     if (layout !== 'auto') {
       const size = parseInt(layout.charAt(0));
       return { columns: size, rows: size };
     }
-    
+
     // Auto layout based on stream count
-    if (streamCount <= 1) return { columns: 1, rows: 1 };
-    if (streamCount <= 4) return { columns: 2, rows: 2 };
-    if (streamCount <= 9) return { columns: 3, rows: 3 };
+    if (streamCount <= 1) {
+      return { columns: 1, rows: 1 };
+    }
+    if (streamCount <= 4) {
+      return { columns: 2, rows: 2 };
+    }
+    if (streamCount <= 9) {
+      return { columns: 3, rows: 3 };
+    }
     return { columns: 4, rows: 4 };
   };
 
@@ -329,27 +308,27 @@ export const MultiViewGrid: React.FC<MultiViewGridProps> = ({
   // Force massive stream dimensions - ignore calculated values for maximum size
   const padding = 0; // No padding for absolute maximum space
   const gap = 0; // No gap for absolute maximum space
-  
+
   // Force absolutely massive dimensions - streams must dominate the screen
-   let minCellWidth, minCellHeight;
-   
-   if (columns === 2) {
-     // For 2x2 grid, make each stream take up nearly half the screen
-     minCellWidth = SCREEN_WIDTH / 2; // Exactly half screen width
-     minCellHeight = (SCREEN_HEIGHT - 150) / 2; // Nearly half screen height
-   } else if (columns === 1) {
-     // For single stream, take up most of the screen
-     minCellWidth = SCREEN_WIDTH - 20;
-     minCellHeight = SCREEN_HEIGHT - 200;
-   } else {
-     // For 3x3 or larger grids, still make them as large as possible
-     minCellWidth = (SCREEN_WIDTH - 20) / columns;
-     minCellHeight = (SCREEN_HEIGHT - 200) / rows;
-   }
-   
-   // Force minimum huge sizes regardless of calculations
-   minCellWidth = Math.max(minCellWidth, SCREEN_WIDTH * 0.45); // At least 45% of screen width
-   minCellHeight = Math.max(minCellHeight, SCREEN_HEIGHT * 0.35); // At least 35% of screen height
+  let minCellWidth, minCellHeight;
+
+  if (columns === 2) {
+    // For 2x2 grid, make each stream take up nearly half the screen
+    minCellWidth = SCREEN_WIDTH / 2; // Exactly half screen width
+    minCellHeight = (SCREEN_HEIGHT - 150) / 2; // Nearly half screen height
+  } else if (columns === 1) {
+    // For single stream, take up most of the screen
+    minCellWidth = SCREEN_WIDTH - 20;
+    minCellHeight = SCREEN_HEIGHT - 200;
+  } else {
+    // For 3x3 or larger grids, still make them as large as possible
+    minCellWidth = (SCREEN_WIDTH - 20) / columns;
+    minCellHeight = (SCREEN_HEIGHT - 200) / rows;
+  }
+
+  // Force minimum huge sizes regardless of calculations
+  minCellWidth = Math.max(minCellWidth, SCREEN_WIDTH * 0.45); // At least 45% of screen width
+  minCellHeight = Math.max(minCellHeight, SCREEN_HEIGHT * 0.35); // At least 35% of screen height
 
   if (displayStreams.length === 0) {
     return (
@@ -378,7 +357,7 @@ export const MultiViewGrid: React.FC<MultiViewGridProps> = ({
   const gridRows = createGridRows();
 
   return (
-    <ScrollView 
+    <ScrollView
       style={styles.container}
       contentContainerStyle={styles.gridContainer}
       showsVerticalScrollIndicator={false}
@@ -395,7 +374,7 @@ export const MultiViewGrid: React.FC<MultiViewGridProps> = ({
                     width: minCellWidth,
                     height: minCellHeight,
                     marginRight: 0, // No gap for absolute maximum space
-                  }
+                  },
                 ]}
               >
                 <StreamCell

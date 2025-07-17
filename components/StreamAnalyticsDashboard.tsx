@@ -1,20 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  ScrollView,
-  Dimensions,
-  TouchableOpacity,
-} from 'react-native';
-import { MotiView } from 'moti';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  BarChart,
-  LineChart,
-  PieChart,
-  ProgressChart,
-} from 'react-native-chart-kit';
 import {
   Activity,
   TrendingUp,
@@ -31,6 +15,10 @@ import {
   Globe,
   Smartphone,
 } from 'lucide-react-native';
+import { MotiView } from 'moti';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, StyleSheet, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import { BarChart, LineChart, PieChart, ProgressChart } from 'react-native-chart-kit';
 import { UniversalStream } from '@/services/multiPlatformStreamingApi';
 import { ModernTheme } from '@/theme/modernTheme';
 
@@ -125,10 +113,13 @@ export const StreamAnalyticsDashboard: React.FC<StreamAnalyticsDashboardProps> =
   // Generate mock analytics data based on current streams
   const generateAnalytics = useCallback(() => {
     const totalViewers = streams.reduce((sum, stream) => sum + stream.viewerCount, 0);
-    const platforms = streams.reduce((acc, stream) => {
-      acc[stream.platform] = (acc[stream.platform] || 0) + stream.viewerCount;
-      return acc;
-    }, {} as { [key: string]: number });
+    const platforms = streams.reduce(
+      (acc, stream) => {
+        acc[stream.platform] = (acc[stream.platform] || 0) + stream.viewerCount;
+        return acc;
+      },
+      {} as { [key: string]: number }
+    );
 
     // Generate mock historical data
     const viewerHistory = Array.from({ length: 24 }, (_, i) => {
@@ -172,7 +163,7 @@ export const StreamAnalyticsDashboard: React.FC<StreamAnalyticsDashboardProps> =
   useEffect(() => {
     if (isVisible) {
       generateAnalytics();
-      
+
       if (realTimeData) {
         const interval = setInterval(generateAnalytics, 30000); // Update every 30 seconds
         return () => clearInterval(interval);
@@ -182,9 +173,9 @@ export const StreamAnalyticsDashboard: React.FC<StreamAnalyticsDashboardProps> =
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + 'M';
+      return `${(num / 1000000).toFixed(1)}M`;
     } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K';
+      return `${(num / 1000).toFixed(1)}K`;
     }
     return num.toString();
   };
@@ -197,30 +188,34 @@ export const StreamAnalyticsDashboard: React.FC<StreamAnalyticsDashboardProps> =
 
   const formatBytes = (bytes: number): string => {
     if (bytes >= 1024 * 1024 * 1024) {
-      return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+      return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
     } else if (bytes >= 1024 * 1024) {
-      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     } else if (bytes >= 1024) {
-      return (bytes / 1024).toFixed(1) + ' KB';
+      return `${(bytes / 1024).toFixed(1)} KB`;
     }
-    return bytes + ' B';
+    return `${bytes} B`;
   };
 
   // Prepare chart data
   const viewerChartData = {
     labels: Array.from({ length: 6 }, (_, i) => `${6 - i}h`),
-    datasets: [{
-      data: analytics.viewerCountHistory.slice(-6),
-    }],
+    datasets: [
+      {
+        data: analytics.viewerCountHistory.slice(-6),
+      },
+    ],
   };
 
-  const platformPieData = Object.entries(analytics.platformBreakdown).map(([platform, viewers], index) => ({
-    name: platform.charAt(0).toUpperCase() + platform.slice(1),
-    population: viewers,
-    color: ['#9146FF', '#FF0000', '#53FC18', '#1877F2'][index % 4],
-    legendFontColor: '#fff',
-    legendFontSize: 12,
-  }));
+  const platformPieData = Object.entries(analytics.platformBreakdown).map(
+    ([platform, viewers], index) => ({
+      name: platform.charAt(0).toUpperCase() + platform.slice(1),
+      population: viewers,
+      color: ['#9146FF', '#FF0000', '#53FC18', '#1877F2'][index % 4],
+      legendFontColor: '#fff',
+      legendFontSize: 12,
+    })
+  );
 
   const performanceData = {
     labels: ['Success', 'Retry', 'Error'],
@@ -231,7 +226,9 @@ export const StreamAnalyticsDashboard: React.FC<StreamAnalyticsDashboardProps> =
     ],
   };
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
@@ -260,7 +257,7 @@ export const StreamAnalyticsDashboard: React.FC<StreamAnalyticsDashboardProps> =
 
         {/* Time Range Selector */}
         <View style={styles.timeRangeSelector}>
-          {(['1h', '6h', '24h', '7d'] as const).map((range) => (
+          {(['1h', '6h', '24h', '7d'] as const).map(range => (
             <TouchableOpacity
               key={range}
               style={[
@@ -390,7 +387,7 @@ export const StreamAnalyticsDashboard: React.FC<StreamAnalyticsDashboardProps> =
             style={styles.performanceContainer}
           >
             <Text style={styles.sectionTitle}>Performance Metrics</Text>
-            
+
             <View style={styles.performanceGrid}>
               <View style={styles.performanceCard}>
                 <LinearGradient
@@ -452,7 +449,7 @@ export const StreamAnalyticsDashboard: React.FC<StreamAnalyticsDashboardProps> =
             style={styles.breakdownContainer}
           >
             <Text style={styles.sectionTitle}>Audience Breakdown</Text>
-            
+
             <View style={styles.breakdownGrid}>
               <View style={styles.breakdownSection}>
                 <Text style={styles.breakdownTitle}>Devices</Text>
@@ -521,7 +518,9 @@ export const StreamAnalyticsDashboard: React.FC<StreamAnalyticsDashboardProps> =
               style={styles.toggleButton}
               onPress={() => setRealTimeData(!realTimeData)}
             >
-              <View style={[styles.toggleIndicator, realTimeData && styles.toggleIndicatorActive]} />
+              <View
+                style={[styles.toggleIndicator, realTimeData && styles.toggleIndicatorActive]}
+              />
               <Text style={styles.toggleText}>Real-time Updates</Text>
             </TouchableOpacity>
           </MotiView>

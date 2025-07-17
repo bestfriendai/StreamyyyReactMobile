@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image, 
-  TouchableOpacity, 
-  Modal, 
-  Dimensions, 
-  Platform 
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Play, Users, Clock, X, Eye } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Modal,
+  Dimensions,
+  Platform,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -32,14 +32,14 @@ interface StreamPreviewProps {
   isActive: boolean;
 }
 
-export function StreamPreview({ 
-  stream, 
-  visible, 
-  onClose, 
-  onAdd, 
-  onToggleFavorite, 
-  isFavorite, 
-  isActive 
+export function StreamPreview({
+  stream,
+  visible,
+  onClose,
+  onAdd,
+  onToggleFavorite,
+  isFavorite,
+  isActive,
 }: StreamPreviewProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const scale = useSharedValue(0);
@@ -59,10 +59,7 @@ export function StreamPreview({
   }, [visible]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: scale.value },
-      { translateY: slideY.value }
-    ],
+    transform: [{ scale: scale.value }, { translateY: slideY.value }],
     opacity: opacity.value,
   }));
 
@@ -77,7 +74,7 @@ export function StreamPreview({
     const start = new Date(startedAt);
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - start.getTime()) / (1000 * 60));
-    
+
     if (diffInMinutes < 60) {
       return `${diffInMinutes}m`;
     } else {
@@ -88,23 +85,18 @@ export function StreamPreview({
   };
 
   const getThumbnailUrl = (templateUrl: string) => {
-    return templateUrl
-      .replace('{width}', '480')
-      .replace('{height}', '270');
+    return templateUrl.replace('{width}', '480').replace('{height}', '270');
   };
 
-  if (!visible) return null;
+  if (!visible) {
+    return null;
+  }
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.backdrop} onPress={onClose} />
-        
+
         <Animated.View style={[styles.container, animatedStyle]}>
           <LinearGradient
             colors={['rgba(26, 26, 26, 0.98)', 'rgba(15, 15, 15, 0.98)']}
@@ -135,10 +127,7 @@ export function StreamPreview({
                 </View>
               )}
               <View style={styles.liveIndicator}>
-                <LinearGradient
-                  colors={['#FF0000', '#CC0000']}
-                  style={styles.liveGradient}
-                >
+                <LinearGradient colors={['#FF0000', '#CC0000']} style={styles.liveGradient}>
                   <View style={styles.liveDot} />
                   <Text style={styles.liveText}>LIVE</Text>
                 </LinearGradient>
@@ -150,7 +139,7 @@ export function StreamPreview({
               <Text style={styles.title} numberOfLines={2}>
                 {stream.title}
               </Text>
-              
+
               <View style={styles.streamerInfo}>
                 <Text style={styles.streamerName}>{stream.user_name}</Text>
                 <Text style={styles.gameInfo}>{stream.game_name}</Text>
@@ -159,15 +148,11 @@ export function StreamPreview({
               <View style={styles.stats}>
                 <View style={styles.stat}>
                   <Users size={16} color="#8B5CF6" />
-                  <Text style={styles.statText}>
-                    {formatViewerCount(stream.viewer_count)}
-                  </Text>
+                  <Text style={styles.statText}>{formatViewerCount(stream.viewer_count)}</Text>
                 </View>
                 <View style={styles.stat}>
                   <Clock size={16} color="#8B5CF6" />
-                  <Text style={styles.statText}>
-                    {formatDuration(stream.started_at)}
-                  </Text>
+                  <Text style={styles.statText}>{formatDuration(stream.started_at)}</Text>
                 </View>
               </View>
             </View>
@@ -180,8 +165,8 @@ export function StreamPreview({
               >
                 <LinearGradient
                   colors={
-                    isFavorite 
-                      ? ['#FF4444', '#CC0000'] 
+                    isFavorite
+                      ? ['#FF4444', '#CC0000']
                       : ['rgba(68, 68, 68, 0.8)', 'rgba(85, 85, 85, 0.8)']
                   }
                   style={styles.actionGradient}
@@ -199,7 +184,7 @@ export function StreamPreview({
               >
                 <LinearGradient
                   colors={
-                    isActive 
+                    isActive
                       ? ['rgba(68, 68, 68, 0.5)', 'rgba(85, 85, 85, 0.5)']
                       : ['#8B5CF6', '#7C3AED']
                   }

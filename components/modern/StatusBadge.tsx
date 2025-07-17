@@ -1,13 +1,6 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ModernTheme } from '@/theme/modernTheme';
+import React from 'react';
+import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -17,8 +10,18 @@ import Animated, {
   interpolate,
   Extrapolate,
 } from 'react-native-reanimated';
+import { ModernTheme } from '@/theme/modernTheme';
 
-export type BadgeVariant = 'live' | 'offline' | 'loading' | 'error' | 'success' | 'warning' | 'info' | 'primary' | 'secondary';
+export type BadgeVariant =
+  | 'live'
+  | 'offline'
+  | 'loading'
+  | 'error'
+  | 'success'
+  | 'warning'
+  | 'info'
+  | 'primary'
+  | 'secondary';
 export type BadgeSize = 'sm' | 'md' | 'lg';
 
 interface StatusBadgeProps {
@@ -50,28 +53,22 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 }) => {
   const pulseScale = useSharedValue(1);
   const glowIntensity = useSharedValue(0);
-  
+
   // Pulse animation
   React.useEffect(() => {
     if (showPulse) {
       pulseScale.value = withRepeat(
-        withSequence(
-          withTiming(1.2, { duration: 1000 }),
-          withTiming(1, { duration: 1000 })
-        ),
+        withSequence(withTiming(1.2, { duration: 1000 }), withTiming(1, { duration: 1000 })),
         -1
       );
-      
+
       glowIntensity.value = withRepeat(
-        withSequence(
-          withTiming(1, { duration: 1000 }),
-          withTiming(0.3, { duration: 1000 })
-        ),
+        withSequence(withTiming(1, { duration: 1000 }), withTiming(0.3, { duration: 1000 })),
         -1
       );
     }
   }, [showPulse]);
-  
+
   // Get variant styles
   const getVariantStyles = () => {
     switch (variant) {
@@ -157,7 +154,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         };
     }
   };
-  
+
   // Get size styles
   const getSizeStyles = () => {
     switch (size) {
@@ -190,10 +187,10 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         };
     }
   };
-  
+
   const variantStyles = getVariantStyles();
   const sizeStyles = getSizeStyles();
-  
+
   // Default labels
   const getDefaultLabel = () => {
     switch (variant) {
@@ -215,27 +212,17 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         return '';
     }
   };
-  
+
   // Animated styles
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
   }));
-  
+
   const glowStyle = useAnimatedStyle(() => ({
-    shadowOpacity: interpolate(
-      glowIntensity.value,
-      [0, 1],
-      [0.2, 0.8],
-      Extrapolate.CLAMP
-    ),
-    shadowRadius: interpolate(
-      glowIntensity.value,
-      [0, 1],
-      [2, 8],
-      Extrapolate.CLAMP
-    ),
+    shadowOpacity: interpolate(glowIntensity.value, [0, 1], [0.2, 0.8], Extrapolate.CLAMP),
+    shadowRadius: interpolate(glowIntensity.value, [0, 1], [2, 8], Extrapolate.CLAMP),
   }));
-  
+
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
@@ -254,7 +241,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     elevation: 2,
     ...style,
   };
-  
+
   const textStyleCombined: TextStyle = {
     color: customTextColor || variantStyles.textColor,
     fontSize: sizeStyles.fontSize,
@@ -263,49 +250,40 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     letterSpacing: 0.5,
     ...textStyle,
   };
-  
+
   const renderContent = () => (
     <>
-      {icon && (
-        <View style={{ marginRight: ModernTheme.spacing.xs }}>
-          {icon}
-        </View>
-      )}
-      
+      {icon && <View style={{ marginRight: ModernTheme.spacing.xs }}>{icon}</View>}
+
       {showDot && (
-        <Animated.View style={[
-          {
-            width: sizeStyles.dotSize,
-            height: sizeStyles.dotSize,
-            borderRadius: sizeStyles.dotSize / 2,
-            backgroundColor: variantStyles.dotColor,
-            marginRight: label || getDefaultLabel() ? ModernTheme.spacing.xs : 0,
-          },
-          showPulse && pulseStyle
-        ]} />
+        <Animated.View
+          style={[
+            {
+              width: sizeStyles.dotSize,
+              height: sizeStyles.dotSize,
+              borderRadius: sizeStyles.dotSize / 2,
+              backgroundColor: variantStyles.dotColor,
+              marginRight: label || getDefaultLabel() ? ModernTheme.spacing.xs : 0,
+            },
+            showPulse && pulseStyle,
+          ]}
+        />
       )}
-      
+
       {(label || getDefaultLabel()) && (
-        <Text style={textStyleCombined}>
-          {label || getDefaultLabel()}
-        </Text>
+        <Text style={textStyleCombined}>{label || getDefaultLabel()}</Text>
       )}
     </>
   );
-  
+
   return (
     <Animated.View style={[showPulse && glowStyle]}>
       {gradient ? (
-        <LinearGradient
-          colors={variantStyles.gradientColors}
-          style={containerStyle}
-        >
+        <LinearGradient colors={variantStyles.gradientColors} style={containerStyle}>
           {renderContent()}
         </LinearGradient>
       ) : (
-        <View style={containerStyle}>
-          {renderContent()}
-        </View>
+        <View style={containerStyle}>{renderContent()}</View>
       )}
     </Animated.View>
   );

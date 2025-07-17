@@ -1,3 +1,4 @@
+import { MotiView, MotiText, MotiPressable } from 'moti';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
@@ -29,7 +30,6 @@ import Animated, {
   withDelay,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { MotiView, MotiText, MotiPressable } from 'moti';
 import { BlurViewFallback as BlurView } from './BlurViewFallback';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -445,7 +445,7 @@ export const MobileButton: React.FC<MobileButtonProps> = ({
     if (!disabled && !loading) {
       scale.value = withSpring(0.95, { damping: 15 });
       opacity.value = withTiming(0.8, { duration: 100 });
-      
+
       if (hapticFeedback) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
@@ -462,11 +462,12 @@ export const MobileButton: React.FC<MobileButtonProps> = ({
   const handlePress = () => {
     if (!disabled && !loading) {
       if (hapticFeedback) {
-        Haptics.impactAsync(config.hapticIntensity === 'light' ? 
-          Haptics.ImpactFeedbackStyle.Light : 
-          config.hapticIntensity === 'medium' ? 
-          Haptics.ImpactFeedbackStyle.Medium : 
-          Haptics.ImpactFeedbackStyle.Heavy
+        Haptics.impactAsync(
+          config.hapticIntensity === 'light'
+            ? Haptics.ImpactFeedbackStyle.Light
+            : config.hapticIntensity === 'medium'
+            Haptics.ImpactFeedbackStyle.Medium :
+            Haptics.ImpactFeedbackStyle.Heavy
         );
       }
       onPress();
@@ -497,12 +498,9 @@ export const MobileButton: React.FC<MobileButtonProps> = ({
           },
           style,
         ]}
-        {...getAccessibilityProps(
-          'button',
-          accessibilityLabel || title,
-          accessibilityHint,
-          { disabled: disabled || loading }
-        )}
+        {...getAccessibilityProps('button', accessibilityLabel || title, accessibilityHint, {
+          disabled: disabled || loading,
+        })}
       >
         <View style={styles.buttonContent}>
           {loading && (
@@ -519,13 +517,11 @@ export const MobileButton: React.FC<MobileButtonProps> = ({
               <RotateCcw size={config.iconSize} color={variantStyles.color} />
             </MotiView>
           )}
-          
+
           {!loading && icon && iconPosition === 'left' && (
-            <View style={[styles.buttonIcon, { marginRight: 8 }]}>
-              {icon}
-            </View>
+            <View style={[styles.buttonIcon, { marginRight: 8 }]}>{icon}</View>
           )}
-          
+
           {!loading && (
             <Text
               style={[
@@ -540,11 +536,9 @@ export const MobileButton: React.FC<MobileButtonProps> = ({
               {title}
             </Text>
           )}
-          
+
           {!loading && icon && iconPosition === 'right' && (
-            <View style={[styles.buttonIcon, { marginLeft: 8 }]}>
-              {icon}
-            </View>
+            <View style={[styles.buttonIcon, { marginLeft: 8 }]}>{icon}</View>
           )}
         </View>
       </Pressable>
@@ -646,10 +640,7 @@ export const MobileInput: React.FC<MobileInputProps> = ({
   }));
 
   const animatedLabelStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: labelScale.value },
-      { translateY: labelY.value },
-    ],
+    transform: [{ scale: labelScale.value }, { translateY: labelY.value }],
   }));
 
   return (
@@ -657,38 +648,39 @@ export const MobileInput: React.FC<MobileInputProps> = ({
       {label && (
         <View style={styles.labelContainer}>
           <Animated.View style={animatedLabelStyle}>
-            <Text style={[
-              styles.inputLabel,
-              {
-                color: error ? COLORS.error[600] : 
-                       success ? COLORS.success[600] :
-                       isFocused ? COLORS.primary[600] : COLORS.neutral[600],
-              }
-            ]}>
+            <Text
+              style={[
+                styles.inputLabel,
+                {
+                  color: error
+                    ? COLORS.error[600]
+                  success ? COLORS.success[600] :
+                    isFocused ? COLORS.primary[600] : COLORS.neutral[600],
+                },
+              ]}
+            >
               {label}
               {required && <Text style={styles.requiredIndicator}> *</Text>}
             </Text>
           </Animated.View>
         </View>
       )}
-      
+
       <Animated.View style={[styles.inputWrapper, animatedBorderStyle]}>
-        {leftIcon && (
-          <View style={styles.inputIcon}>
-            {leftIcon}
-          </View>
-        )}
-        
+        {leftIcon && <View style={styles.inputIcon}>{leftIcon}</View>}
+
         <TextInput
           style={[
             styles.textInput,
             {
               fontSize: config.fontSize,
-              minHeight: multiline ? config.touchTargetSize * (numberOfLines || 1) : config.touchTargetSize,
+              minHeight: multiline
+                ? config.touchTargetSize * (numberOfLines || 1)
+                : config.touchTargetSize,
               paddingLeft: leftIcon ? 0 : config.spacing,
               paddingRight: rightIcon ? 0 : config.spacing,
               color: disabled ? COLORS.neutral[400] : COLORS.neutral[900],
-            }
+            },
           ]}
           value={value}
           onChangeText={onChangeText}
@@ -704,14 +696,9 @@ export const MobileInput: React.FC<MobileInputProps> = ({
           editable={!disabled}
           onFocus={handleFocus}
           onBlur={handleBlur}
-          {...getAccessibilityProps(
-            'text',
-            label || placeholder,
-            hint,
-            { disabled }
-          )}
+          {...getAccessibilityProps('text', label || placeholder, hint, { disabled })}
         />
-        
+
         {rightIcon && (
           <TouchableOpacity
             style={styles.inputIcon}
@@ -723,7 +710,7 @@ export const MobileInput: React.FC<MobileInputProps> = ({
           </TouchableOpacity>
         )}
       </Animated.View>
-      
+
       {(error || hint) && (
         <MotiView
           from={{ opacity: 0, translateY: -5 }}
@@ -733,14 +720,10 @@ export const MobileInput: React.FC<MobileInputProps> = ({
           {error ? (
             <View style={styles.errorMessage}>
               <AlertCircle size={14} color={COLORS.error[600]} />
-              <Text style={[styles.messageText, { color: COLORS.error[600] }]}>
-                {error}
-              </Text>
+              <Text style={[styles.messageText, { color: COLORS.error[600] }]}>{error}</Text>
             </View>
           ) : hint ? (
-            <Text style={[styles.messageText, { color: COLORS.neutral[500] }]}>
-              {hint}
-            </Text>
+            <Text style={[styles.messageText, { color: COLORS.neutral[500] }]}>{hint}</Text>
           ) : null}
         </MotiView>
       )}
@@ -859,7 +842,7 @@ export const MobileCard: React.FC<MobileCardProps> = ({
     if (pressable || onPress) {
       scale.value = withSpring(0.98, { damping: 15 });
       opacity.value = withTiming(0.8, { duration: 100 });
-      
+
       if (hapticFeedback) {
         Haptics.selectionAsync();
       }
@@ -909,11 +892,7 @@ export const MobileCard: React.FC<MobileCardProps> = ({
           onPressOut={handlePressOut}
           onPress={handlePress}
           style={cardStyles}
-          {...getAccessibilityProps(
-            'button',
-            accessibilityLabel,
-            accessibilityHint
-          )}
+          {...getAccessibilityProps('button', accessibilityLabel, accessibilityHint)}
         >
           {children}
         </Pressable>
@@ -921,11 +900,7 @@ export const MobileCard: React.FC<MobileCardProps> = ({
     );
   }
 
-  return (
-    <View style={cardStyles}>
-      {children}
-    </View>
-  );
+  return <View style={cardStyles}>{children}</View>;
 };
 
 // Enhanced Modal Component
@@ -963,20 +938,20 @@ export const MobileModal: React.FC<MobileModalProps> = ({
   const scale = useSharedValue(0.8);
   const opacity = useSharedValue(0);
   const backdropOpacity = useSharedValue(0);
-  
+
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setIsVisible(true);
       onShow?.();
-      
+
       if (hapticFeedback) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
-      
+
       backdropOpacity.value = withTiming(1, { duration: config.animationDuration });
-      
+
       switch (animationType) {
         case 'slide':
           if (variant === 'bottom-sheet') {
@@ -996,7 +971,7 @@ export const MobileModal: React.FC<MobileModalProps> = ({
       }
     } else if (isVisible) {
       backdropOpacity.value = withTiming(0, { duration: config.animationDuration });
-      
+
       switch (animationType) {
         case 'slide':
           if (variant === 'bottom-sheet') {
@@ -1014,7 +989,7 @@ export const MobileModal: React.FC<MobileModalProps> = ({
           opacity.value = withTiming(0, { duration: config.animationDuration });
           break;
       }
-      
+
       setTimeout(() => {
         setIsVisible(false);
         onHide?.();
@@ -1102,7 +1077,7 @@ export const MobileModal: React.FC<MobileModalProps> = ({
     }
   };
 
-  if (!isVisible) return null;
+  if (!isVisible) {return null;}
 
   return (
     <View style={styles.modalOverlay}>
@@ -1111,21 +1086,12 @@ export const MobileModal: React.FC<MobileModalProps> = ({
           <View style={StyleSheet.absoluteFill} />
         </TouchableWithoutFeedback>
       </Animated.View>
-      
-      <Animated.View
-        style={[
-          styles.modalContent,
-          getVariantStyles(),
-          contentAnimatedStyle,
-          style,
-        ]}
-      >
+
+      <Animated.View style={[styles.modalContent, getVariantStyles(), contentAnimatedStyle, style]}>
         {(title || showCloseButton) && (
           <View style={styles.modalHeader}>
             {title && (
-              <Text style={[styles.modalTitle, { fontSize: config.fontSize + 4 }]}>
-                {title}
-              </Text>
+              <Text style={[styles.modalTitle, { fontSize: config.fontSize + 4 }]}>{title}</Text>
             )}
             {showCloseButton && (
               <TouchableOpacity
@@ -1138,10 +1104,8 @@ export const MobileModal: React.FC<MobileModalProps> = ({
             )}
           </View>
         )}
-        
-        <View style={styles.modalBody}>
-          {children}
-        </View>
+
+        <View style={styles.modalBody}>{children}</View>
       </Animated.View>
     </View>
   );
@@ -1197,7 +1161,7 @@ export const MobileLoading: React.FC<MobileLoadingProps> = ({
 
   const renderLoadingIndicator = () => {
     const loadingSize = getLoadingSize();
-    
+
     switch (variant) {
       case 'spinner':
         return (
@@ -1213,11 +1177,11 @@ export const MobileLoading: React.FC<MobileLoadingProps> = ({
             <RotateCcw size={loadingSize} color={color} />
           </MotiView>
         );
-      
+
       case 'dots':
         return (
           <View style={styles.dotsContainer}>
-            {[0, 1, 2].map((index) => (
+            {[0, 1, 2].map(index => (
               <MotiView
                 key={index}
                 from={{ scale: 0.8, opacity: 0.5 }}
@@ -1241,11 +1205,11 @@ export const MobileLoading: React.FC<MobileLoadingProps> = ({
             ))}
           </View>
         );
-      
+
       case 'bars':
         return (
           <View style={styles.barsContainer}>
-            {[0, 1, 2, 3].map((index) => (
+            {[0, 1, 2, 3].map(index => (
               <MotiView
                 key={index}
                 from={{ scaleY: 0.4 }}
@@ -1269,7 +1233,7 @@ export const MobileLoading: React.FC<MobileLoadingProps> = ({
             ))}
           </View>
         );
-      
+
       case 'pulse':
         return (
           <MotiView
@@ -1285,7 +1249,7 @@ export const MobileLoading: React.FC<MobileLoadingProps> = ({
             <Circle size={loadingSize} color={color} fill={color} />
           </MotiView>
         );
-      
+
       default:
         return (
           <MotiView
@@ -1303,32 +1267,24 @@ export const MobileLoading: React.FC<MobileLoadingProps> = ({
     }
   };
 
-  if (!visible) return null;
+  if (!visible) {return null;}
 
   const loadingContent = (
     <View style={[styles.loadingContainer, !overlay && styles.loadingInline, style]}>
       {renderLoadingIndicator()}
       {message && (
-        <Text style={[styles.loadingMessage, { fontSize: config.fontSize - 2 }]}>
-          {message}
-        </Text>
+        <Text style={[styles.loadingMessage, { fontSize: config.fontSize - 2 }]}>{message}</Text>
       )}
     </View>
   );
 
   if (overlay) {
     return (
-      <Animated.View style={[styles.loadingOverlay, animatedStyle]}>
-        {loadingContent}
-      </Animated.View>
+      <Animated.View style={[styles.loadingOverlay, animatedStyle]}>{loadingContent}</Animated.View>
     );
   }
 
-  return (
-    <Animated.View style={animatedStyle}>
-      {loadingContent}
-    </Animated.View>
-  );
+  return <Animated.View style={animatedStyle}>{loadingContent}</Animated.View>;
 };
 
 // Enhanced Toast Component
@@ -1366,7 +1322,7 @@ export const MobileToast: React.FC<MobileToastProps> = ({
   useEffect(() => {
     if (visible) {
       setIsVisible(true);
-      
+
       if (hapticFeedback) {
         switch (type) {
           case 'success':
@@ -1383,10 +1339,10 @@ export const MobileToast: React.FC<MobileToastProps> = ({
             break;
         }
       }
-      
+
       translateY.value = withSpring(0, { damping: 15 });
       opacity.value = withTiming(1, { duration: 200 });
-      
+
       // Auto hide after duration
       if (duration > 0) {
         setTimeout(() => {
@@ -1399,7 +1355,7 @@ export const MobileToast: React.FC<MobileToastProps> = ({
   const hideToast = () => {
     translateY.value = withTiming(100, { duration: 200 });
     opacity.value = withTiming(0, { duration: 200 });
-    
+
     setTimeout(() => {
       setIsVisible(false);
       onHide?.();
@@ -1465,7 +1421,7 @@ export const MobileToast: React.FC<MobileToastProps> = ({
   const typeStyles = getTypeStyles();
   const positionStyles = getPositionStyles();
 
-  if (!isVisible) return null;
+  if (!isVisible) {return null;}
 
   return (
     <Animated.View
@@ -1482,9 +1438,7 @@ export const MobileToast: React.FC<MobileToastProps> = ({
     >
       <View style={styles.toastContent}>
         {typeStyles.icon}
-        <Text style={[styles.toastMessage, { fontSize: config.fontSize }]}>
-          {message}
-        </Text>
+        <Text style={[styles.toastMessage, { fontSize: config.fontSize }]}>{message}</Text>
         {action && (
           <TouchableOpacity
             style={styles.toastAction}

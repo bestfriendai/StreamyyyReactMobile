@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Platform, Alert } from 'react-native';
-import { WebView } from 'react-native-webview';
-import { 
-  Volume2, 
-  VolumeX, 
-  Maximize, 
-  X, 
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  Volume2,
+  VolumeX,
+  Maximize,
+  X,
   Settings,
   Monitor,
   MessageCircle,
@@ -14,10 +12,19 @@ import {
   Pause,
   MoreVertical,
   Eye,
-  Users
+  Users,
 } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView, MotiText } from 'moti';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Dimensions,
+  Platform,
+  Alert,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -25,8 +32,9 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { BlurViewFallback as BlurView } from './BlurViewFallback';
+import { WebView } from 'react-native-webview';
 import { TwitchStream, twitchApi } from '@/services/twitchApi';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
 
 interface EnhancedStreamViewerProps {
   stream: TwitchStream;
@@ -42,16 +50,16 @@ interface EnhancedStreamViewerProps {
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
-export function EnhancedStreamViewer({ 
-  stream, 
-  onRemove, 
-  width, 
+export function EnhancedStreamViewer({
+  stream,
+  onRemove,
+  width,
   height,
   isActive = false,
   onToggleActive,
   onTogglePiP,
   onOpenQuality,
-  showAdvancedControls = true
+  showAdvancedControls = true,
 }: EnhancedStreamViewerProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -59,11 +67,11 @@ export function EnhancedStreamViewer({
   const [isLoading, setIsLoading] = useState(true);
   const [viewerCount, setViewerCount] = useState(stream.viewer_count || 0);
   const [isFavorite, setIsFavorite] = useState(false);
-  
+
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(false);
   const webViewRef = useRef<WebView>(null);
-  
+
   // Animation values
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -75,11 +83,12 @@ export function EnhancedStreamViewer({
   const viewerWidth = width || screenWidth - 32;
   const viewerHeight = height || (viewerWidth * 9) / 16;
 
-  const embedUrl = twitchApi.generateEmbedUrl(stream.user_login) + (isMuted ? '&muted=true' : '&muted=false');
+  const embedUrl =
+    twitchApi.generateEmbedUrl(stream.user_login) + (isMuted ? '&muted=true' : '&muted=false');
 
   useEffect(() => {
     isMountedRef.current = true;
-    
+
     return () => {
       isMountedRef.current = false;
       if (timeoutRef.current) {
@@ -113,12 +122,12 @@ export function EnhancedStreamViewer({
   useEffect(() => {
     if (showControls) {
       controlsOpacity.value = withTiming(1, { duration: 200 });
-      
+
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
-      
+
       timeoutRef.current = setTimeout(() => {
         if (isMountedRef.current) {
           setShowControls(false);
@@ -156,11 +165,11 @@ export function EnhancedStreamViewer({
         stream.user_name,
         `${stream.game_name}\n${viewerCount.toLocaleString()} viewers`,
         [
-          { text: "Picture-in-Picture", onPress: () => onTogglePiP?.() },
-          { text: "Quality Settings", onPress: () => onOpenQuality?.() },
-          { text: "Toggle Favorite", onPress: () => setIsFavorite(!isFavorite) },
-          { text: "Remove Stream", style: "destructive", onPress: () => onRemove(stream.id) },
-          { text: "Cancel", style: "cancel" }
+          { text: 'Picture-in-Picture', onPress: () => onTogglePiP?.() },
+          { text: 'Quality Settings', onPress: () => onOpenQuality?.() },
+          { text: 'Toggle Favorite', onPress: () => setIsFavorite(!isFavorite) },
+          { text: 'Remove Stream', style: 'destructive', onPress: () => onRemove(stream.id) },
+          { text: 'Cancel', style: 'cancel' },
         ]
       );
     }
@@ -185,11 +194,8 @@ export function EnhancedStreamViewer({
 
   const animatedContainerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
-    borderColor: interpolate(
-      borderGlow.value,
-      [0, 1],
-      [0, 1]
-    ) > 0.5 ? '#8B5CF6' : 'rgba(139, 92, 246, 0.2)',
+    borderColor:
+      interpolate(borderGlow.value, [0, 1], [0, 1]) > 0.5 ? '#8B5CF6' : 'rgba(139, 92, 246, 0.2)',
     borderWidth: interpolate(borderGlow.value, [0, 1], [1, 2]),
   }));
 
@@ -273,7 +279,13 @@ export function EnhancedStreamViewer({
   `;
 
   return (
-    <Animated.View style={[styles.container, { width: viewerWidth, height: viewerHeight }, animatedContainerStyle]}>
+    <Animated.View
+      style={[
+        styles.container,
+        { width: viewerWidth, height: viewerHeight },
+        animatedContainerStyle,
+      ]}
+    >
       <MotiView
         from={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -298,16 +310,16 @@ export function EnhancedStreamViewer({
               style={styles.webview}
               onLoadStart={() => setIsLoading(true)}
               onLoadEnd={() => setIsLoading(false)}
-              allowsInlineMediaPlayback={true}
+              allowsInlineMediaPlayback
               mediaPlaybackRequiresUserAction={false}
               scrollEnabled={false}
               bounces={false}
-              javaScriptEnabled={true}
-              domStorageEnabled={true}
-              startInLoadingState={true}
-              onError={(error) => console.error(`Stream error for ${stream.user_name}:`, error)}
+              javaScriptEnabled
+              domStorageEnabled
+              startInLoadingState
+              onError={error => console.error(`Stream error for ${stream.user_name}:`, error)}
             />
-            
+
             {/* Loading overlay */}
             {isLoading && (
               <MotiView
@@ -339,10 +351,7 @@ export function EnhancedStreamViewer({
             )}
 
             {/* Info overlay */}
-            <LinearGradient
-              colors={['rgba(0,0,0,0.8)', 'transparent']}
-              style={styles.infoOverlay}
-            >
+            <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.infoOverlay}>
               <View style={styles.streamInfo}>
                 <View style={styles.topRow}>
                   <View style={styles.platformBadge}>
@@ -363,7 +372,7 @@ export function EnhancedStreamViewer({
                     <Text style={styles.liveText}>LIVE</Text>
                   </View>
                 </View>
-                
+
                 <MotiText
                   from={{ opacity: 0, translateY: 10 }}
                   animate={{ opacity: 1, translateY: 0 }}
@@ -373,16 +382,14 @@ export function EnhancedStreamViewer({
                 >
                   {stream.user_name}
                 </MotiText>
-                
+
                 <View style={styles.streamMeta}>
                   <Text style={styles.streamGame} numberOfLines={1}>
                     {stream.game_name}
                   </Text>
                   <View style={styles.viewerInfo}>
                     <Eye size={12} color="#999" />
-                    <Text style={styles.viewerCount}>
-                      {viewerCount.toLocaleString()}
-                    </Text>
+                    <Text style={styles.viewerCount}>{viewerCount.toLocaleString()}</Text>
                   </View>
                 </View>
               </View>
@@ -397,10 +404,7 @@ export function EnhancedStreamViewer({
                 >
                   {/* Primary controls */}
                   <View style={styles.primaryControls}>
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={handlePlayPause}
-                    >
+                    <TouchableOpacity style={styles.controlButton} onPress={handlePlayPause}>
                       <LinearGradient
                         colors={['rgba(139, 92, 246, 0.9)', 'rgba(124, 58, 237, 0.9)']}
                         style={styles.controlGradient}
@@ -413,14 +417,12 @@ export function EnhancedStreamViewer({
                       </LinearGradient>
                     </TouchableOpacity>
 
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={handleMuteToggle}
-                    >
+                    <TouchableOpacity style={styles.controlButton} onPress={handleMuteToggle}>
                       <LinearGradient
-                        colors={isMuted 
-                          ? ['rgba(239, 68, 68, 0.9)', 'rgba(220, 38, 38, 0.9)']
-                          : ['rgba(139, 92, 246, 0.9)', 'rgba(124, 58, 237, 0.9)']
+                        colors={
+                          isMuted
+                            ? ['rgba(239, 68, 68, 0.9)', 'rgba(220, 38, 38, 0.9)']
+                            : ['rgba(139, 92, 246, 0.9)', 'rgba(124, 58, 237, 0.9)']
                         }
                         style={styles.controlGradient}
                       >
@@ -451,16 +453,17 @@ export function EnhancedStreamViewer({
                           onPress={() => setIsFavorite(!isFavorite)}
                         >
                           <LinearGradient
-                            colors={isFavorite 
-                              ? ['rgba(239, 68, 68, 0.9)', 'rgba(220, 38, 38, 0.9)']
-                              : ['rgba(75, 85, 99, 0.9)', 'rgba(55, 65, 81, 0.9)']
+                            colors={
+                              isFavorite
+                                ? ['rgba(239, 68, 68, 0.9)', 'rgba(220, 38, 38, 0.9)']
+                                : ['rgba(75, 85, 99, 0.9)', 'rgba(55, 65, 81, 0.9)']
                             }
                             style={styles.controlGradient}
                           >
-                            <Heart 
-                              size={16} 
-                              color="#fff" 
-                              fill={isFavorite ? "#fff" : "transparent"}
+                            <Heart
+                              size={16}
+                              color="#fff"
+                              fill={isFavorite ? '#fff' : 'transparent'}
                             />
                           </LinearGradient>
                         </TouchableOpacity>

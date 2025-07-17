@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Volume2, VolumeX, X, Eye, ExternalLink } from 'lucide-react-native';
 import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
@@ -10,14 +12,6 @@ import {
   Linking,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Volume2,
-  VolumeX,
-  X,
-  Eye,
-  ExternalLink,
-} from 'lucide-react-native';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
 
@@ -57,7 +51,7 @@ export const DirectTwitchPlayer: React.FC<DirectTwitchPlayerProps> = ({
       time: '0s',
       parent: 'localhost',
     });
-    
+
     const url = `https://player.twitch.tv/?${params.toString()}`;
     console.log('🎯 Direct Twitch URL:', url);
     return url;
@@ -97,11 +91,7 @@ export const DirectTwitchPlayer: React.FC<DirectTwitchPlayerProps> = ({
 
   return (
     <View style={[styles.container, { width, height }]}>
-      <TouchableOpacity
-        style={styles.touchArea}
-        onPress={onPress}
-        activeOpacity={1}
-      >
+      <TouchableOpacity style={styles.touchArea} onPress={onPress} activeOpacity={1}>
         {/* Direct Twitch WebView - No custom HTML */}
         <WebView
           ref={webViewRef}
@@ -110,19 +100,19 @@ export const DirectTwitchPlayer: React.FC<DirectTwitchPlayerProps> = ({
           onLoad={handleWebViewLoad}
           onLoadStart={handleWebViewLoadStart}
           // Minimal configuration focused on autoplay
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
-          scalesPageToFit={true}
+          scalesPageToFit
           bounces={false}
           scrollEnabled={false}
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['*']}
-          allowsFullscreenVideo={true}
-          allowsProtectedMedia={true}
+          allowsFullscreenVideo
+          allowsProtectedMedia
           // Force autoplay settings
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1 TwitchMobile/1.0"
         />
@@ -137,10 +127,7 @@ export const DirectTwitchPlayer: React.FC<DirectTwitchPlayerProps> = ({
 
         {/* Stream Info Overlay */}
         <View style={styles.infoOverlay}>
-          <LinearGradient
-            colors={['rgba(0,0,0,0.7)', 'transparent']}
-            style={styles.infoGradient}
-          >
+          <LinearGradient colors={['rgba(0,0,0,0.7)', 'transparent']} style={styles.infoGradient}>
             <View style={styles.streamInfo}>
               <View style={styles.platformBadge}>
                 <Text style={styles.platformText}>LIVE</Text>
@@ -170,21 +157,15 @@ export const DirectTwitchPlayer: React.FC<DirectTwitchPlayerProps> = ({
             >
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={onMuteToggle}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={onMuteToggle}>
                     {isMuted ? (
                       <VolumeX size={14} color="#fff" />
                     ) : (
                       <Volume2 size={14} color="#fff" />
                     )}
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handleOpenExternal}
-                  >
+
+                  <TouchableOpacity style={styles.controlButton} onPress={handleOpenExternal}>
                     <ExternalLink size={14} color="#fff" />
                   </TouchableOpacity>
                 </View>

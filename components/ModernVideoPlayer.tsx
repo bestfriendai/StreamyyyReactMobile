@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { Play, Pause, Volume2, VolumeX, X, Eye, Settings } from 'lucide-react-native';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
@@ -8,25 +10,15 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  X,
-  Eye,
-  Settings,
-} from 'lucide-react-native';
-import { TwitchStream } from '@/services/twitchApi';
-import { ModernTheme } from '@/theme/modernTheme';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { WebView } from 'react-native-webview';
+import { TwitchStream } from '@/services/twitchApi';
+import { ModernTheme } from '@/theme/modernTheme';
 
 interface ModernVideoPlayerProps {
   stream: TwitchStream;
@@ -63,65 +55,67 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [controlsVisible, setControlsVisible] = useState(false);
   const webViewRef = useRef<WebView>(null);
-  
+
   // Generate Twitch embed URL
   const getTwitchEmbedUrl = useCallback(() => {
     const params = new URLSearchParams({
       channel: stream.user_login,
       muted: isMuted.toString(),
       autoplay: 'true',
-      controls: 'true'
+      controls: 'true',
     });
-    
+
     params.append('parent', 'localhost');
     params.append('parent', '127.0.0.1');
     params.append('parent', 'expo.dev');
-    
+
     return `https://player.twitch.tv/?${params.toString()}`;
   }, [stream.user_login, isMuted]);
-  
+
   const embedUrl = getTwitchEmbedUrl();
-  
+
   // Animation values
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
   const controlsOpacity = useSharedValue(0);
-  
+
   // Auto-hide controls timer
   const controlsTimer = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Animated styles
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
     opacity: opacity.value,
   }));
-  
+
   const controlsStyle = useAnimatedStyle(() => ({
     opacity: controlsOpacity.value,
   }));
-  
+
   // Handle press with animation
   const handlePress = useCallback(() => {
     scale.value = withSpring(0.95, { damping: 15 }, () => {
       scale.value = withSpring(1);
     });
-    
+
     // Toggle controls visibility
     setControlsVisible(!controlsVisible);
     controlsOpacity.value = withTiming(controlsVisible ? 0 : 1, { duration: 200 });
-    
+
     // Auto-hide controls after 3 seconds
     if (!controlsVisible) {
-      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      if (controlsTimer.current) {
+        clearTimeout(controlsTimer.current);
+      }
       controlsTimer.current = setTimeout(() => {
         setControlsVisible(false);
         controlsOpacity.value = withTiming(0, { duration: 200 });
       }, 3000);
     }
-    
+
     onPress?.();
   }, [controlsVisible, onPress]);
-  
+
   // Handle long press with animation
   const handleLongPress = useCallback(() => {
     scale.value = withSpring(1.05, { damping: 12 }, () => {
@@ -129,7 +123,7 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
     });
     onLongPress?.();
   }, [onLongPress]);
-  
+
   // Handle play/pause
   const handlePlayPause = useCallback(() => {
     setIsPlaying(!isPlaying);
@@ -140,7 +134,7 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
   const handleMuteToggle = useCallback(() => {
     onMuteToggle?.();
   }, [onMuteToggle]);
-  
+
   // WebView event handlers
   const handleWebViewLoad = useCallback(() => {
     console.log('WebView loaded successfully for:', stream.user_login);
@@ -148,19 +142,22 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
     setError(null);
   }, [stream.user_login]);
 
-  const handleWebViewError = useCallback((syntheticEvent: any) => {
-    const { nativeEvent } = syntheticEvent;
-    console.log('WebView error for', stream.user_login, ':', nativeEvent);
-    setError(`Failed to load stream: ${nativeEvent.description || 'Unknown error'}`);
-    setIsLoading(false);
-  }, [stream.user_login]);
+  const handleWebViewError = useCallback(
+    (syntheticEvent: any) => {
+      const { nativeEvent } = syntheticEvent;
+      console.log('WebView error for', stream.user_login, ':', nativeEvent);
+      setError(`Failed to load stream: ${nativeEvent.description || 'Unknown error'}`);
+      setIsLoading(false);
+    },
+    [stream.user_login]
+  );
 
   const handleWebViewLoadStart = useCallback(() => {
     console.log('WebView load started for:', stream.user_login);
     setIsLoading(true);
     setError(null);
   }, [stream.user_login]);
-  
+
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
@@ -169,7 +166,7 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
       }
     };
   }, []);
-  
+
   return (
     <Animated.View style={[styles.container, { width, height }, containerStyle]}>
       <TouchableOpacity
@@ -186,10 +183,10 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
           onLoad={handleWebViewLoad}
           onError={handleWebViewError}
           onLoadStart={handleWebViewLoadStart}
-          allowsInlineMediaPlayback={true}
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
+          javaScriptEnabled
+          domStorageEnabled
           startInLoadingState={false}
           scalesPageToFit={false}
           bounces={false}
@@ -197,12 +194,12 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           originWhitelist={['https://*']}
-          mixedContentMode={'compatibility'}
+          mixedContentMode="compatibility"
           allowsFullscreenVideo={false}
-          allowsProtectedMedia={true}
+          allowsProtectedMedia
           userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1"
         />
-        
+
         {/* Loading Overlay */}
         {isLoading && (
           <View style={styles.loadingOverlay}>
@@ -210,7 +207,7 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
             <Text style={styles.loadingText}>Loading stream...</Text>
           </View>
         )}
-        
+
         {/* Error Overlay */}
         {error && (
           <View style={styles.errorOverlay}>
@@ -226,20 +223,19 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
             </TouchableOpacity>
           </View>
         )}
-        
+
         {/* Stream Info Overlay */}
         {!isLoading && !error && (
           <View style={styles.infoOverlay}>
-            <LinearGradient
-              colors={['rgba(0,0,0,0.8)', 'transparent']}
-              style={styles.infoGradient}
-            >
+            <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.infoGradient}>
               <View style={styles.streamInfo}>
                 <View style={styles.platformBadge}>
                   <Text style={styles.platformText}>TWITCH</Text>
                 </View>
                 <View style={styles.liveIndicator}>
-                  <View style={[styles.liveDot, { backgroundColor: ModernTheme.colors.status.live }]} />
+                  <View
+                    style={[styles.liveDot, { backgroundColor: ModernTheme.colors.status.live }]}
+                  />
                   <Text style={styles.liveText}>LIVE</Text>
                 </View>
               </View>
@@ -260,7 +256,7 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
             </LinearGradient>
           </View>
         )}
-        
+
         {/* Controls Overlay */}
         {showControls && !isLoading && !error && (
           <Animated.View style={[styles.controlsOverlay, controlsStyle]}>
@@ -270,10 +266,7 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
             >
               <View style={styles.controlsContainer}>
                 <View style={styles.leftControls}>
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handlePlayPause}
-                  >
+                  <TouchableOpacity style={styles.controlButton} onPress={handlePlayPause}>
                     <LinearGradient
                       colors={ModernTheme.colors.gradients.primary}
                       style={styles.controlButtonGradient}
@@ -285,11 +278,8 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
                       )}
                     </LinearGradient>
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={styles.controlButton}
-                    onPress={handleMuteToggle}
-                  >
+
+                  <TouchableOpacity style={styles.controlButton} onPress={handleMuteToggle}>
                     <LinearGradient
                       colors={ModernTheme.colors.gradients.primary}
                       style={styles.controlButtonGradient}
@@ -302,7 +292,7 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
                     </LinearGradient>
                   </TouchableOpacity>
                 </View>
-                
+
                 <View style={styles.rightControls}>
                   <TouchableOpacity style={styles.controlButton}>
                     <LinearGradient
@@ -312,12 +302,9 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
                       <Settings size={16} color="#fff" />
                     </LinearGradient>
                   </TouchableOpacity>
-                  
+
                   {onRemove && (
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={() => onRemove()}
-                    >
+                    <TouchableOpacity style={styles.controlButton} onPress={() => onRemove()}>
                       <LinearGradient
                         colors={ModernTheme.colors.gradients.danger}
                         style={styles.controlButtonGradient}
@@ -331,7 +318,7 @@ export const ModernVideoPlayer: React.FC<ModernVideoPlayerProps> = ({
             </LinearGradient>
           </Animated.View>
         )}
-        
+
         {/* Active Stream Indicator */}
         {isActive && (
           <View style={styles.activeIndicator}>

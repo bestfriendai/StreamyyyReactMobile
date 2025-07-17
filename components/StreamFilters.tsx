@@ -3,17 +3,7 @@
  * Advanced filtering interface for stream search
  */
 
-import React, { useState, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurViewFallback as BlurView } from './BlurViewFallback';
 import {
   Filter,
   ChevronDown,
@@ -25,6 +15,8 @@ import {
   X,
   Check,
 } from 'lucide-react-native';
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet, Text, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -35,9 +27,10 @@ import Animated, {
   SlideInDown,
   SlideOutUp,
 } from 'react-native-reanimated';
+import { SearchFilters } from '@/services/searchService';
 import { ModernTheme } from '@/theme/modernTheme';
 import { HapticFeedback } from '@/utils/haptics';
-import { SearchFilters } from '@/services/searchService';
+import { BlurViewFallback as BlurView } from './BlurViewFallback';
 
 interface StreamFiltersProps {
   filters: SearchFilters;
@@ -131,28 +124,37 @@ export const StreamFilters: React.FC<StreamFiltersProps> = ({
   }, []);
 
   // Update filters
-  const updateFilters = useCallback((updates: Partial<SearchFilters>) => {
-    const newFilters = { ...filters, ...updates };
-    onFiltersChange(newFilters);
-  }, [filters, onFiltersChange]);
+  const updateFilters = useCallback(
+    (updates: Partial<SearchFilters>) => {
+      const newFilters = { ...filters, ...updates };
+      onFiltersChange(newFilters);
+    },
+    [filters, onFiltersChange]
+  );
 
   // Handle viewer range selection
-  const handleViewerRangeSelect = useCallback((range: { min?: number; max?: number }) => {
-    updateFilters({
-      minViewers: range.min,
-      maxViewers: range.max,
-    });
-  }, [updateFilters]);
+  const handleViewerRangeSelect = useCallback(
+    (range: { min?: number; max?: number }) => {
+      updateFilters({
+        minViewers: range.min,
+        maxViewers: range.max,
+      });
+    },
+    [updateFilters]
+  );
 
   // Handle tag toggle
-  const handleTagToggle = useCallback((tag: string) => {
-    const currentTags = filters.tags || [];
-    const newTags = currentTags.includes(tag)
-      ? currentTags.filter(t => t !== tag)
-      : [...currentTags, tag];
-    
-    updateFilters({ tags: newTags });
-  }, [filters.tags, updateFilters]);
+  const handleTagToggle = useCallback(
+    (tag: string) => {
+      const currentTags = filters.tags || [];
+      const newTags = currentTags.includes(tag)
+        ? currentTags.filter(t => t !== tag)
+        : [...currentTags, tag];
+
+      updateFilters({ tags: newTags });
+    },
+    [filters.tags, updateFilters]
+  );
 
   // Clear all filters
   const clearAllFilters = useCallback(() => {
@@ -187,10 +189,7 @@ export const StreamFilters: React.FC<StreamFiltersProps> = ({
 
     return (
       <View style={styles.section}>
-        <TouchableOpacity
-          style={styles.sectionHeader}
-          onPress={() => toggleSection(id)}
-        >
+        <TouchableOpacity style={styles.sectionHeader} onPress={() => toggleSection(id)}>
           <View style={styles.sectionHeaderLeft}>
             {icon}
             <Text style={styles.sectionTitle}>{title}</Text>
@@ -203,11 +202,7 @@ export const StreamFilters: React.FC<StreamFiltersProps> = ({
         </TouchableOpacity>
 
         {isExpanded && (
-          <Animated.View
-            entering={SlideInDown}
-            exiting={SlideOutUp}
-            style={styles.sectionContent}
-          >
+          <Animated.View entering={SlideInDown} exiting={SlideOutUp} style={styles.sectionContent}>
             {content}
           </Animated.View>
         )}
@@ -223,9 +218,9 @@ export const StreamFilters: React.FC<StreamFiltersProps> = ({
     multiSelect = false
   ) => (
     <View style={styles.chipContainer}>
-      {options.map((option) => {
+      {options.map(option => {
         const isSelected = multiSelect
-          ? (Array.isArray(selectedValue) && selectedValue.includes(option.value))
+          ? Array.isArray(selectedValue) && selectedValue.includes(option.value)
           : selectedValue === option.value;
 
         return (
@@ -234,9 +229,7 @@ export const StreamFilters: React.FC<StreamFiltersProps> = ({
             style={[styles.chip, isSelected && styles.chipSelected]}
             onPress={() => onSelect(option.value)}
           >
-            {isSelected && (
-              <Check size={14} color="#fff" style={styles.chipIcon} />
-            )}
+            {isSelected && <Check size={14} color="#fff" style={styles.chipIcon} />}
             <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
               {option.label}
             </Text>
@@ -246,17 +239,15 @@ export const StreamFilters: React.FC<StreamFiltersProps> = ({
     </View>
   );
 
-  if (!visible) return null;
+  if (!visible) {
+    return null;
+  }
 
   return (
     <View style={StyleSheet.absoluteFill}>
       {/* Overlay */}
       <Animated.View style={[styles.overlay, overlayStyle]}>
-        <TouchableOpacity
-          style={StyleSheet.absoluteFill}
-          onPress={onClose}
-          activeOpacity={1}
-        />
+        <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
       </Animated.View>
 
       {/* Filter Panel */}
@@ -272,38 +263,27 @@ export const StreamFilters: React.FC<StreamFiltersProps> = ({
                 <Filter size={24} color={ModernTheme.colors.primary[400]} />
                 <Text style={styles.title}>Filters</Text>
               </View>
-              
+
               <View style={styles.headerRight}>
-                <TouchableOpacity
-                  style={styles.clearButton}
-                  onPress={clearAllFilters}
-                >
+                <TouchableOpacity style={styles.clearButton} onPress={clearAllFilters}>
                   <Text style={styles.clearButtonText}>Clear All</Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={onClose}
-                >
+
+                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                   <X size={24} color={ModernTheme.colors.text.secondary} />
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Filter Content */}
-            <ScrollView
-              style={styles.content}
-              showsVerticalScrollIndicator={false}
-            >
+            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
               {/* Sort By */}
               {renderSection(
                 'sort',
                 'Sort By',
                 <SortAsc size={20} color={ModernTheme.colors.primary[400]} />,
-                renderOptionChips(
-                  SORT_OPTIONS,
-                  filters.sortBy,
-                  (value) => updateFilters({ sortBy: value })
+                renderOptionChips(SORT_OPTIONS, filters.sortBy, value =>
+                  updateFilters({ sortBy: value })
                 )
               )}
 
@@ -314,8 +294,8 @@ export const StreamFilters: React.FC<StreamFiltersProps> = ({
                 <Users size={20} color={ModernTheme.colors.accent[400]} />,
                 renderOptionChips(
                   VIEWER_RANGES,
-                  VIEWER_RANGES.find(r => 
-                    r.value.min === filters.minViewers && r.value.max === filters.maxViewers
+                  VIEWER_RANGES.find(
+                    r => r.value.min === filters.minViewers && r.value.max === filters.maxViewers
                   )?.value,
                   handleViewerRangeSelect
                 )
@@ -326,10 +306,8 @@ export const StreamFilters: React.FC<StreamFiltersProps> = ({
                 'language',
                 'Language',
                 <Globe size={20} color={ModernTheme.colors.success[400]} />,
-                renderOptionChips(
-                  LANGUAGE_OPTIONS,
-                  filters.language,
-                  (value) => updateFilters({ language: value })
+                renderOptionChips(LANGUAGE_OPTIONS, filters.language, value =>
+                  updateFilters({ language: value })
                 )
               )}
 
@@ -338,12 +316,7 @@ export const StreamFilters: React.FC<StreamFiltersProps> = ({
                 'tags',
                 'Tags',
                 <Hash size={20} color={ModernTheme.colors.warning[400]} />,
-                renderOptionChips(
-                  POPULAR_TAGS,
-                  filters.tags || [],
-                  handleTagToggle,
-                  true
-                )
+                renderOptionChips(POPULAR_TAGS, filters.tags || [], handleTagToggle, true)
               )}
 
               {/* Custom Category */}
@@ -357,7 +330,7 @@ export const StreamFilters: React.FC<StreamFiltersProps> = ({
                     placeholder="Enter game or category..."
                     placeholderTextColor={ModernTheme.colors.text.secondary}
                     value={filters.category || ''}
-                    onChangeText={(value) => updateFilters({ category: value || undefined })}
+                    onChangeText={value => updateFilters({ category: value || undefined })}
                   />
                 </View>
               )}
