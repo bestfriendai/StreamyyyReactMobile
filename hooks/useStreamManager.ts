@@ -42,7 +42,10 @@ export function useStreamManager() {
       ]);
 
       if (storedStreams) {
-        setActiveStreams(JSON.parse(storedStreams));
+        const parsedStreams = JSON.parse(storedStreams);
+        setActiveStreams(parsedStreams);
+      } else {
+        setActiveStreams([]);
       }
       if (storedFavorites) {
         setFavorites(JSON.parse(storedFavorites));
@@ -59,25 +62,25 @@ export function useStreamManager() {
 
   const addStream = useCallback(async (stream: TwitchStream): Promise<{ success: boolean; message: string }> => {
     try {
-      const isAlreadyActive = activeStreams.some(s => s.id === stream.id);
+      // Check current state first
+      const currentStreams = activeStreams;
+      
+      const isAlreadyActive = currentStreams.some(s => s.id === stream.id);
       if (isAlreadyActive) {
-        console.log(`Stream ${stream.user_name} is already active`);
         return { success: false, message: 'Stream is already in your multi-view' };
       }
 
-      if (activeStreams.length >= 6) {
-        console.log('Maximum number of streams reached');
+      if (currentStreams.length >= 6) {
         return { success: false, message: 'Maximum of 6 streams allowed' };
       }
 
-      console.log('<¬ Setting activeStreams to:', [...activeStreams, stream].map(s => s.user_name));
-      const updatedStreams = [...activeStreams, stream];
+      const updatedStreams = [...currentStreams, stream];
+      
+      // Update state
       setActiveStreams(updatedStreams);
       
-      // Non-blocking storage update
-      AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_STREAMS, JSON.stringify(updatedStreams)).catch(error => {
-        console.error('Error saving streams to storage:', error);
-      });
+      // Save to storage
+      await AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_STREAMS, JSON.stringify(updatedStreams));
 
       return { success: true, message: `${stream.user_name} added to multi-view` };
     } catch (error) {
@@ -87,23 +90,19 @@ export function useStreamManager() {
   }, [activeStreams]);
 
   const removeStream = useCallback(async (streamId: string) => {
-    const streamToRemove = activeStreams.find(s => s.id === streamId);
-    if (streamToRemove) {
-      console.log(`Removing stream: ${streamToRemove.user_name}`);
+    try {
+      const updatedStreams = activeStreams.filter(stream => stream.id !== streamId);
+      
+      setActiveStreams(updatedStreams);
+      
+      await AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_STREAMS, JSON.stringify(updatedStreams));
+    } catch (error) {
+      console.error('Error removing stream:', error);
     }
-    
-    const updatedStreams = activeStreams.filter(stream => stream.id !== streamId);
-    setActiveStreams(updatedStreams);
-    
-    // Non-blocking storage update
-    AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_STREAMS, JSON.stringify(updatedStreams)).catch(error => {
-      console.error('Error saving streams to storage:', error);
-    });
   }, [activeStreams]);
 
   const toggleFavorite = useCallback(async (stream: TwitchStream) => {
     const isFavorite = favorites.some(fav => fav.user_id === stream.user_id);
-    console.log(`${isFavorite ? 'Removing from' : 'Adding to'} favorites: ${stream.user_name}`);
     
     const updatedFavorites = isFavorite
       ? favorites.filter(fav => fav.user_id !== stream.user_id)
@@ -111,7 +110,6 @@ export function useStreamManager() {
     
     setFavorites(updatedFavorites);
     
-    // Non-blocking storage update
     AsyncStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(updatedFavorites)).catch(error => {
       console.error('Error saving favorites to storage:', error);
     });
@@ -136,16 +134,14 @@ export function useStreamManager() {
   }, [settings]);
 
   const clearAllStreams = useCallback(async () => {
-    console.log(`Clearing all ${activeStreams.length} active streams`);
-    setActiveStreams([]);
-    
-    // Non-blocking storage update
-    AsyncStorage.removeItem(STORAGE_KEYS.ACTIVE_STREAMS).catch(error => {
+    try {
+      setActiveStreams([]);
+      await AsyncStorage.removeItem(STORAGE_KEYS.ACTIVE_STREAMS);
+    } catch (error) {
       console.error('Error clearing streams from storage:', error);
-    });
-  }, [activeStreams]);
+    }
+  }, []);
 
-  // Force reload without recreating arrays (optimized)
   const forceReload = useCallback(() => {
     loadStoredData();
   }, []);

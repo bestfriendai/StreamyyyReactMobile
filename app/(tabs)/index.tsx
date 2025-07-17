@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BannerAdComponent } from '@/components/ads/BannerAd';
-import { EnhancedDiscoverScreenV4 } from '@/components/EnhancedDiscoverScreenV4';
+import { ModernDiscoverScreen } from '@/components/ModernDiscoverScreen';
 import { NavigationHeader } from '@/components/NavigationHeader';
 import { useInterstitialAd } from '@/hooks/useInterstitialAd';
 import { useStreamManager } from '@/hooks/useStreamManager';
@@ -30,12 +30,14 @@ export default function DiscoverScreen() {
   } = useStreamManager();
   const { showAd, canShow } = useInterstitialAd();
 
-  // Refresh active streams state when the screen is focused (optimized)
+
   useFocusEffect(
     useCallback(() => {
-      // Only reload if needed, don't force streams array recreation
-      forceReload();
-    }, [forceReload])
+      // Only reload if we don't have any streams or if we're coming back from another screen
+      if (activeStreams.length === 0) {
+        forceReload();
+      }
+    }, [forceReload, activeStreams.length])
   );
 
   useEffect(() => {
@@ -83,20 +85,16 @@ export default function DiscoverScreen() {
   };
 
   const handleStreamSelect = async (stream: TwitchStream) => {
-    console.log('handleStreamSelect called - delegating to handleAddStream');
     return await handleAddStream(stream);
   };
 
   const handleAddStream = async (stream: TwitchStream) => {
     try {
-      console.log('handleAddStream called with:', stream.user_name, stream.id);
       const result = await addStream(stream);
-      console.log('addStream result:', result);
 
       if (result.success) {
         // Show interstitial ad occasionally after successful stream add
         if (canShow && activeStreams.length >= 2 && Math.random() < 0.5) {
-          // 50% chance after 2+ streams
           showAd('stream_added');
         }
 
@@ -113,7 +111,7 @@ export default function DiscoverScreen() {
 
       return result;
     } catch (error) {
-      console.error('Error in handleAddStream:', error);
+      console.error('Error adding stream:', error);
       const errorResult = { success: false, message: 'Failed to add stream' };
       Alert.alert('Error', errorResult.message);
       return errorResult;
@@ -138,23 +136,21 @@ export default function DiscoverScreen() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#000' }}>
-      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <EnhancedDiscoverScreenV4
-          streams={streams}
-          games={games}
-          onStreamSelect={handleStreamSelect}
-          onRefresh={handleRefresh}
-          isLoading={loading}
-          onLoadMore={handleLoadMore}
-          hasMore={hasMore}
-          onAddStream={handleAddStream}
-          onToggleFavorite={handleToggleFavorite}
-          isFavorite={isFavorite}
-          isStreamActive={isStreamActive}
-        />
-        <BannerAdComponent size="ADAPTIVE_BANNER" position="bottom" />
-      </SafeAreaView>
+    <View style={{ flex: 1, backgroundColor: '#09090b' }}>
+      <ModernDiscoverScreen
+        streams={streams}
+        games={games}
+        onStreamSelect={handleStreamSelect}
+        onRefresh={handleRefresh}
+        isLoading={loading}
+        onLoadMore={handleLoadMore}
+        hasMore={hasMore}
+        onAddStream={handleAddStream}
+        onToggleFavorite={handleToggleFavorite}
+        isFavorite={isFavorite}
+        isStreamActive={isStreamActive}
+      />
+      <BannerAdComponent size="ADAPTIVE_BANNER" position="bottom" />
     </View>
   );
 }
