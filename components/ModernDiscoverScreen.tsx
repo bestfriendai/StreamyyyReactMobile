@@ -178,13 +178,18 @@ export const ModernDiscoverScreen: React.FC<ModernDiscoverScreenProps> = ({
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <BlurView intensity={100} style={styles.headerBlur}>
+      <LinearGradient
+        colors={['#000000', '#0a0a0a']}
+        style={styles.headerGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
         {/* Main Header */}
         <View style={styles.headerMain}>
           <View style={styles.headerLeft}>
             <View style={styles.titleSection}>
               <View style={styles.iconContainer}>
-                <Flame size={24} color="#3b82f6" />
+                <Flame size={22} color="#3b82f6" />
               </View>
               <View>
                 <Text style={styles.title}>Discover</Text>
@@ -200,25 +205,48 @@ export const ModernDiscoverScreen: React.FC<ModernDiscoverScreenProps> = ({
               style={[styles.actionButton, showSearch && styles.actionButtonActive]}
               onPress={toggleSearch}
             >
-              {showSearch ? <X size={20} color="#3b82f6" /> : <Search size={20} color="#a1a1aa" />}
+              <LinearGradient
+                colors={
+                  showSearch 
+                    ? ['#3b82f6', '#2563eb'] 
+                    : ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']
+                }
+                style={styles.actionButtonGradient}
+              >
+                {showSearch ? <X size={18} color="#ffffff" /> : <Search size={18} color="#a1a1aa" />}
+              </LinearGradient>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.actionButton, showFilters && styles.actionButtonActive]}
               onPress={toggleFilters}
             >
-              <SlidersHorizontal size={20} color={showFilters ? "#3b82f6" : "#a1a1aa"} />
+              <LinearGradient
+                colors={
+                  showFilters 
+                    ? ['#3b82f6', '#2563eb'] 
+                    : ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']
+                }
+                style={styles.actionButtonGradient}
+              >
+                <SlidersHorizontal size={18} color={showFilters ? "#ffffff" : "#a1a1aa"} />
+              </LinearGradient>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
             >
-              {viewMode === 'grid' ? (
-                <List size={20} color="#a1a1aa" />
-              ) : (
-                <Grid3X3 size={20} color="#a1a1aa" />
-              )}
+              <LinearGradient
+                colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
+                style={styles.actionButtonGradient}
+              >
+                {viewMode === 'grid' ? (
+                  <List size={18} color="#a1a1aa" />
+                ) : (
+                  <Grid3X3 size={18} color="#a1a1aa" />
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
@@ -249,24 +277,26 @@ export const ModernDiscoverScreen: React.FC<ModernDiscoverScreenProps> = ({
             {CATEGORIES.map(category => (
               <TouchableOpacity
                 key={category.id}
-                style={[
-                  styles.categoryChip,
-                  selectedCategory === category.id && styles.categoryChipActive,
-                ]}
+                style={styles.categoryChip}
                 onPress={() => setSelectedCategory(category.id)}
               >
-                <category.icon
-                  size={14}
-                  color={selectedCategory === category.id ? "#fff" : "#71717a"}
-                />
-                <Text
-                  style={[
-                    styles.categoryText,
-                    selectedCategory === category.id && styles.categoryTextActive,
-                  ]}
+                <LinearGradient
+                  colors={selectedCategory === category.id ? ['#3b82f6', '#2563eb'] : ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
+                  style={styles.categoryChipGradient}
                 >
-                  {category.name}
-                </Text>
+                  <category.icon
+                    size={14}
+                    color={selectedCategory === category.id ? "#fff" : "#71717a"}
+                  />
+                  <Text
+                    style={[
+                      styles.categoryText,
+                      selectedCategory === category.id && styles.categoryTextActive,
+                    ]}
+                  >
+                    {category.name}
+                  </Text>
+                </LinearGradient>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -275,25 +305,27 @@ export const ModernDiscoverScreen: React.FC<ModernDiscoverScreenProps> = ({
             {(['viewers', 'trending', 'recent', 'alphabetical'] as SortBy[]).map(sort => (
               <TouchableOpacity
                 key={sort}
-                style={[
-                  styles.sortChip,
-                  sortBy === sort && styles.sortChipActive,
-                ]}
+                style={styles.sortChip}
                 onPress={() => setSortBy(sort)}
               >
-                <Text
-                  style={[
-                    styles.sortText,
-                    sortBy === sort && styles.sortTextActive,
-                  ]}
+                <LinearGradient
+                  colors={sortBy === sort ? ['#3b82f6', '#2563eb'] : ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
+                  style={styles.sortChipGradient}
                 >
-                  {sort.charAt(0).toUpperCase() + sort.slice(1)}
-                </Text>
+                  <Text
+                    style={[
+                      styles.sortText,
+                      sortBy === sort && styles.sortTextActive,
+                    ]}
+                  >
+                    {sort.charAt(0).toUpperCase() + sort.slice(1)}
+                  </Text>
+                </LinearGradient>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </Animated.View>
-      </BlurView>
+      </LinearGradient>
     </View>
   );
 
@@ -314,6 +346,7 @@ export const ModernDiscoverScreen: React.FC<ModernDiscoverScreenProps> = ({
       )}
       numColumns={numColumns}
       key={`${viewMode}-${numColumns}`}
+      extraData={isStreamActive}
       contentContainerStyle={styles.gridContainer}
       ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
       columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
@@ -363,17 +396,17 @@ const styles = StyleSheet.create({
   },
   header: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
-  headerBlur: {
+  headerGradient: {
     paddingBottom: 16,
   },
   headerMain: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingHorizontal: 20,
+    paddingTop: 12,
   },
   headerLeft: {
     flex: 1,
@@ -384,53 +417,58 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#f4f4f5',
-    letterSpacing: -0.5,
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: -0.8,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#71717a',
     fontWeight: '500',
     marginTop: 2,
+    letterSpacing: 0.2,
   },
   headerActions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   actionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  actionButtonGradient: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
   actionButtonActive: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    transform: [{ scale: 0.95 }],
   },
   searchContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     overflow: 'hidden',
   },
   searchInput: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 14,
+    paddingHorizontal: 14,
     height: 44,
-    gap: 8,
-    marginTop: 8,
+    gap: 10,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.04)',
   },
   searchField: {
     flex: 1,
@@ -438,52 +476,50 @@ const styles = StyleSheet.create({
     color: '#f4f4f5',
   },
   filtersContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingHorizontal: 20,
+    paddingTop: 12,
     overflow: 'hidden',
   },
   categoriesRow: {
-    marginBottom: 8,
+    marginBottom: 10,
   },
   categoryChip: {
+    borderRadius: 18,
+    marginRight: 8,
+    overflow: 'hidden',
+  },
+  categoryChipGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    marginRight: 8,
-    gap: 4,
-  },
-  categoryChipActive: {
-    backgroundColor: '#3b82f6',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    gap: 6,
   },
   categoryText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#71717a',
   },
   categoryTextActive: {
-    color: '#fff',
+    color: '#ffffff',
   },
   sortRow: {},
   sortChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     marginRight: 8,
+    overflow: 'hidden',
   },
-  sortChipActive: {
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+  sortChipGradient: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
   sortText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#71717a',
   },
   sortTextActive: {
-    color: '#3b82f6',
+    color: '#ffffff',
   },
   content: {
     flex: 1,

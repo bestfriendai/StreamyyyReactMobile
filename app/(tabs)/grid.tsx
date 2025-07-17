@@ -1,7 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { View, StatusBar, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 import { OptimizedMultiStreamGrid } from '@/components/OptimizedMultiStreamGrid';
+import { useStreamManager } from '@/hooks/useStreamManager';
 
 type GridLayout = '1x1' | '2x2' | '3x3' | '2x1' | '1x2' | 'adaptive';
 type ViewMode = 'grid' | 'stack' | 'pip' | 'focus';
@@ -9,6 +11,17 @@ type ViewMode = 'grid' | 'stack' | 'pip' | 'focus';
 export default React.memo(function GridScreen() {
   const [layout, setLayout] = useState<GridLayout>('adaptive');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const { forceReload } = useStreamManager();
+
+  // Only reload when grid screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      const timer = setTimeout(() => {
+        forceReload();
+      }, 100);
+      return () => clearTimeout(timer);
+    }, [forceReload])
+  );
 
   const handleLayoutChange = useCallback((newLayout: GridLayout) => {
     setLayout(newLayout);

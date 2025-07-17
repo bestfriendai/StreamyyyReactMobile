@@ -31,14 +31,9 @@ export default function DiscoverScreen() {
   const { showAd, canShow } = useInterstitialAd();
 
 
-  useFocusEffect(
-    useCallback(() => {
-      // Only reload if we don't have any streams or if we're coming back from another screen
-      if (activeStreams.length === 0) {
-        forceReload();
-      }
-    }, [forceReload, activeStreams.length])
-  );
+  const handleManualRefresh = useCallback(() => {
+    forceReload();
+  }, [forceReload]);
 
   useEffect(() => {
     loadInitialData();
@@ -138,6 +133,7 @@ export default function DiscoverScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#09090b' }}>
       <ModernDiscoverScreen
+        key={`discover-${activeStreams.length}`}
         streams={streams}
         games={games}
         onStreamSelect={handleStreamSelect}
