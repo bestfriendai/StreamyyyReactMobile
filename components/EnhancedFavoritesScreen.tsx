@@ -6,11 +6,7 @@ import {
   Filter,
   Grid3X3,
   List,
-  Play,
-  Users,
   Eye,
-  Star,
-  Trash2,
   Plus,
   SortAsc,
   SortDesc,
@@ -22,11 +18,10 @@ import {
   MoreVertical,
 } from 'lucide-react-native';
 import { MotiView, AnimatePresence, MotiText } from 'moti';
-import React, { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
   Text,
   TouchableOpacity,
   TextInput,
@@ -38,15 +33,14 @@ import {
   RefreshControl,
   Pressable,
 } from 'react-native';
-import Animated, {
+import {
   useSharedValue,
   withSpring,
-  withTiming,
-  interpolate,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStreamManager } from '@/hooks/useStreamManager';
 import { ModernTheme } from '@/theme/modernTheme';
+import { HapticFeedback } from '@/utils/haptics';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -77,11 +71,8 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
   const [filterLive, setFilterLive] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedStreams, setSelectedStreams] = useState<string[]>([]);
-  const [showBulkActions, setShowBulkActions] = useState(false);
 
   // Animation values
-  const headerOpacity = useSharedValue(1);
   const cardScale = useSharedValue(1);
 
   // Convert TwitchStream favorites to FavoriteStream format for UI compatibility
@@ -94,34 +85,39 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
       viewers: stream.viewer_count,
       isLive: stream.type === 'live',
       thumbnail: stream.thumbnail_url,
-      addedAt: stream.fetchedAt ? new Date(stream.fetchedAt) : new Date(),
+      addedAt: 'fetchedAt' in stream && typeof stream.fetchedAt === 'string'
+        ? new Date(stream.fetchedAt)
+        : new Date(),
     }));
   }, [favorites]);
 
-  const filteredAndSortedStreams = favoriteStreams
-    .filter(stream => {
-      const matchesSearch =
-        stream.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        stream.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        stream.game.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesFilter = !filterLive || stream.isLive;
-      return matchesSearch && matchesFilter;
-    })
-    .sort((a, b) => {
-      let comparison = 0;
-      switch (sortBy) {
-        case 'name':
-          comparison = a.username.localeCompare(b.username);
-          break;
-        case 'viewers':
-          comparison = a.viewers - b.viewers;
-          break;
-        case 'added':
-          comparison = a.addedAt.getTime() - b.addedAt.getTime();
-          break;
-      }
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
+  // Filter and sort streams with memoization for performance
+  const filteredAndSortedStreams = useMemo(() => {
+    return favoriteStreams
+      .filter(stream => {
+        const matchesSearch =
+          stream.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          stream.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          stream.game.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesFilter = !filterLive || stream.isLive;
+        return matchesSearch && matchesFilter;
+      })
+      .sort((a, b) => {
+        let comparison = 0;
+        switch (sortBy) {
+          case 'name':
+            comparison = a.username.localeCompare(b.username);
+            break;
+          case 'viewers':
+            comparison = a.viewers - b.viewers;
+            break;
+          case 'added':
+            comparison = a.addedAt.getTime() - b.addedAt.getTime();
+            break;
+        }
+        return sortOrder === 'asc' ? comparison : -comparison;
+      });
+  }, [favoriteStreams, searchQuery, filterLive, sortBy, sortOrder]);
 
   const handleRemoveFavorite = (streamId: string, username: string) => {
     Alert.alert('Remove Favorite', `Remove ${username} from your favorites?`, [
@@ -136,37 +132,53 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
     ]);
   };
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    // Simulate API call
-    setTimeout(() => {
+  const handleRefresh = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      // Add actual refresh logic here if needed
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error('Refresh failed:', error);
+      Alert.alert('Error', 'Failed to refresh favorites. Please try again.');
+    } finally {
       setRefreshing(false);
-    }, 1000);
-  };
+    }
+  }, []);
 
-  const handleAddToMultiView = (stream: FavoriteStream) => {
-    addToMultiView({
-      id: stream.id,
-      username: stream.username,
-      url: `https://www.twitch.tv/${stream.username}`,
-      title: stream.title,
-      game: stream.game,
-      viewers: stream.viewers,
-    });
-    Alert.alert(
-      'Added to Multi-View',
-      `${stream.username} has been added to your multi-view grid.`,
-      [
-        { text: 'OK' },
-        {
-          text: 'View Grid',
-          onPress: () => {
-            router.push('/(tabs)/grid');
-          },
-        },
-      ]
-    );
-  };
+  const handleAddToMultiView = useCallback(async (stream: FavoriteStream) => {
+    try {
+      await HapticFeedback.medium();
+      const result = await addToMultiView({
+        id: stream.id,
+        username: stream.username,
+        url: `https://www.twitch.tv/${stream.username}`,
+        title: stream.title,
+        game: stream.game,
+        viewers: stream.viewers,
+      });
+
+      if (result.success) {
+        Alert.alert(
+          'Added to Multi-View',
+          result.message,
+          [
+            { text: 'OK' },
+            {
+              text: 'View Grid',
+              onPress: () => {
+                router.push('/(tabs)/grid');
+              },
+            },
+          ]
+        );
+      } else {
+        Alert.alert('Error', result.message);
+      }
+    } catch (error) {
+      console.error('Error adding to multi-view:', error);
+      Alert.alert('Error', 'Failed to add stream to multi-view');
+    }
+  }, [addToMultiView, router]);
 
   const formatViewers = (viewers: number) => {
     if (viewers >= 1000000) {
@@ -177,10 +189,10 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
     return viewers.toString();
   };
 
-  const renderStreamCard = (stream: FavoriteStream, index: number) => {
+  const renderStreamCard = useCallback((stream: FavoriteStream, index: number) => {
     const isGrid = viewMode === 'grid';
     const cardWidth = isGrid ? (screenWidth - 48) / 2 : screenWidth - 32;
-    const isSelected = selectedStreams.includes(stream.id);
+    const isSelected = false; // Removed bulk selection feature
 
     return (
       <MotiView
@@ -285,11 +297,11 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
 
               <View style={styles.streamStats}>
                 <View style={styles.statItem}>
-                  <Eye size={14} color={ModernTheme.colors.textSecondary} />
+                  <Eye size={14} color={ModernTheme.colors.text.secondary} />
                   <Text style={styles.statText}>{formatViewers(stream.viewers)}</Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Clock size={14} color={ModernTheme.colors.accent} />
+                  <Clock size={14} color={ModernTheme.colors.text.accent} />
                   <Text style={styles.statText}>{stream.addedAt.toLocaleDateString()}</Text>
                 </View>
                 <View style={styles.statItem}>
@@ -309,13 +321,21 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
                   styles.playButton,
                   pressed && { transform: [{ scale: 0.95 }] },
                 ]}
-                onPress={() => {
-                  HapticFeedback.medium();
-                  cardScale.value = withSpring(1.05, { damping: 15 }, () => {
-                    cardScale.value = withSpring(1);
-                  });
-                  handleAddToMultiView(stream);
+                onPress={async () => {
+                  try {
+                    await HapticFeedback.medium();
+                    cardScale.value = withSpring(1.05, { damping: 15 }, () => {
+                      cardScale.value = withSpring(1);
+                    });
+                    await handleAddToMultiView(stream);
+                  } catch (error) {
+                    console.error('Action failed:', error);
+                    await HapticFeedback.light(); // Error feedback
+                  }
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={`Add ${stream.username} to multi-view`}
+                accessibilityHint="Adds this stream to your multi-view grid for simultaneous viewing"
               >
                 <LinearGradient
                   colors={['#8B5CF6', '#7C3AED', '#6366F1']}
@@ -374,7 +394,7 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
         </View>
       </MotiView>
     );
-  };
+  }, [viewMode, screenWidth, handleAddToMultiView]);
 
   const renderEmptyState = () => (
     <MotiView
@@ -487,13 +507,15 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
                 colors={['rgba(42, 42, 42, 0.9)', 'rgba(28, 28, 28, 0.9)']}
                 style={styles.searchGradient}
               >
-                <Search size={20} color={ModernTheme.colors.textSecondary} />
+                <Search size={20} color={ModernTheme.colors.text.secondary} />
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Search favorites..."
-                  placeholderTextColor={ModernTheme.colors.textSecondary}
+                  placeholderTextColor={ModernTheme.colors.text.secondary}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
+                  accessibilityLabel="Search favorites"
+                  accessibilityHint="Type to search through your favorite streams by name, title, or game"
                 />
               </LinearGradient>
             </View>
@@ -507,7 +529,7 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
                 >
                   <Grid3X3
                     size={18}
-                    color={viewMode === 'grid' ? '#fff' : ModernTheme.colors.textSecondary}
+                    color={viewMode === 'grid' ? '#fff' : ModernTheme.colors.text.secondary}
                   />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -516,7 +538,7 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
                 >
                   <List
                     size={18}
-                    color={viewMode === 'list' ? '#fff' : ModernTheme.colors.textSecondary}
+                    color={viewMode === 'list' ? '#fff' : ModernTheme.colors.text.secondary}
                   />
                 </TouchableOpacity>
               </View>
@@ -525,7 +547,7 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
                 style={[styles.filterButton, showFilters && styles.activeFilter]}
                 onPress={() => setShowFilters(!showFilters)}
               >
-                <Filter size={18} color={showFilters ? '#fff' : ModernTheme.colors.textSecondary} />
+                <Filter size={18} color={showFilters ? '#fff' : ModernTheme.colors.text.secondary} />
               </TouchableOpacity>
             </View>
 
@@ -549,7 +571,7 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
                           <TouchableOpacity
                             key={sort}
                             style={[styles.sortButton, sortBy === sort && styles.activeSortButton]}
-                            onPress={() => setSortBy(sort as any)}
+                            onPress={() => setSortBy(sort as 'name' | 'viewers' | 'added')}
                           >
                             <Text
                               style={[styles.sortText, sortBy === sort && styles.activeSortText]}
@@ -609,7 +631,7 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
             />
           }
           ListEmptyComponent={renderEmptyState}
-          ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+          ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
           columnWrapperStyle={viewMode === 'grid' ? styles.gridRow : undefined}
         />
       </SafeAreaView>
@@ -920,7 +942,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statText: {
-    color: ModernTheme.colors.textSecondary,
+    color: ModernTheme.colors.text.secondary,
     fontSize: 12,
     fontFamily: 'Inter-Regular',
   },
@@ -1021,6 +1043,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
+  },
+  itemSeparator: {
+    height: 16,
   },
 });
 

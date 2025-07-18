@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TwitchStream } from '@/services/twitchApi';
 
@@ -70,35 +70,47 @@ export function useStreamManager() {
 
   const addStream = useCallback(async (stream: TwitchStream): Promise<{ success: boolean; message: string }> => {
     try {
-      return new Promise((resolve) => {
-        setActiveStreams(currentStreams => {
-          const isAlreadyActive = currentStreams.some(s => s.id === stream.id);
-          if (isAlreadyActive) {
-            resolve({ success: false, message: 'Stream is already in your multi-view' });
-            return currentStreams;
-          }
+      console.log('🎯 ADD STREAM CALLED - Stream:', stream.user_name, 'ID:', stream.id);
 
-          if (currentStreams.length >= 6) {
-            resolve({ success: false, message: 'Maximum of 6 streams allowed' });
-            return currentStreams;
-          }
-
-          const updatedStreams = [...currentStreams, stream];
-          
-          // Save to storage asynchronously but resolve immediately since state is already updated
-          AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_STREAMS, JSON.stringify(updatedStreams))
-            .catch(error => {
-              console.error('Error saving to storage:', error);
-            });
-          
-          // Resolve immediately since state is already updated
-          resolve({ success: true, message: `${stream.user_name} added to multi-view` });
-          
-          return updatedStreams;
+      // Check current state first
+      const currentStreams = await new Promise<TwitchStream[]>((resolve) => {
+        setActiveStreams(streams => {
+          console.log('🎯 CURRENT STREAMS IN STATE:', streams.length, 'streams:', streams.map(s => s.user_name));
+          resolve(streams);
+          return streams;
         });
       });
+
+      console.log('🎯 CHECKING CONDITIONS - Current streams:', currentStreams.length);
+
+      const isAlreadyActive = currentStreams.some(s => s.id === stream.id);
+      if (isAlreadyActive) {
+        console.log('❌ STREAM ALREADY ACTIVE:', stream.user_name);
+        return { success: false, message: 'Stream is already in your multi-view' };
+      }
+
+      if (currentStreams.length >= 6) {
+        console.log('❌ MAX STREAMS REACHED:', currentStreams.length);
+        return { success: false, message: 'Maximum of 6 streams allowed' };
+      }
+
+      const updatedStreams = [...currentStreams, stream];
+      console.log('🎯 UPDATING STATE - New streams array:', updatedStreams.map(s => s.user_name));
+
+      // Update state and storage
+      setActiveStreams(updatedStreams);
+
+      try {
+        await AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_STREAMS, JSON.stringify(updatedStreams));
+        console.log('✅ STREAM ADDED SUCCESSFULLY:', stream.user_name, 'Total streams:', updatedStreams.length);
+      } catch (storageError) {
+        console.error('❌ Error saving to storage:', storageError);
+        // Don't fail the operation if storage fails
+      }
+
+      return { success: true, message: `${stream.user_name} added to multi-view` };
     } catch (error) {
-      console.error('Error adding stream:', error);
+      console.error('❌ ERROR ADDING STREAM:', error);
       return { success: false, message: 'Failed to add stream' };
     }
   }, []);
@@ -149,6 +161,8 @@ export function useStreamManager() {
   }, []);
 
   const addToMultiView = useCallback(async (streamData: any) => {
+    console.log('🚀 ADD TO MULTI-VIEW CALLED - Data:', streamData);
+
     // Convert the stream data to TwitchStream format
     const stream: TwitchStream = {
       id: streamData.id,
@@ -166,8 +180,11 @@ export function useStreamManager() {
       tag_ids: streamData.tag_ids || [],
       is_mature: streamData.is_mature || false
     };
-    
-    return await addStream(stream);
+
+    console.log('🚀 CONVERTED STREAM DATA:', stream);
+    const result = await addStream(stream);
+    console.log('🚀 ADD TO MULTI-VIEW RESULT:', result);
+    return result;
   }, [addStream]);
 
   const isFavorite = useCallback((userId: string) => {
@@ -175,7 +192,9 @@ export function useStreamManager() {
   }, [favorites]);
 
   const isStreamActive = useCallback((streamId: string) => {
-    return activeStreams.some(stream => stream.id === streamId);
+    const isActive = activeStreams.some(stream => stream.id === streamId);
+    console.log('🔍 IS STREAM ACTIVE CHECK - Stream ID:', streamId, 'Active:', isActive, 'Total active streams:', activeStreams.length);
+    return isActive;
   }, [activeStreams]);
 
   const updateSettings = useCallback(async (newSettings: Partial<StreamSettings>) => {
@@ -190,12 +209,14 @@ export function useStreamManager() {
 
   const clearAllStreams = useCallback(async () => {
     try {
+      console.log('🧹 CLEARING ALL STREAMS - Before clear, activeStreams length:', activeStreams.length);
       setActiveStreams([]);
       await AsyncStorage.removeItem(STORAGE_KEYS.ACTIVE_STREAMS);
+      console.log('🧹 CLEARED ALL STREAMS - Storage cleared, state set to empty array');
     } catch (error) {
-      console.error('Error clearing streams from storage:', error);
+      console.error('❌ Error clearing streams from storage:', error);
     }
-  }, []);
+  }, [activeStreams.length]);
 
   const forceReload = useCallback(() => {
     loadStoredData();

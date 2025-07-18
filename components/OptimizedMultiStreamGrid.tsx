@@ -97,6 +97,11 @@ export const OptimizedMultiStreamGrid: React.FC<OptimizedMultiStreamGridProps> =
     enableGestures = true,
   }) => {
     const { activeStreams, removeStream, clearAllStreams } = useStreamManager();
+
+  // Debug logging for grid component
+  useEffect(() => {
+    console.log('📺 GRID COMPONENT - Active streams changed:', activeStreams.length, 'streams:', activeStreams.map(s => s.user_name));
+  }, [activeStreams]);
     const insets = useSafeAreaInsets();
 
 

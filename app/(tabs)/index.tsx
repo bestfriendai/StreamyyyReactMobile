@@ -147,7 +147,9 @@ export default function DiscoverScreen() {
 
   const isStreamActive = useCallback(
     (streamId: string) => {
-      return activeStreams.some(stream => stream.id === streamId);
+      const isActive = activeStreams.some(stream => stream.id === streamId);
+      console.log(`🔍 DISCOVER PAGE - Checking stream active: "${streamId}" -> ${isActive} (total active: ${activeStreams.length})`);
+      return isActive;
     },
     [activeStreams]
   );
@@ -167,6 +169,7 @@ export default function DiscoverScreen() {
         onToggleFavorite={handleToggleFavorite}
         isFavorite={isFavorite}
         isStreamActive={isStreamActive}
+        activeStreamsCount={activeStreams.length}
       />
       <BannerAdComponent size="ADAPTIVE_BANNER" position="bottom" />
     </View>

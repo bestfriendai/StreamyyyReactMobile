@@ -50,6 +50,7 @@ interface ModernDiscoverScreenProps {
   onToggleFavorite: (userId: string) => void;
   isFavorite: (userId: string) => boolean;
   isStreamActive: (streamId: string) => boolean;
+  activeStreamsCount?: number;
 }
 
 type ViewMode = 'grid' | 'list';
@@ -74,6 +75,7 @@ export const ModernDiscoverScreen: React.FC<ModernDiscoverScreenProps> = ({
   onToggleFavorite,
   isFavorite,
   isStreamActive,
+  activeStreamsCount = 0,
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -346,7 +348,7 @@ export const ModernDiscoverScreen: React.FC<ModernDiscoverScreenProps> = ({
       )}
       numColumns={numColumns}
       key={`${viewMode}-${numColumns}`}
-      extraData={isStreamActive}
+      extraData={activeStreamsCount}
       contentContainerStyle={styles.gridContainer}
       ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
       columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
