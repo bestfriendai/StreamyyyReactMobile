@@ -13,15 +13,8 @@ export default React.memo(function GridScreen() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const { forceReload } = useStreamManager();
 
-  // Only reload when grid screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      const timer = setTimeout(() => {
-        forceReload();
-      }, 100);
-      return () => clearTimeout(timer);
-    }, [forceReload])
-  );
+  // Remove automatic reload on focus to prevent race conditions with discover screen
+  // The grid will update reactively through the shared useStreamManager state
 
   const handleLayoutChange = useCallback((newLayout: GridLayout) => {
     setLayout(newLayout);

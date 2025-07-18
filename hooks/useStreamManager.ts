@@ -85,15 +85,14 @@ export function useStreamManager() {
 
           const updatedStreams = [...currentStreams, stream];
           
-          // Save to storage
+          // Save to storage asynchronously but resolve immediately since state is already updated
           AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_STREAMS, JSON.stringify(updatedStreams))
-            .then(() => {
-              resolve({ success: true, message: `${stream.user_name} added to multi-view` });
-            })
             .catch(error => {
               console.error('Error saving to storage:', error);
-              resolve({ success: false, message: 'Failed to add stream' });
             });
+          
+          // Resolve immediately since state is already updated
+          resolve({ success: true, message: `${stream.user_name} added to multi-view` });
           
           return updatedStreams;
         });
@@ -132,6 +131,44 @@ export function useStreamManager() {
       console.error('Error saving favorites to storage:', error);
     });
   }, [favorites]);
+
+  const removeFavorite = useCallback(async (streamId: string) => {
+    try {
+      setFavorites(currentFavorites => {
+        // Use user_id for consistency with toggleFavorite function
+        const updatedFavorites = currentFavorites.filter(fav => fav.user_id !== streamId && fav.id !== streamId);
+        
+        AsyncStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(updatedFavorites))
+          .catch(error => console.error('Error removing favorite:', error));
+        
+        return updatedFavorites;
+      });
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+    }
+  }, []);
+
+  const addToMultiView = useCallback(async (streamData: any) => {
+    // Convert the stream data to TwitchStream format
+    const stream: TwitchStream = {
+      id: streamData.id,
+      user_id: streamData.id, // For favorites, use the same ID for both
+      user_login: streamData.username || streamData.user_login,
+      user_name: streamData.username || streamData.user_name,
+      game_id: streamData.game_id || '',
+      game_name: streamData.game || streamData.game_name || '',
+      type: 'live',
+      title: streamData.title || '',
+      viewer_count: streamData.viewers || streamData.viewer_count || 0,
+      started_at: streamData.started_at || new Date().toISOString(),
+      language: streamData.language || 'en',
+      thumbnail_url: streamData.thumbnail || streamData.thumbnail_url || '',
+      tag_ids: streamData.tag_ids || [],
+      is_mature: streamData.is_mature || false
+    };
+    
+    return await addStream(stream);
+  }, [addStream]);
 
   const isFavorite = useCallback((userId: string) => {
     return favorites.some(fav => fav.user_id === userId);
@@ -172,6 +209,8 @@ export function useStreamManager() {
     addStream,
     removeStream,
     toggleFavorite,
+    removeFavorite,
+    addToMultiView,
     isFavorite,
     isStreamActive,
     updateSettings,

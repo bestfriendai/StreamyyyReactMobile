@@ -25,6 +25,8 @@ export default function DiscoverScreen() {
   const {
     addStream,
     activeStreams,
+    toggleFavorite,
+    isFavorite: checkIsFavorite,
     loading: streamManagerLoading,
     forceReload,
   } = useStreamManager();
@@ -34,6 +36,16 @@ export default function DiscoverScreen() {
   const handleManualRefresh = useCallback(() => {
     forceReload();
   }, [forceReload]);
+
+  // Refresh when screen comes into focus, but only if needed to prevent race conditions
+  useFocusEffect(
+    useCallback(() => {
+      // Only reload if we don't have recent data or if streams were cleared
+      if (activeStreams.length === 0 || !streams.length) {
+        forceReload();
+      }
+    }, [forceReload, activeStreams.length, streams.length])
+  );
 
   useEffect(() => {
     loadInitialData();
@@ -113,14 +125,24 @@ export default function DiscoverScreen() {
     }
   };
 
-  const handleToggleFavorite = (userId: string) => {
-    // TODO: Implement favorites functionality
-    console.log('Toggle favorite for user:', userId);
+  const handleToggleFavorite = async (userId: string) => {
+    try {
+      // Find the stream by user_id
+      const stream = streams.find(s => s.user_id === userId);
+      if (stream) {
+        await toggleFavorite(stream);
+        console.log('Toggled favorite for:', stream.user_name);
+      } else {
+        console.error('Stream not found for user_id:', userId);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      Alert.alert('Error', 'Failed to update favorites');
+    }
   };
 
   const isFavorite = (userId: string) => {
-    // TODO: Implement favorites check
-    return false;
+    return checkIsFavorite(userId);
   };
 
   const isStreamActive = useCallback(

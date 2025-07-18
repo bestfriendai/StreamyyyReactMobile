@@ -22,7 +22,7 @@ import {
   MoreVertical,
 } from 'lucide-react-native';
 import { MotiView, AnimatePresence, MotiText } from 'moti';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -84,39 +84,19 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
   const headerOpacity = useSharedValue(1);
   const cardScale = useSharedValue(1);
 
-  // Mock data for demonstration
-  const [favoriteStreams, setFavoriteStreams] = useState<FavoriteStream[]>([
-    {
-      id: '1',
-      username: 'shroud',
-      title: 'VALORANT Ranked Grind | !settings !crosshair',
-      game: 'VALORANT',
-      viewers: 45230,
-      isLive: true,
-      thumbnail: 'https://static-cdn.jtvnw.net/previews-ttv/live_user_shroud-320x180.jpg',
-      addedAt: new Date('2024-01-15'),
-    },
-    {
-      id: '2',
-      username: 'pokimane',
-      title: 'Cozy morning stream! Chatting and games',
-      game: 'Just Chatting',
-      viewers: 28450,
-      isLive: false,
-      thumbnail: 'https://static-cdn.jtvnw.net/previews-ttv/live_user_pokimane-320x180.jpg',
-      addedAt: new Date('2024-01-10'),
-    },
-    {
-      id: '3',
-      username: 'xqcow',
-      title: 'REACT ANDY + VARIETY GAMING | !gfuel !vpn',
-      game: 'Variety',
-      viewers: 67890,
-      isLive: true,
-      thumbnail: 'https://static-cdn.jtvnw.net/previews-ttv/live_user_xqcow-320x180.jpg',
-      addedAt: new Date('2024-01-12'),
-    },
-  ]);
+  // Convert TwitchStream favorites to FavoriteStream format for UI compatibility
+  const favoriteStreams = useMemo(() => {
+    return favorites.map((stream): FavoriteStream => ({
+      id: stream.id,
+      username: stream.user_name,
+      title: stream.title,
+      game: stream.game_name,
+      viewers: stream.viewer_count,
+      isLive: stream.type === 'live',
+      thumbnail: stream.thumbnail_url,
+      addedAt: stream.fetchedAt ? new Date(stream.fetchedAt) : new Date(),
+    }));
+  }, [favorites]);
 
   const filteredAndSortedStreams = favoriteStreams
     .filter(stream => {
@@ -150,7 +130,6 @@ export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
         text: 'Remove',
         style: 'destructive',
         onPress: () => {
-          setFavoriteStreams(prev => prev.filter(s => s.id !== streamId));
           removeFavorite(streamId);
         },
       },
