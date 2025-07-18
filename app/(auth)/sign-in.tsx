@@ -23,6 +23,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
+import { OAuthButtons } from '@/components/OAuthButtons';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -207,6 +208,20 @@ export default function SignInScreen() {
               </TouchableOpacity>
             </Animated.View>
 
+            {/* Divider */}
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or continue with</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* OAuth Buttons */}
+            <OAuthButtons
+              onSuccess={() => router.replace('/(tabs)')}
+              onError={(error) => console.error('OAuth error:', error)}
+              style={styles.oauthButtons}
+            />
+
             {/* Guest Mode */}
             <TouchableOpacity
               style={styles.guestButton}
@@ -367,6 +382,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
     color: '#fff',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#666',
+  },
+  oauthButtons: {
+    marginBottom: 24,
   },
   guestButton: {
     paddingVertical: 16,

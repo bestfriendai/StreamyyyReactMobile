@@ -126,7 +126,7 @@ export const Button: React.FC<ButtonProps> = ({
           ? 'xs'
           : size === 'sm'
             ? 'sm'
-          size === 'md' ? 'base' :
+            : size === 'md' ? 'base' :
             size === 'lg' ? 'md' :
               'lg'
       ];

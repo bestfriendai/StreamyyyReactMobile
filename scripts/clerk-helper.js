@@ -168,11 +168,12 @@ function generateClerkConfig() {
 
 export const clerkConfig = {
   publishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
-  
+
   // OAuth providers (configure in Clerk Dashboard)
   oauthProviders: [
     'oauth_google',
-    'oauth_discord',
+    'oauth_twitch',
+    // 'oauth_discord', // Removed per user preference
     // 'oauth_github',
     // 'oauth_twitter',
   ],

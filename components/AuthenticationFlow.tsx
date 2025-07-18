@@ -1,3 +1,4 @@
+import { useSSO } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import {
@@ -27,6 +28,7 @@ import {
   ActivityIndicator,
   Dimensions,
   ScrollView,
+  Image,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -63,29 +65,51 @@ const socialProviders: SocialProvider[] = [
   {
     id: 'google',
     name: 'Google',
-    icon: <Globe size={20} color="#fff" />,
+    icon: (
+      <Image
+        source={require('@/assets/images/google-logo-official.png')}
+        style={{ width: 20, height: 20 }}
+        resizeMode="contain"
+      />
+    ),
     color: '#4285F4',
-    enabled: true,
-  },
-  {
-    id: 'discord',
-    name: 'Discord',
-    icon: <Smartphone size={20} color="#fff" />,
-    color: '#5865F2',
     enabled: true,
   },
   {
     id: 'twitch',
     name: 'Twitch',
-    icon: <Sparkles size={20} color="#fff" />,
+    icon: (
+      <Image
+        source={require('@/assets/images/twitch-logo-official.png')}
+        style={{ width: 20, height: 20 }}
+        resizeMode="contain"
+      />
+    ),
     color: '#9146FF',
     enabled: true,
   },
+  // Discord removed per user preference
+  // {
+  //   id: 'discord',
+  //   name: 'Discord',
+  //   icon: (
+  //     <Image
+  //       source={require('@/assets/images/discord-logo-official.png')}
+  //       style={{ width: 20, height: 20 }}
+  //       resizeMode="contain"
+  //     />
+  //   ),
+  //   color: '#5865F2',
+  //   enabled: true,
+  // },
 ];
 
 export const AuthenticationFlow: React.FC = () => {
   const { signIn, signUp, isLoading, continueAsGuest } = useAuth();
   const globalStore = useGlobalStore();
+
+  // Native OAuth hooks
+  const { startSSOFlow } = useSSO();
 
   const [currentStep, setCurrentStep] = useState<AuthStep>('welcome');
   const [formData, setFormData] = useState({
@@ -192,8 +216,63 @@ export const AuthenticationFlow: React.FC = () => {
       return;
     }
 
-    // Implement social login
-    Alert.alert('Social Login', `${provider.name} login functionality will be implemented here.`);
+    console.log(`🔐 Starting ${provider.name} social login...`);
+
+    try {
+      let result;
+      let strategy;
+
+      switch (provider.id) {
+        case 'google':
+          console.log('📱 Initiating Google native OAuth...');
+          strategy = 'oauth_google';
+          break;
+        case 'twitch':
+          console.log('📱 Initiating Twitch OAuth (via Discord)...');
+          strategy = 'oauth_discord'; // Use Discord since Twitch isn't supported by Clerk
+          break;
+        default:
+          console.error(`❌ Unsupported login provider: ${provider.id}`);
+          Alert.alert('Error', 'Unsupported login provider');
+          return;
+      }
+
+      result = await startSSOFlow({ strategy });
+
+      console.log(`✅ ${provider.name} OAuth result:`, {
+        hasCreatedSessionId: !!result?.createdSessionId,
+        hasSetActive: !!result?.setActive,
+        resultKeys: result ? Object.keys(result) : 'no result'
+      });
+
+      if (result?.createdSessionId) {
+        console.log(`🔄 Setting active session for ${provider.name}...`);
+        // OAuth successful
+        if (result.setActive) {
+          await result.setActive({ session: result.createdSessionId });
+          console.log(`✅ ${provider.name} session activated successfully`);
+        }
+        console.log(`🏠 Redirecting to main app after ${provider.name} login`);
+        navigationService.navigate('/(tabs)');
+      } else {
+        console.warn(`⚠️ ${provider.name} OAuth completed but no session created`);
+        Alert.alert(
+          `${provider.name} Login Issue`,
+          'Login completed but no session was created. Please try again.'
+        );
+      }
+    } catch (error) {
+      console.error(`❌ ${provider.name} OAuth error:`, {
+        error: error,
+        message: error?.message,
+        code: error?.code,
+        stack: error?.stack
+      });
+      Alert.alert(
+        `${provider.name} Login Failed`,
+        `Error: ${error?.message || 'Unknown error'}. Please try again or use email/password login.`
+      );
+    }
   };
 
   const handleGuestContinue = () => {
@@ -298,7 +377,9 @@ export const AuthenticationFlow: React.FC = () => {
               disabled={!provider.enabled}
             >
               {provider.icon}
-              <Text style={styles.socialButtonText}>{provider.name}</Text>
+              <Text style={styles.socialButtonText}>
+                {provider.id === 'twitch' ? 'Twitch (via Discord)' : provider.name}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -403,7 +484,9 @@ export const AuthenticationFlow: React.FC = () => {
               disabled={!provider.enabled}
             >
               {provider.icon}
-              <Text style={styles.socialButtonText}>{provider.name}</Text>
+              <Text style={styles.socialButtonText}>
+                {provider.id === 'twitch' ? 'Twitch (via Discord)' : provider.name}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>

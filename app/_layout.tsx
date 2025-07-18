@@ -10,7 +10,7 @@ import {
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
-import { ClerkProvider } from '@clerk/clerk-expo';
+import { ClerkProvider, tokenCache } from '@clerk/clerk-expo';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
@@ -60,7 +60,10 @@ export default function RootLayout() {
     <ErrorBoundary>
       <TamaguiProvider config={config}>
         <ThemeProvider defaultMode="dark">
-          <ClerkProvider publishableKey={clerkPublishableKey}>
+          <ClerkProvider 
+            tokenCache={tokenCache}
+            publishableKey={clerkPublishableKey}
+          >
             <AuthProvider>
               <StreamManagerProvider>
                 <Stack screenOptions={{ headerShown: false }}>
