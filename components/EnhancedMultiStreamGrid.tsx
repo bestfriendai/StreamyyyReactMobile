@@ -44,7 +44,7 @@ import Animated, {
   interpolateColor,
 } from 'react-native-reanimated';
 import { WebView } from 'react-native-webview';
-import { useStreamManager } from '@/hooks/useStreamManager';
+import { useStreamManagerContext } from '@/contexts/StreamManagerContext';
 import { TwitchStream } from '@/services/twitchApi';
 import { BlurViewFallback as BlurView } from './BlurViewFallback';
 
@@ -485,7 +485,7 @@ export const EnhancedMultiStreamGrid: React.FC<StreamGridProps> = ({
   maxStreams = 4,
   onLayoutChange,
 }) => {
-  const { activeStreams, removeStream, clearAllStreams } = useStreamManager();
+  const { activeStreams, removeStream, clearAllStreams } = useStreamManagerContext();
   const [layout, setLayout] = useState<GridLayout>('2x2');
   const [activeStreamId, setActiveStreamId] = useState<string | null>(null);
   const [showControls, setShowControls] = useState(true);

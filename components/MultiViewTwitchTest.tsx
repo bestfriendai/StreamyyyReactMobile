@@ -24,7 +24,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { useStreamManager } from '@/hooks/useStreamManager';
+import { useStreamManagerContext } from '@/contexts/StreamManagerContext';
 import {
   streamHealthMonitor,
   generateHealthReport,
@@ -46,7 +46,7 @@ interface TestSuiteProps {
 }
 
 export const MultiViewTwitchTest: React.FC<TestSuiteProps> = ({ onTestComplete }) => {
-  const { activeStreams, addStream, removeStream, clearAllStreams } = useStreamManager();
+  const { activeStreams, addStream, removeStream, clearAllStreams } = useStreamManagerContext();
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [currentTest, setCurrentTest] = useState<string>('');

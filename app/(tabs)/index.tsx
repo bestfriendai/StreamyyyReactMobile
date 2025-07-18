@@ -8,7 +8,7 @@ import { BannerAdComponent } from '@/components/ads/BannerAd';
 import { ModernDiscoverScreen } from '@/components/ModernDiscoverScreen';
 import { NavigationHeader } from '@/components/NavigationHeader';
 import { useInterstitialAd } from '@/hooks/useInterstitialAd';
-import { useStreamManager } from '@/hooks/useStreamManager';
+import { useStreamManagerContext } from '@/contexts/StreamManagerContext';
 import {
   TwitchStream,
   TwitchGame,
@@ -29,7 +29,7 @@ export default function DiscoverScreen() {
     isFavorite: checkIsFavorite,
     loading: streamManagerLoading,
     forceReload,
-  } = useStreamManager();
+  } = useStreamManagerContext();
   const { showAd, canShow } = useInterstitialAd();
 
 

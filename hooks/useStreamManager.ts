@@ -39,7 +39,7 @@ export function useStreamManager() {
     if (isReloading) {
       return;
     }
-    
+
     try {
       setIsReloading(true);
       const [storedStreams, storedFavorites, storedSettings] = await Promise.all([
@@ -50,8 +50,10 @@ export function useStreamManager() {
 
       if (storedStreams) {
         const parsedStreams = JSON.parse(storedStreams);
+        console.log('📱 LOADING STORED STREAMS:', parsedStreams.length, 'streams:', parsedStreams.map(s => s.user_name));
         setActiveStreams(parsedStreams);
       } else {
+        console.log('📱 NO STORED STREAMS FOUND - Setting empty array');
         setActiveStreams([]);
       }
       if (storedFavorites) {
@@ -61,7 +63,10 @@ export function useStreamManager() {
         setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(storedSettings) });
       }
     } catch (error) {
-      console.error('Error loading stored data:', error);
+      console.error('❌ Error loading stored data:', error);
+      // Set empty arrays on error to prevent undefined state
+      setActiveStreams([]);
+      setFavorites([]);
     } finally {
       setLoading(false);
       setIsReloading(false);
@@ -116,17 +121,43 @@ export function useStreamManager() {
   }, []);
 
   const removeStream = useCallback(async (streamId: string) => {
+    console.log('🗑️ REMOVE STREAM CALLED - Stream ID:', streamId);
+
     try {
+      // Validate streamId
+      if (!streamId) {
+        console.error('❌ REMOVE STREAM ERROR: Invalid stream ID');
+        return;
+      }
+
       setActiveStreams(currentStreams => {
+        console.log('🗑️ CURRENT STREAMS IN STATE:', currentStreams.length, 'streams:', currentStreams.map(s => s.user_name));
+
+        // Check if stream exists
+        const streamExists = currentStreams.some(stream => stream.id === streamId);
+        if (!streamExists) {
+          console.warn('⚠️ REMOVE STREAM WARNING: Stream not found in active streams');
+          return currentStreams; // Return unchanged state
+        }
+
         const updatedStreams = currentStreams.filter(stream => stream.id !== streamId);
-        
+        console.log('🗑️ UPDATING STATE - New streams array:', updatedStreams.map(s => s.user_name));
+
+        // Save to storage with error handling
         AsyncStorage.setItem(STORAGE_KEYS.ACTIVE_STREAMS, JSON.stringify(updatedStreams))
-          .catch(error => console.error('Error removing stream:', error));
-        
+          .then(() => {
+            console.log('✅ STREAM REMOVED SUCCESSFULLY:', streamId, 'Total streams:', updatedStreams.length);
+          })
+          .catch(error => {
+            console.error('❌ ERROR SAVING TO STORAGE:', error);
+            // Continue execution even if storage fails
+          });
+
         return updatedStreams;
       });
     } catch (error) {
-      console.error('Error removing stream:', error);
+      console.error('❌ ERROR REMOVING STREAM:', error);
+      // Don't throw the error to prevent crashes
     }
   }, []);
 
@@ -193,7 +224,10 @@ export function useStreamManager() {
 
   const isStreamActive = useCallback((streamId: string) => {
     const isActive = activeStreams.some(stream => stream.id === streamId);
-    console.log('🔍 IS STREAM ACTIVE CHECK - Stream ID:', streamId, 'Active:', isActive, 'Total active streams:', activeStreams.length);
+    // Only log when debugging specific issues - much less spam
+    if (process.env.NODE_ENV === 'development' && Math.random() < 0.001) {
+      console.log('🔍 IS STREAM ACTIVE CHECK - Stream ID:', streamId, 'Active:', isActive, 'Total active streams:', activeStreams.length);
+    }
     return isActive;
   }, [activeStreams]);
 

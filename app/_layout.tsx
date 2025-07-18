@@ -14,6 +14,7 @@ import { ClerkProvider } from '@clerk/clerk-expo';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { StreamManagerProvider } from '@/contexts/StreamManagerContext';
 import { adMobService } from '@/services/adMobService';
 import { interstitialAdService } from '@/services/interstitialAdService';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandler';
@@ -61,11 +62,13 @@ export default function RootLayout() {
         <ThemeProvider defaultMode="dark">
           <ClerkProvider publishableKey={clerkPublishableKey}>
             <AuthProvider>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="+not-found" />
-              </Stack>
-              <StatusBar style="light" backgroundColor="#000" />
+              <StreamManagerProvider>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+                <StatusBar style="light" backgroundColor="#000" />
+              </StreamManagerProvider>
             </AuthProvider>
           </ClerkProvider>
         </ThemeProvider>

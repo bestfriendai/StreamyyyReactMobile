@@ -22,7 +22,7 @@ import {
   X,
   Monitor,
 } from 'lucide-react-native';
-import { useStreamManager } from '@/hooks/useStreamManager';
+import { useStreamManagerContext } from '@/contexts/StreamManagerContext';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
 import { DirectTwitchPlayer } from './DirectTwitchPlayer';
@@ -44,7 +44,7 @@ export const ModernMultiStreamGrid: React.FC<ModernMultiStreamGridProps> = ({
   maxStreams = 4,
   onLayoutChange,
 }) => {
-  const { activeStreams, removeStream, clearAllStreams } = useStreamManager();
+  const { activeStreams, removeStream, clearAllStreams } = useStreamManagerContext();
   const [layout, setLayout] = useState<GridLayout>('2x2');
   const [activeStreamId, setActiveStreamId] = useState<string | null>(null);
   const [globalMute, setGlobalMute] = useState(true);

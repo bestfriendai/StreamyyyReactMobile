@@ -5,7 +5,7 @@
 
 import React, { useEffect, useCallback, useState } from 'react';
 import { Alert, Platform } from 'react-native';
-import { useStreamManager } from '@/hooks/useStreamManager';
+import { useStreamManagerContext } from '@/contexts/StreamManagerContext';
 import {
   streamHealthMonitor,
   generateHealthReport,
@@ -26,7 +26,7 @@ export const MultiStreamPerformanceOptimizer: React.FC<PerformanceOptimizerProps
   maxStreams = 4,
   performanceThreshold = 5000,
 }) => {
-  const { activeStreams, removeStream } = useStreamManager();
+  const { activeStreams, removeStream } = useStreamManagerContext();
   const [lastOptimization, setLastOptimization] = useState<number>(0);
   const [performanceReport, setPerformanceReport] = useState<StreamPerformanceReport | null>(null);
 

@@ -32,7 +32,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { WebView } from 'react-native-webview';
-import { useStreamManager } from '@/hooks/useStreamManager';
+import { useStreamManagerContext } from '@/contexts/StreamManagerContext';
 import { TwitchStream, twitchApi } from '@/services/twitchApi';
 import { BlurViewFallback as BlurView } from './BlurViewFallback';
 
@@ -277,7 +277,7 @@ interface MultiViewGridProps {
 }
 
 export const MultiViewGrid: React.FC<MultiViewGridProps> = ({ layout = 'auto' }) => {
-  const { activeStreams, removeStream } = useStreamManager();
+  const { activeStreams, removeStream } = useStreamManagerContext();
   const [activeStreamId, setActiveStreamId] = useState<string | null>(null);
 
   const getGridLayout = () => {

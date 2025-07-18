@@ -237,10 +237,8 @@ export const StreamPlayerCard: React.FC<StreamPlayerCardProps> = React.memo(
     const handleRemove = useCallback(() => {
       HapticFeedback.warning();
 
-      // Animate out before removing
-      scale.value = withSpring(0.8, { damping: 20 }, () => {
-        onRemove?.();
-      });
+      // Remove immediately to prevent crashes
+      onRemove?.();
     }, [onRemove]);
 
     const retryLoad = useCallback(() => {

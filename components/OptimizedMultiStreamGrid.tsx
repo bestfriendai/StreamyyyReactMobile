@@ -54,7 +54,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useStreamManager } from '@/hooks/useStreamManager';
+import { useStreamManagerContext } from '@/contexts/StreamManagerContext';
 import { TwitchStream } from '@/services/twitchApi';
 import { ModernTheme } from '@/theme/modernTheme';
 import { StreamPlayerCard } from './StreamPlayerCard';
@@ -96,7 +96,7 @@ export const OptimizedMultiStreamGrid: React.FC<OptimizedMultiStreamGridProps> =
     showControls = true,
     enableGestures = true,
   }) => {
-    const { activeStreams, removeStream, clearAllStreams } = useStreamManager();
+    const { activeStreams, removeStream, clearAllStreams } = useStreamManagerContext();
 
   // Debug logging for grid component
   useEffect(() => {
@@ -766,6 +766,17 @@ export const OptimizedMultiStreamGrid: React.FC<OptimizedMultiStreamGridProps> =
               onPress={() => handleStreamPress(stream)}
               onLongPress={() => handleStreamLongPress(stream)}
               onRemove={() => removeStream(stream.id)}
+              onMuteToggle={() => {
+                // If this is the active stream, toggle global mute
+                if (activeStreamId === stream.id) {
+                  setGlobalMute(!globalMute);
+                } else {
+                  // Make this stream active and unmute
+                  setActiveStreamId(stream.id);
+                  setGlobalMute(false);
+                }
+                HapticFeedback.light();
+              }}
               showQuality
               showViewers
               expanded
@@ -793,6 +804,10 @@ export const OptimizedMultiStreamGrid: React.FC<OptimizedMultiStreamGridProps> =
                 onPress={() => handleStreamPress(mainStream)}
                 onLongPress={() => handleStreamLongPress(mainStream)}
                 onRemove={() => removeStream(mainStream.id)}
+                onMuteToggle={() => {
+                  setGlobalMute(!globalMute);
+                  HapticFeedback.light();
+                }}
                 showQuality
                 showViewers
                 expanded
@@ -845,6 +860,12 @@ export const OptimizedMultiStreamGrid: React.FC<OptimizedMultiStreamGridProps> =
                       onPress={() => setActiveStreamId(stream.id)}
                       onLongPress={() => handleStreamLongPress(stream)}
                       onRemove={() => removeStream(stream.id)}
+                      onMuteToggle={() => {
+                        // Make this stream active and unmute
+                        setActiveStreamId(stream.id);
+                        setGlobalMute(false);
+                        HapticFeedback.light();
+                      }}
                       compact
                     />
                   </Animated.View>
@@ -874,6 +895,10 @@ export const OptimizedMultiStreamGrid: React.FC<OptimizedMultiStreamGridProps> =
                 onPress={() => handleStreamPress(focusedStream)}
                 onLongPress={() => handleStreamLongPress(focusedStream)}
                 onRemove={() => removeStream(focusedStream.id)}
+                onMuteToggle={() => {
+                  setGlobalMute(!globalMute);
+                  HapticFeedback.light();
+                }}
                 showQuality
                 showViewers
                 expanded
@@ -909,6 +934,12 @@ export const OptimizedMultiStreamGrid: React.FC<OptimizedMultiStreamGridProps> =
                       onPress={() => setActiveStreamId(stream.id)}
                       onLongPress={() => handleStreamLongPress(stream)}
                       onRemove={() => removeStream(stream.id)}
+                      onMuteToggle={() => {
+                        // Make this stream active and unmute
+                        setActiveStreamId(stream.id);
+                        setGlobalMute(false);
+                        HapticFeedback.light();
+                      }}
                       compact
                     />
                   </Animated.View>

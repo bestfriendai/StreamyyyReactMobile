@@ -38,7 +38,7 @@ import {
   withSpring,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useStreamManager } from '@/hooks/useStreamManager';
+import { useStreamManagerContext } from '@/contexts/StreamManagerContext';
 import { ModernTheme } from '@/theme/modernTheme';
 import { HapticFeedback } from '@/utils/haptics';
 
@@ -63,7 +63,7 @@ interface FavoritesScreenProps {
 }
 
 export function EnhancedFavoritesScreen(props: FavoritesScreenProps = {}) {
-  const { favorites, removeFavorite, addToMultiView } = useStreamManager();
+  const { favorites, removeFavorite, addToMultiView } = useStreamManagerContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'name' | 'viewers' | 'added'>('added');

@@ -21,7 +21,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useStreamManager } from '@/hooks/useStreamManager';
+import { useStreamManagerContext } from '@/contexts/StreamManagerContext';
 import { useTwitchStreams } from '@/hooks/useTwitchStreams';
 import { twitchApi } from '@/services/twitchApi';
 import { BlurViewFallback as BlurView } from './BlurViewFallback';
@@ -82,7 +82,7 @@ export const EnhancedDiscoverScreen: React.FC = () => {
     refresh,
   } = useTwitchStreams();
 
-  const { addStream, toggleFavorite, isFavorite, isStreamActive } = useStreamManager();
+  const { addStream, toggleFavorite, isFavorite, isStreamActive } = useStreamManagerContext();
 
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
